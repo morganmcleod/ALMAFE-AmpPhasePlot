@@ -17,7 +17,6 @@ class AmpPhaseDataLib(object):
         self.__reset()
         self.__loadConfiguration()
         self.db = DatabaseImpl(self.localDatabaseFile)
-        self.db.OpenOrCreateLocalDatabase()
         self.tsParser = ParseTimeStamp()
     
     def startTimeSeries(self, tau0Seconds = None, startTime = None, description = None):
@@ -36,7 +35,7 @@ class AmpPhaseDataLib(object):
         self.dataSeriesId = None
         self.description = description
         # create a time series header record and return the dataSeriesId:
-        self.dataSeriesId = self.db.InsertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
+        self.dataSeriesId = self.db.insertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
         return self.dataSeriesId
     
     def insertTimeSeriesChunk(self, dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None):
@@ -63,7 +62,7 @@ class AmpPhaseDataLib(object):
         self.__validateTimeSeries()
         self.__validateTimeStampsStartTime()
         self.__initializeTau0Seconds()
-        self.db.InsertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
+        self.db.insertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
         
     def insertTimeSeries(self, 
                          dataSeries, 
@@ -102,8 +101,9 @@ class AmpPhaseDataLib(object):
         self.__validateTimeStampsStartTime()
         self.__initializeStartTime(startTime)
         self.__initializeTau0Seconds()
-        self.dataSeriesId = self.db.InsertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
-        self.db.InsertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
+        self.dataSeriesId = self.db.insertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
+        self.db.insertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
+        return self.dataSeriesId
     
     def retrieveTimeSeries(self, dataSeriesId):
         '''
@@ -111,14 +111,37 @@ class AmpPhaseDataLib(object):
         :return dataSeriesId if successful, otherwise None
         '''
         self.__reset()
-        (self.dataSeriesId, self.startTime, self.tau0Seconds, self.description) = self.db.RetrieveTimeSeriesHeader(dataSeriesId)
+        (self.dataSeriesId, self.startTime, self.tau0Seconds, self.description) = self.db.retrieveTimeSeriesHeader(dataSeriesId)
         if self.dataSeriesId:
-            (self.dataSeries, self.timeStamps, self.temperatures1, self.temperatures2) = self.db.RetrieveTimeSeries(self.dataSeriesId)
+            (self.dataSeries, self.timeStamps, self.temperatures1, self.temperatures2) = self.db.retrieveTimeSeries(self.dataSeriesId)
         return self.dataSeriesId
+        
+    def setTimeSeriesTags(self, dataSeriesId, tagDictionary):
+        '''
+        Set, update, or delete tags on the specified time series:
+        Tag name keys evaluating to False are ignored.
+        Empty string values are stored, but None and False values cause a tag to be deleted.
+        :param dataSeriesId:  integer id of the time series to update
+        :param tagDictionary: dictionary of tag names and values.
+        '''
+        self.db.setTimeSeriesTags(dataSeriesId, tagDictionary)
+        
+    def getTimeSeriesTags(self, dataSeriesId, tagNames):
+        '''
+        Retrieve tag values on the specified time series:
+        :param dataSeriesId: integer id of the time series to query
+        :param tagNames: list of strings
+        :return dictionary of {tagName, tagValue} where tagValue is None if the tag was not found.  String otherwise.
+        '''
+        return self.db.getTimeSeriesTags(dataSeriesId, tagNames)
         
     # private implementation methods...
     
     def __reset(self):
+        '''
+        Initialize all data members to just-constructed state.
+        Called in constructor and retrieveTimeSeries()  
+        '''
         self.dataSeries = None
         self.temperatures1 = None
         self.temperatures2 = None
@@ -151,29 +174,29 @@ class AmpPhaseDataLib(object):
         
     def __loadTimeStamps(self, timeStamps):
         '''
-        :param timeStamps: list of dateTime strings corresponding to the points in dataSeries
+        :param timeStamps: single or list of timeStamp corresponding to the points in dataSeries
                            several formats supported, YYYY/MM/DD HH:MM:SS.mmm preferred
         '''
         if isinstance (timeStamps, str):
-            # its a single string. Do we have a cached format string?
-            if self.timeStampFormat:
-                # yes. Use it:
-                self.timeStamps.append(self.tsParser.tryParseTimeStamp(timeStamps, self.timeStampFormat))
-            else:
-                # no. Call the full-featured parsing function and store the format for next time
-                self.timeStamps.append(self.tsParser.parseTimeStamp(timeStamps))
-                self.timeStampFormat = self.tsParser.lastTimeStampFormat
+            self.__implLoadTimeStamp(timeStamps)
         elif isinstance(timeStamps, list):
             # it's a list of strings.  Iterate:
-            for timeStampString in timeStamps:
-                if self.timeStampFormat:
-                    # use the cached format string:
-                    self.timeStamps.append(self.tsParser.tryParseTimeStamp(timeStampString, self.timeStampFormat))
-                else:
-                    # Call the full parser and store the format for next time
-                    self.timeStamps.append(self.tsParser.parseTimeStamp(timeStampString))
-                    self.timeStampFormat = self.tsParser.lastTimeStampFormat
-                
+            for timeStamp in timeStamps:
+                self.__implLoadTimeStamp(timeStamp)
+    
+    def __implLoadTimeStamp(self, timeStamp):
+        '''
+        Implement loading a single timestamp, using cached timeStampFormat if available:
+        :param timeStamp: single timeStamp string
+        '''
+        if self.timeStampFormat:
+            # use the cached format string:
+            self.timeStamps.append(self.tsParser.parseTimeStampWithFormatString(timeStamp, self.timeStampFormat))
+        else:
+            # Call the full parser and store the format for next time
+            self.timeStamps.append(self.tsParser.parseTimeStamp(timeStamp))
+            self.timeStampFormat = self.tsParser.lastTimeStampFormat        
+        
     def __validateTimeStampsStartTime(self):
         '''
         check for timeStamps or tao0Seconds provided, initialize startTime
@@ -204,6 +227,3 @@ class AmpPhaseDataLib(object):
         if not self.tau0Seconds:
             delta = self.timeStamps[1] - self.timeStamps[0]
             self.tau0Seconds = delta.seconds + (delta.microseconds / 1.0e6)
-
-
-    

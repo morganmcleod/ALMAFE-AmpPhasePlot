@@ -29,7 +29,7 @@ def step_impl(context):
     '''
     assert_that(context.libObj.localDatabaseFile)
         
-@given('dataSeries list "{dataList}" and the timestamp list "{timeStampList}"')
+@given('dataSeries list "{dataList}" and timestamp list "{timeStampList}"')
 def step_impl(context, dataList, timeStampList):
     """
     :param context: behave.runner.Context
@@ -46,7 +46,7 @@ def step_impl(context):
     :param context: behave.runner.Context
     """
     context.libObj = AmpPhaseDataLib.AmpPhaseDataLib()
-    context.libObj.insertTimeSeries(dataSeries = context.dataSeries, timeStamps = context.timeStamps)
+    context.dataSeriesId = context.libObj.insertTimeSeries(dataSeries = context.dataSeries, timeStamps = context.timeStamps)
     
 @then('startTime is "{timeStampString}"')
 def step_impl(context, timeStampString):
@@ -153,6 +153,57 @@ def step_impl(context, floatString):
             deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
             assert_that(deltaSeconds, equal_to(tau0Seconds))
             TS0 = TS
-        
-        
+
+@then('we can add tag "{tagName}" with value "{tagValue}"')
+def step_impl(context, tagName, tagValue):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    :param tagValue: str
+    """
+    if not hasattr(context, 'tagsAdded'):
+        context.tagsAdded = {}
+    context.tagsAdded[tagName] = tagValue
+    context.libObj.setTimeSeriesTags(context.dataSeriesId, {tagName: tagValue})
+
+@then('we can add tag "{tagName}" with value ""')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    if not hasattr(context, 'tagsAdded'):
+        context.tagsAdded = {}
+    context.tagsAdded[tagName] = ""
+    context.libObj.setTimeSeriesTags(context.dataSeriesId, {tagName: ""})
     
+@then('we can retrieve tag "{tagName}" and the value matches')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    if not hasattr(context, 'tagsAdded'):
+        context.tagsAdded = {}
+    tagValue = context.libObj.getTimeSeriesTags(context.dataSeriesId, [tagName])[tagName]
+    assert_that(tagValue, equal_to(context.tagsAdded[tagName]))
+    
+@then('we cannot retrieve tag "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    tagValue = context.libObj.getTimeSeriesTags(context.dataSeriesId, [tagName])[tagName]
+    assert_that(tagValue, equal_to(None))
+    
+@then('we can delete tag "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    if not hasattr(context, 'tagsAdded'):
+        context.tagsAdded = {} 
+    del context.tagsAdded[tagName]
+    context.libObj.setTimeSeriesTags(context.dataSeriesId, {tagName: None})

@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import dateutil.parser
 import sys
 
 class ParseTimeStamp(object):
     '''
-    classdocs
+    Helper object for parsing time stamps in a variety of formats.
+    Caches last matching time stamp format string to speed subsequent calls.
     '''
 
     def __init__(self):
@@ -26,19 +27,19 @@ class ParseTimeStamp(object):
         self.lastTimeStampFormat = None
         
         # try SQL format:
-        timeStamp = self.tryParseTimeStamp(timeStampString, '%Y-%m-%d %H:%M:%S')
+        timeStamp = self.parseTimeStampWithFormatString(timeStampString, '%Y-%m-%d %H:%M:%S')
         if timeStamp:
             return timeStamp
         
         # try SQL format with milliseconds:
-        timeStamp = self.tryParseTimeStamp(timeStampString, '%Y-%m-%d %H:%M:%S.%f')
+        timeStamp = self.parseTimeStampWithFormatString(timeStampString, '%Y-%m-%d %H:%M:%S.%f')
         if timeStamp:
             # was parsed as microseconds; convert to ms:
             timeStamp.replace(microsecond= timeStamp.microsecond // 1000)
             return timeStamp
         
         # try with seconds and AM/PM:
-        timeStamp = self.tryParseTimeStamp(timeStampString, '%Y-%m-%d %I:%M:%S %p')
+        timeStamp = self.parseTimeStampWithFormatString(timeStampString, '%Y-%m-%d %I:%M:%S %p')
         if timeStamp:
             return timeStamp
         
@@ -53,7 +54,7 @@ class ParseTimeStamp(object):
         else:
             return timeStamp
         
-    def tryParseTimeStamp(self, timeStampString, timeStampFormat):
+    def parseTimeStampWithFormatString(self, timeStampString, timeStampFormat):
         '''
         Private, though is called directly by test cases.
         Test parsing timeStamp using the given timeStampFormat
