@@ -1,9 +1,9 @@
 import sqlite3
-from .ParseTimeStamp import ParseTimeStamp
+from Utility import ParseTimeStamp
 from datetime import timedelta
 import itertools
 
-class DatabaseImpl(object):
+class TimeSeriesDatabase(object):
     '''
     Helper class for storing and loading time series in the local database.
     '''
@@ -160,7 +160,7 @@ class DatabaseImpl(object):
             raise ValueError('No local database filename configured.')
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
-        tsParser = ParseTimeStamp()
+        tsParser = ParseTimeStamp.ParseTimeStamp()
         self.dataSeriesId = None
         conn = sqlite3.connect(self.localDatabaseFile)
         cursor = conn.cursor()
@@ -190,7 +190,7 @@ class DatabaseImpl(object):
         timeStamps = []
         
         #object for parsing the timeStamp column:
-        tsParser = ParseTimeStamp()
+        tsParser = ParseTimeStamp.ParseTimeStamp()
         
         conn = sqlite3.connect(self.localDatabaseFile)
         cursor = conn.cursor()        

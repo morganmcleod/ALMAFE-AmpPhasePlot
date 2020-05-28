@@ -1,13 +1,13 @@
-from .DatabaseImpl import DatabaseImpl
-from .ParseTimeStamp import ParseTimeStamp
+from Database import TimeSeriesDatabase
+from Utility import ParseTimeStamp
 from datetime import datetime
 import configparser
 
 # TODO: define our own exceptions instead of using ValueError
 
-class AmpPhaseDataLib(object):
+class AmpPhaseTimeSeries(object):
     '''
-    Data management API for Amplitude and Phase stability time-series and results sets
+    Data management API for Amplitude and Phase stability time series
     '''
 
     def __init__(self):
@@ -16,8 +16,8 @@ class AmpPhaseDataLib(object):
         '''
         self.__reset()
         self.__loadConfiguration()
-        self.db = DatabaseImpl(self.localDatabaseFile)
-        self.tsParser = ParseTimeStamp()
+        self.db = TimeSeriesDatabase.TimeSeriesDatabase(self.localDatabaseFile)
+        self.tsParser = ParseTimeStamp.ParseTimeStamp()
     
     def startTimeSeries(self, tau0Seconds = None, startTime = None, description = None):
         '''

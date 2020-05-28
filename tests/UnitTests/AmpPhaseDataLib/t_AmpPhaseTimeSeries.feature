@@ -1,4 +1,4 @@
-Feature: Validate AmpPhaseDataLib API
+Feature: Validate AmpPhaseTimeSeries API
 
     Scenario: Load the configuration file
     Given the configuration filename

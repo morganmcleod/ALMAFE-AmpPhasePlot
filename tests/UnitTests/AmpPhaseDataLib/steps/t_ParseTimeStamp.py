@@ -1,9 +1,9 @@
 '''
 Implement test cases for t_ParseTimeStamps.feature
-Validate AmpPhaseDataLib API
+Validate AmpPhaseDataLib.ParseTimeStamps
 '''
 from behave import given, when, then 
-from AmpPhaseDataLib import ParseTimeStamp
+from Utility import ParseTimeStamp
 from hamcrest import assert_that, equal_to, is_not, instance_of
 from datetime import datetime
 
