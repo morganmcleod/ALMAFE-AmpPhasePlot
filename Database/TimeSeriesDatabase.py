@@ -8,6 +8,8 @@ class TimeSeriesDatabase(object):
     Helper class for storing and loading time series in the local database.
     '''
 
+    TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+
     def __init__(self, localDatabaseFile):
         '''
         Constructor
@@ -124,9 +126,9 @@ class TimeSeriesDatabase(object):
             q += str(self.dataSeriesId) 
                 
             if TS:
-                q += ", '{0}'".format(TS.strftime('%Y-%m-%d %H:%M:%S.%f'))
+                q += ", '{0}'".format(TS.strftime(self.TIMESTAMP_FORMAT))
             else:
-                q += ", '{0}'".format(timeCount.strftime('%Y-%m-%d %H:%M:%S.%f'))
+                q += ", '{0}'".format(timeCount.strftime(self.TIMESTAMP_FORMAT))
                 timeCount += timeDelta
             
             q += ", {0}".format(str(data))

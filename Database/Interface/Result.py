@@ -1,36 +1,20 @@
 '''
-Result storage and retrieval...
-
-a Result has
-values:
-    resultId:int, description, timeStamp
-tags:
-    zero or more name-value pairs
-aggregates:
-    zero or more Plots
-    
-a Plot has
-values:
-    kind : PlotType (TimeSeries, AllanVar, AllanDev, PowerSpectrum)
-tags:
-    zero or more name-value pairs
-aggregates:
-    zero or more Traces
-    zero or more PlotImages
-    
-a Trace has
-values: 
-    traceId:int, legend, xyData
-    
-a PlotImage has
-values:
-    name, path    
+Interface classes for storage and retrieval of Result, Plot, and Trace objects.
 '''
 
 from abc import ABC, abstractmethod
 from datetime import datetime
 
 class Result:
+    '''
+    a Result has
+    values:
+        resultId:int, description, timeStamp
+    tags:
+        zero or more name-value pairs
+    aggregates:
+        zero or more Plots
+    '''
     def __init__(self, resultId, description = None, timeStamp = None):
         self.resultId = resultId
         self.description = description
@@ -39,44 +23,61 @@ class Result:
             self.timeStamp = datetime.now()
         
 class Plot:
+    '''
+    a Plot has
+    values:
+        plotId: int, kind: enum(TimeSeries, AllanVar, AllanDev, PowerSpectrum)
+    tags:
+        zero or more name-value pairs
+    aggregates:
+        zero or more Traces
+        zero or more PlotImages
+    references:
+        one Result via resultId
+    '''
     KIND_NONE = 0
     KIND_TIMESERIES = 1
     KIND_ALLANVAR = 2
     KIND_ALLANDEV = 3
     KIND_PWRSPECTRUM = 4
         
-    def __init__(self, ResultId, plotId, kind = KIND_NONE):
-        self.resultId = ResultId
+    def __init__(self, plotId, ResultId, kind = KIND_NONE):
         self.plotId = plotId
+        self.resultId = ResultId
         self.kind = kind
         
 class Trace:
-    def __init__(self, plotId, name, xyData, legend = None):
+    '''
+    a Trace has
+    values: 
+        traceId:int, name, legend, 
+        xyData: float list of tuples (x, y) or (x, y, yError)
+    references:
+        one Plot via plotId
+    '''
+    def __init__(self, traceId, plotId, xyData, name = None, legend = None):
+        self.traceId = traceId
         self.plotId = plotId
-        self.name = name
         self.xyData = xyData
+        self.name = name
         self.legend = legend
         if not self.legend:
             self.legend = self.name
-    
-class PlotImage:
-    def __init__(self, plotId, name = None, path = None, keyId = None):
-        self.plotId = plotId
-        self.name = name
-        self.path = path
-        self.keyId = keyId
         
 class ResultInterface(ABC):
     '''
-    Defines the interface for storing and retrieving Result objects defined above.     
+    Defines the interface for storing and retrieving Result, Plot, Trace objects defined above.     
     '''
+    
+#// Result methods
+    
     @abstractmethod
     def createResult(self, description = None, timeStamp = None):
         '''
         Create a new Result object in the database
         :param description: str
         :param timeStamp: datetime to associate with the Result.  Defaults to now(). 
-        :return Result object if succesful, None otherwise.
+        :return Result object if successful, None otherwise.
         '''
         pass
     
@@ -85,15 +86,15 @@ class ResultInterface(ABC):
         '''
         Retrieve a Result object from the database
         :param resultId: int to retrieve
-        :return Result object if succesful, None otherwise.
+        :return Result object if successful, None otherwise.
         '''
         pass
     
     @abstractmethod
-    def updateResult(self, Result):
+    def updateResult(self, result):
         '''
         Update an existing Result object in the database
-        :param Result: object to update
+        :param result: object to update
         :return Result object if successful, None otherwise.
         '''
         pass
@@ -105,95 +106,66 @@ class ResultInterface(ABC):
         :param resultId: int to delete
         '''
         pass
+
+#// Plot methods
     
     @abstractmethod
-    def setResultTags(self, resultId, tagDictionary):
-        '''
-        Set, update, or delete tags on the specified Result:
-        Tag name keys evaluating to False are ignored.
-        Empty string values are stored, but None and False values cause a tag to be deleted.
-        :param resultId: int of the Result to update.
-        :param tagDictionary: dictionary of tag names and value strings.
-        '''
-        pass
-        
-    @abstractmethod
-    def getResultTags(self, resultId, tagNames):       
-        '''
-        Retrieve tags on the specified Result:
-        :param resultId: int of the Result to query
-        :param tagNames: list of strings
-        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
-        '''
-        pass
-    
-    @abstractmethod
-    def createPlot(self, resultId, kind = None):
+    def createPlot(self, resultId, kind):
         '''
         Create a Plot associated with the specified Result:
         :param resultId: int of the Result to associate with the Plot
         :param kind: Plot.KIND* specify what type of plot it is
-        :return Plot object if succesful, None otherwise.
+        :return Plot object if successful, None otherwise.
         '''
         pass
     
     @abstractmethod
-    def retrievePlot(self, resultId, kind = None, plotId = None):
+    def retrievePlot(self, plotId):
         '''
-        Retrieve a Plot associated with the specified Result:
-        Can search on kind or plotId so one or the other must be given.
-        :param resultId: int of the Result
-        :param kind: Plot.KIND* specify which plot to retrieve
+        Retrieve a specified Plot:
         :param plotId: int of the plot to retrieve
-        :return Plot object if succesful, None otherwise.
+        :return Plot object if successful, None otherwise.
         '''
         
     # no updatePlot() needed yet...
     
     @abstractmethod
-    def deletePlot(self, resultId, kind = None, plotId = None):
+    def deletePlot(self, plotId):
         '''
-        Delete a Plot associated with the specified Result
-        Can search on kind or plotId so one or the other must be given.
-        :param resultId: int of the Result
-        :param kind: Plot.KIND* specify which plot(s) to delete
-        :param plotId: plotId: int of the plot to delete
+        Delete the specified Plot
+        :param plotId: int of the plot to delete
         '''
-    
-    @abstractmethod
-    def setPlotTags(self, plotId, tagDictionary):
-        '''
-        Set, update, or delete tags on the specified Plot:
-        Tag name keys evaluating to False are ignored.
-        Empty string values are stored, but None and False values cause a tag to be deleted.
-        :param plotId: int of the Plot to update.
-        :param tagDictionary: dictionary of tag names and value strings.
-        '''
-        pass
-        
-    @abstractmethod
-    def getPlotTags(self, plotId, tagNames):       
-        '''
-        Retrieve tags on the specified Plot:
-        :param plotId: int of the Plot to query
-        :param tagNames: list of strings
-        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
-        '''
-        pass
+
+#// Trace methods
     
     @abstractmethod        
     def createTrace(self, plotId, xyData, name = None, legend = None):
+        '''
+        Create a trace on the specified Plot
+        :param plotId: Plot to which the trace belongs
+        :param xyData: float list of tuples (x, y) or (x, y, yError)
+        :param name: trace name
+        :param legend: trace legend for display
+        :return Trace object if successful, None otherwise
+        '''
         pass
         
     @abstractmethod        
-    def retrieveTrace(self, plotId, name):
+    def retrieveTrace(self, traceId):
+        '''
+        Retrieve the specified trace
+        :param traceId int to retrieve
+        :return Trace object if successful, None otherwise
+        '''
         pass
     
-    @abstractmethod        
-    def updateTrace(self, trace):
-        pass
+    # no updateTrace needed yet...
     
     @abstractmethod        
-    def deleteTrace(self, plotId, name):
+    def deleteTrace(self, traceId):
+        '''
+        Delete the specified trace
+        :param traceId int to delete
+        '''
         pass
         
