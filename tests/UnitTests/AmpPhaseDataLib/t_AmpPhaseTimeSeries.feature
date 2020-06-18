@@ -43,3 +43,4 @@ Feature: Validate AmpPhaseTimeSeries API
     And we can delete tag "operator"
     And we cannot retrieve tag "operator"
 
+#TODO Add test cases for set/get multiple tags

@@ -3,7 +3,7 @@ Interface classes for set/get/update/delete tags refering to another table via f
 '''
 from abc import ABC, abstractmethod
 
-class TagInterface(ABC):
+class TagsInterface(ABC):
     '''
     Defines the interface for set/get/update/delete tags
     '''

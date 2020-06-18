@@ -13,8 +13,8 @@ class PlotImage:
     def __init__(self, plotId, plotImageId, name = None, path = None):
         self.plotImageId = plotImageId
         self.plotId = plotId
-        self.name = name
-        self.path = path
+        self.name = str(name) if name else ""
+        self.path = str(path) if path else ""
 
 class PlotImageInterface(ABC):
     '''

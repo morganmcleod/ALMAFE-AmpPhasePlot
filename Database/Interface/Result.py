@@ -17,10 +17,8 @@ class Result:
     '''
     def __init__(self, resultId, description = None, timeStamp = None):
         self.resultId = resultId
-        self.description = description
-        self.timeStamp = timeStamp
-        if not self.timeStamp:
-            self.timeStamp = datetime.now()
+        self.description = str(description if description else "")
+        self.timeStamp = timeStamp if timeStamp else datetime.now()
         
 class Plot:
     '''
@@ -59,10 +57,8 @@ class Trace:
         self.traceId = traceId
         self.plotId = plotId
         self.xyData = xyData
-        self.name = name
-        self.legend = legend
-        if not self.legend:
-            self.legend = self.name
+        self.name = str(name) if name else ""
+        self.legend = str(legend) if legend else self.name
         
 class ResultInterface(ABC):
     '''

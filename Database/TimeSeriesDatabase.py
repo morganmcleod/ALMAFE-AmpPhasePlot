@@ -1,4 +1,4 @@
-import sqlite3
+import Database.Driver.SQLite as driver
 from Utility import ParseTimeStamp
 from datetime import timedelta
 import itertools
@@ -15,23 +15,20 @@ class TimeSeriesDatabase(object):
         Constructor
         :param localDatabaseFile: Filename of local database.
         '''
-        self.localDatabaseFile = localDatabaseFile
         self.dataSeriesId = None
         self.CHUNK_SIZE = 1000 # max records to load at a time
+        connectionInfo = { 'localDatabaseFile' : localDatabaseFile }
+        self.DB = driver.DriverSQLite(connectionInfo)
         self.createLocalDatabase()
     
     def createLocalDatabase(self):
         '''
         Create the local database tables if they do not already exist.
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()
         # find or create TimeSeriesHeader table:
-        cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesHeader';")
-        if not cursor.fetchone()[0]:
-            cursor.execute("""CREATE TABLE TimeSeriesHeader (
+        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesHeader';")
+        if not self.DB.fetchone()[0]:
+            self.DB.query("""CREATE TABLE TimeSeriesHeader (
                                 TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 startTime TIMESTAMP,
                                 tau0Seconds FLOAT, 
@@ -39,28 +36,27 @@ class TimeSeriesDatabase(object):
                             """)
         
         # find or create TimeSeries table:
-        cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeries';")
-        if not cursor.fetchone()[0]:
-            cursor.execute("""CREATE TABLE TimeSeries (
+        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeries';")
+        if not self.DB.fetchone()[0]:
+            self.DB.query("""CREATE TABLE TimeSeries (
                                 fkHeader INTEGER, 
                                 timeStamp TIMESTAMP,
                                 seriesData FLOAT,
                                 temperatures1 FLOAT,
                                 temperatures2 FLOAT);
                             """)
-            cursor.execute("""CREATE INDEX tsHeader ON TimeSeries (fkHeader);""")
+            self.DB.query("""CREATE INDEX tsHeader ON TimeSeries (fkHeader);""")
                               
-        cursor.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesTags';")
-        if not cursor.fetchone()[0]:
-            cursor.execute("""CREATE TABLE TimeSeriesTags (
+        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesTags';")
+        if not self.DB.fetchone()[0]:
+            self.DB.query("""CREATE TABLE TimeSeriesTags (
                                 fkHeader INTEGER,
                                 tagName TEXT,
                                 tagValue TEXT);
                             """)
-            cursor.execute("""CREATE INDEX tagHeader ON TimeSeriesTags (fkHeader);""")    
+            self.DB.query("""CREATE INDEX tagHeader ON TimeSeriesTags (fkHeader);""")    
         
-        conn.commit()
-        conn.close()
+        self.DB.commit()
     
     def insertTimeSeriesHeader(self, description, startTime, tau0Seconds):
         '''
@@ -70,19 +66,14 @@ class TimeSeriesDatabase(object):
         :param tau0Seconds: float sampling interval of the measurement
         :return self.dataSeriesId: int rowid of the new header record.
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()
         
         if not description:
             description = ""
         
-        cursor.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds, description) VALUES ('{0}', {1}, '{2}')".format(startTime, str(tau0Seconds), description))
-        cursor.execute("SELECT last_insert_rowid()")
-        self.dataSeriesId = cursor.fetchone()[0]
-        conn.commit()
-        conn.close()
+        self.DB.query("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds, description) VALUES ('{0}', {1}, '{2}')".format(startTime, str(tau0Seconds), description))
+        self.DB.query("SELECT last_insert_rowid()")
+        self.dataSeriesId = self.DB.fetchone()[0]
+        self.DB.commit()
         return self.dataSeriesId
     
     def insertTimeSeries(self, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
@@ -95,8 +86,6 @@ class TimeSeriesDatabase(object):
         :param temperatures1: list of temperature sensor readings taken concurrent with the dataSeries
         :param temperatures2: 2nd list of temperature sensor readings 
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
         if not self.dataSeriesId:
             raise ValueError('No currently selected dataSeriesId.')
         if not dataSeries:
@@ -145,11 +134,7 @@ class TimeSeriesDatabase(object):
                 
             q += ")"
         
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()
-        cursor.execute(q)
-        conn.commit()
-        conn.close()
+        self.DB.query(q, commit = True)
 
     def retrieveTimeSeriesHeader(self, dataSeriesId):
         '''
@@ -158,21 +143,16 @@ class TimeSeriesDatabase(object):
         :param dataSeriesId: rowid of header to fetch
         :return (dataSeriesId, startTime, tau0Seconds, description) if successful, None otherwise.
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
         tsParser = ParseTimeStamp.ParseTimeStamp()
         self.dataSeriesId = None
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()
-        cursor.execute("SELECT startTime, tau0Seconds, description FROM TimeSeriesHeader WHERE rowid = {0}".format(dataSeriesId))
+        self.DB.query("SELECT startTime, tau0Seconds, description FROM TimeSeriesHeader WHERE rowid = {0}".format(dataSeriesId))
 
         result = None
-        row = cursor.fetchone()
+        row = self.DB.fetchone()
         if row:
             result = (dataSeriesId, tsParser.parseTimeStamp(row[0]), float(row[1]), row[2])
-        conn.close()
         return result
     
     def retrieveTimeSeries(self, dataSeriesId):
@@ -181,8 +161,6 @@ class TimeSeriesDatabase(object):
         :param dataSeriesId: rowid of the corresponding header record
         :return (dataSeries[], timeStamps[], temperatures1[], temperatures2[]) if successful, else None
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
         
@@ -194,11 +172,9 @@ class TimeSeriesDatabase(object):
         #object for parsing the timeStamp column:
         tsParser = ParseTimeStamp.ParseTimeStamp()
         
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()        
-        cursor.execute("SELECT timeStamp, seriesData, temperatures1, temperatures2 FROM TimeSeries WHERE fkHeader = '{0}'".format(dataSeriesId))
+        self.DB.query("SELECT timeStamp, seriesData, temperatures1, temperatures2 FROM TimeSeries WHERE fkHeader = '{0}'".format(dataSeriesId))
         
-        records = cursor.fetchmany(self.CHUNK_SIZE)
+        records = self.DB.fetchmany(self.CHUNK_SIZE)
         firstTime = True
         while records:
             for TS, data, temp1, temp2 in records:
@@ -215,8 +191,7 @@ class TimeSeriesDatabase(object):
                     temperatures1.append(temp1)
                 if temp2:
                     temperatures2.append(temp2)
-            records = cursor.fetchmany(self.CHUNK_SIZE)
-        cursor.close()
+            records = self.DB.fetchmany(self.CHUNK_SIZE)
         if dataSeries:
             return (dataSeries, timeStamps, temperatures1, temperatures2)
         else:
@@ -230,13 +205,8 @@ class TimeSeriesDatabase(object):
         :param dataSeriesId:  integer id of the time series to update
         :param tagDictionary: dictionary of tag names and values.
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
-        
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()        
         
         deleteList = []
         insertList = []
@@ -257,7 +227,7 @@ class TimeSeriesDatabase(object):
                     q += " OR "
                 q += "tagName = '{0}'".format(str(key))
             q += ");"
-            cursor.execute(q)
+            self.DB.query(q)
     
         if insertList:
             q = "INSERT INTO TimeSeriesTags (fkHeader, tagName, tagValue) VALUES ("
@@ -266,13 +236,13 @@ class TimeSeriesDatabase(object):
                 if firstTime:
                     firstTime = False
                 else:
-                    q += "), {"
+                    q += "), ("
                 q += "{0}, '{1}', '{2}'".format(dataSeriesId, str(item[0]), str(item[1]))
             q += ");"
-            cursor.execute(q)
+            self.DB.query(q)
         
-        conn.commit()
-        conn.close()
+        self.DB.commit()
+        
         
     def getTimeSeriesTags(self, dataSeriesId, tagNames):
         '''
@@ -281,13 +251,8 @@ class TimeSeriesDatabase(object):
         :param tagNames: list of strings
         :return dictionary of {tagName, tagValue} where tagValue is None if the tag was not found.  String otherwise.
         '''
-        if not self.localDatabaseFile:
-            raise ValueError('No local database filename configured.')
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
-        
-        conn = sqlite3.connect(self.localDatabaseFile)
-        cursor = conn.cursor()    
         
         q = "SELECT tagName, tagValue FROM TimeSeriesTags WHERE fkHeader = {0} AND (".format(dataSeriesId)
         
@@ -302,11 +267,11 @@ class TimeSeriesDatabase(object):
             q += "tagName = '{0}'".format(str(tagName))
         q += ");"
         
-        cursor.execute(q)
-        records = cursor.fetchmany(self.CHUNK_SIZE)
+        self.DB.query(q)
+        records = self.DB.fetchmany(self.CHUNK_SIZE)
         while records:
             for tagName, tagValue in records:
                 result[tagName] = tagValue
-            records = cursor.fetchmany(self.CHUNK_SIZE)
+            records = self.DB.fetchmany(self.CHUNK_SIZE)
             
         return result
