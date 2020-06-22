@@ -116,7 +116,7 @@ class AmpPhaseTimeSeries(object):
             (self.dataSeries, self.timeStamps, self.temperatures1, self.temperatures2) = self.db.retrieveTimeSeries(self.dataSeriesId)
         return self.dataSeriesId
         
-    def setTimeSeriesTags(self, dataSeriesId, tagDictionary):
+    def setTags(self, dataSeriesId, tagDictionary):
         '''
         Set, update, or delete tags on the specified time series:
         Tag name keys evaluating to False are ignored.
@@ -124,16 +124,16 @@ class AmpPhaseTimeSeries(object):
         :param dataSeriesId:  integer id of the time series to update
         :param tagDictionary: dictionary of tag names and values.
         '''
-        self.db.setTimeSeriesTags(dataSeriesId, tagDictionary)
+        self.db.setTags(dataSeriesId, tagDictionary)
         
-    def getTimeSeriesTags(self, dataSeriesId, tagNames):
+    def getTags(self, dataSeriesId, tagNames):
         '''
         Retrieve tag values on the specified time series:
         :param dataSeriesId: integer id of the time series to query
         :param tagNames: list of strings
         :return dictionary of {tagName, tagValue} where tagValue is None if the tag was not found.  String otherwise.
         '''
-        return self.db.getTimeSeriesTags(dataSeriesId, tagNames)
+        return self.db.getTags(dataSeriesId, tagNames)
         
     # private implementation methods...
     

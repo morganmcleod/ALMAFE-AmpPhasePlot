@@ -162,10 +162,10 @@ def step_impl(context, tagName, tagValue):
     :param tagName: str
     :param tagValue: str
     """
-    if not hasattr(context, 'tagsAdded'):
+    if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {}
     context.tagsAdded[tagName] = tagValue
-    context.timeSeries.setTimeSeriesTags(context.dataSeriesId, {tagName: tagValue})
+    context.timeSeries.setTags(context.dataSeriesId, {tagName: tagValue})
 
 @then('we can add tag "{tagName}" with value ""')
 def step_impl(context, tagName):
@@ -173,10 +173,10 @@ def step_impl(context, tagName):
     :param context: behave.runner.Context
     :param tagName: str
     """
-    if not hasattr(context, 'tagsAdded'):
+    if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {}
     context.tagsAdded[tagName] = ""
-    context.timeSeries.setTimeSeriesTags(context.dataSeriesId, {tagName: ""})
+    context.timeSeries.setTags(context.dataSeriesId, {tagName: ""})
     
 @then('we can retrieve tag "{tagName}" and the value matches')
 def step_impl(context, tagName):
@@ -184,10 +184,11 @@ def step_impl(context, tagName):
     :param context: behave.runner.Context
     :param tagName: str
     """
-    if not hasattr(context, 'tagsAdded'):
+    if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {}
-    tagValue = context.timeSeries.getTimeSeriesTags(context.dataSeriesId, [tagName])[tagName]
-    assert_that(tagValue, equal_to(context.tagsAdded[tagName]))
+    tags = context.timeSeries.getTags(context.dataSeriesId, [tagName])
+    assert_that(tagName in tags)
+    assert_that(tags[tagName], equal_to(context.tagsAdded[tagName]))
     
 @then('we cannot retrieve tag "{tagName}"')
 def step_impl(context, tagName):
@@ -195,8 +196,8 @@ def step_impl(context, tagName):
     :param context: behave.runner.Context
     :param tagName: str
     """
-    tagValue = context.timeSeries.getTimeSeriesTags(context.dataSeriesId, [tagName])[tagName]
-    assert_that(tagValue, equal_to(None))
+    tags = context.timeSeries.getTags(context.dataSeriesId, [tagName])
+    assert_that(tagName not in tags)
     
 @then('we can delete tag "{tagName}"')
 def step_impl(context, tagName):
@@ -204,7 +205,7 @@ def step_impl(context, tagName):
     :param context: behave.runner.Context
     :param tagName: str
     """
-    if not hasattr(context, 'tagsAdded'):
+    if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {} 
     del context.tagsAdded[tagName]
-    context.timeSeries.setTimeSeriesTags(context.dataSeriesId, {tagName: None})
+    context.timeSeries.setTags(context.dataSeriesId, {tagName: None})

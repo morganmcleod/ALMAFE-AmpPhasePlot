@@ -1,4 +1,5 @@
 import Database.Driver.SQLite as driver
+import Database.TagsDatabase as TagsDB
 from Utility import ParseTimeStamp
 from datetime import timedelta
 import itertools
@@ -20,7 +21,8 @@ class TimeSeriesDatabase(object):
         connectionInfo = { 'localDatabaseFile' : localDatabaseFile }
         self.DB = driver.DriverSQLite(connectionInfo)
         self.createLocalDatabase()
-    
+        self.tagsDB = TagsDB.TagsDatabase(self.DB)
+
     def createLocalDatabase(self):
         '''
         Create the local database tables if they do not already exist.
@@ -197,7 +199,7 @@ class TimeSeriesDatabase(object):
         else:
             return None
 
-    def setTimeSeriesTags(self, dataSeriesId, tagDictionary):
+    def setTags(self, dataSeriesId, tagDictionary):
         '''
         Set, update, or delete tags on the specified time series:
         Tag name keys evaluating to False are ignored.
@@ -207,44 +209,9 @@ class TimeSeriesDatabase(object):
         '''
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
+        self.tagsDB.setTags(dataSeriesId, 'TimeSeriesTags', 'fkHeader', tagDictionary)
         
-        deleteList = []
-        insertList = []
-        
-        for key, value in tagDictionary.items():
-            if key:
-                deleteList.append(key)
-                if not (value is None or value is False):
-                    insertList.append((key, value))
-        
-        if deleteList:
-            q = "DELETE FROM TimeSeriesTags WHERE fkHeader = {0} AND (".format(dataSeriesId)
-            firstTime = True
-            for key in deleteList:
-                if firstTime:
-                    firstTime = False
-                else:
-                    q += " OR "
-                q += "tagName = '{0}'".format(str(key))
-            q += ");"
-            self.DB.query(q)
-    
-        if insertList:
-            q = "INSERT INTO TimeSeriesTags (fkHeader, tagName, tagValue) VALUES ("
-            firstTime = True
-            for item in insertList:
-                if firstTime:
-                    firstTime = False
-                else:
-                    q += "), ("
-                q += "{0}, '{1}', '{2}'".format(dataSeriesId, str(item[0]), str(item[1]))
-            q += ");"
-            self.DB.query(q)
-        
-        self.DB.commit()
-        
-        
-    def getTimeSeriesTags(self, dataSeriesId, tagNames):
+    def getTags(self, dataSeriesId, tagNames):
         '''
         Retrieve tag values on the specified time series:
         :param dataSeriesId: integer id of the time series to query
@@ -253,25 +220,4 @@ class TimeSeriesDatabase(object):
         '''
         if not dataSeriesId:
             raise ValueError('Invalid dataSeriesId.')
-        
-        q = "SELECT tagName, tagValue FROM TimeSeriesTags WHERE fkHeader = {0} AND (".format(dataSeriesId)
-        
-        result = {}
-        firstTime = True
-        for tagName in tagNames:
-            result[tagName] = None
-            if firstTime:
-                firstTime = False
-            else:
-                q += " OR "
-            q += "tagName = '{0}'".format(str(tagName))
-        q += ");"
-        
-        self.DB.query(q)
-        records = self.DB.fetchmany(self.CHUNK_SIZE)
-        while records:
-            for tagName, tagValue in records:
-                result[tagName] = tagValue
-            records = self.DB.fetchmany(self.CHUNK_SIZE)
-            
-        return result
+        return self.tagsDB.getTags(dataSeriesId, 'TimeSeriesTags', 'fkHeader', tagNames)
