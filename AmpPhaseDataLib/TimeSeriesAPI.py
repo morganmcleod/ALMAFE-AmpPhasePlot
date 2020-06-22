@@ -1,3 +1,7 @@
+'''
+Data management API for Amplitude and Phase stability Time Series
+'''
+
 from Database import TimeSeriesDatabase
 from Utility import ParseTimeStamp
 from datetime import datetime
@@ -5,7 +9,7 @@ import configparser
 
 # TODO: define our own exceptions instead of using ValueError
 
-class AmpPhaseTimeSeries(object):
+class TimeSeriesAPI(object):
     '''
     Data management API for Amplitude and Phase stability time series
     '''

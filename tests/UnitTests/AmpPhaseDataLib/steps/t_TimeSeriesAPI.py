@@ -1,9 +1,9 @@
 '''
-Implement test cases for t_AmpPhaseTimeSeries.feature
-Validate AmpPhaseTimeSeries API
+Implement test cases for t_TimeSeriesAPI.feature
+Validate TimeSeriesAPI API
 '''
 from behave import given, when, then 
-from AmpPhaseDataLib import AmpPhaseTimeSeries
+from AmpPhaseDataLib import TimeSeriesAPI
 from Utility import ParseTimeStamp
 from hamcrest import assert_that, equal_to, close_to
 from builtins import int
@@ -21,7 +21,7 @@ def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    context.timeSeries = AmpPhaseTimeSeries.AmpPhaseTimeSeries()
+    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
     
 @then('the database filename is stored')
 def step_impl(context):
@@ -46,7 +46,7 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    context.timeSeries = AmpPhaseTimeSeries.AmpPhaseTimeSeries()
+    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
     context.dataSeriesId = context.timeSeries.insertTimeSeries(dataSeries = context.dataSeries, timeStamps = context.timeStamps)
     
 @then('startTime is "{timeStampString}"')
@@ -106,7 +106,7 @@ def step_impl(context, description):
     context.description = description
     context.now = datetime.now()    
     
-    context.timeSeries = AmpPhaseTimeSeries.AmpPhaseTimeSeries()
+    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
     context.dataSeriesId = context.timeSeries.startTimeSeries(context.tau0Seconds, description=description)
     for item in context.dataSeries:
         context.timeSeries.insertTimeSeriesChunk(float(item))
