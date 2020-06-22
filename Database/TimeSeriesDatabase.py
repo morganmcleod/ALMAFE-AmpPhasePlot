@@ -4,6 +4,20 @@ from Utility import ParseTimeStamp
 from datetime import timedelta
 import itertools
 
+class TimeSeriesHeader(object):
+    def __init__(self, timeSeriesId, startTime, tau0Seconds, description):
+        self.timeSeriesId = timeSeriesId
+        self.startTime = startTime
+        self.tau0Seconds = tau0Seconds
+        self.description = description
+    
+class TimeSeries(object):
+    def __init__(self, dataSeries, timeStamps, temperatures1, temperatures2):
+        self.dataSeries = dataSeries
+        self.timeStamps = timeStamps
+        self.temperatures1 = temperatures1
+        self.temperatures2 = temperatures2
+
 class TimeSeriesDatabase(object):
     '''
     Helper class for storing and loading time series in the local database.
@@ -16,21 +30,22 @@ class TimeSeriesDatabase(object):
         Constructor
         :param localDatabaseFile: Filename of local database.
         '''
-        self.dataSeriesId = None
+        self.timeSeriesId = None
         self.CHUNK_SIZE = 1000 # max records to load at a time
         connectionInfo = { 'localDatabaseFile' : localDatabaseFile }
-        self.DB = driver.DriverSQLite(connectionInfo)
+        self.db = driver.DriverSQLite(connectionInfo)
         self.createLocalDatabase()
-        self.tagsDB = TagsDB.TagsDatabase(self.DB)
+        self.tagsDb = TagsDB.TagsDatabase(self.db)
 
     def createLocalDatabase(self):
         '''
         Create the local database tables if they do not already exist.
         '''
         # find or create TimeSeriesHeader table:
-        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesHeader';")
-        if not self.DB.fetchone()[0]:
-            self.DB.query("""CREATE TABLE TimeSeriesHeader (
+        self.db.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesHeader';")
+        if not self.db.fetchone()[0]:
+            self.db.execute("""CREATE TABLE TimeSeriesHeader (
+                                keyId INTEGER PRIMARY KEY,
                                 TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 startTime TIMESTAMP,
                                 tau0Seconds FLOAT, 
@@ -38,49 +53,57 @@ class TimeSeriesDatabase(object):
                             """)
         
         # find or create TimeSeries table:
-        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeries';")
-        if not self.DB.fetchone()[0]:
-            self.DB.query("""CREATE TABLE TimeSeries (
+        self.db.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeries';")
+        if not self.db.fetchone()[0]:
+            self.db.execute("""CREATE TABLE TimeSeries (
                                 fkHeader INTEGER, 
                                 timeStamp TIMESTAMP,
                                 seriesData FLOAT,
                                 temperatures1 FLOAT,
-                                temperatures2 FLOAT);
+                                temperatures2 FLOAT,
+                                FOREIGN KEY (fkHeader) 
+                                    REFERENCES TimeSeriesHeader(keyId)
+                                    ON DELETE CASCADE
+                                );
                             """)
-            self.DB.query("""CREATE INDEX tsHeader ON TimeSeries (fkHeader);""")
+            self.db.execute("""CREATE INDEX tsHeader ON TimeSeries (fkHeader);""")
                               
-        self.DB.query("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesTags';")
-        if not self.DB.fetchone()[0]:
-            self.DB.query("""CREATE TABLE TimeSeriesTags (
+        self.db.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='TimeSeriesTags';")
+        if not self.db.fetchone()[0]:
+            self.db.execute("""CREATE TABLE TimeSeriesTags (
                                 fkHeader INTEGER,
                                 tagName TEXT,
-                                tagValue TEXT);
+                                tagValue TEXT,
+                                FOREIGN KEY (fkHeader) 
+                                    REFERENCES TimeSeriesHeader(keyId)
+                                    ON DELETE CASCADE
+                                );
                             """)
-            self.DB.query("""CREATE INDEX tagHeader ON TimeSeriesTags (fkHeader);""")    
+            self.db.execute("""CREATE INDEX tagHeader ON TimeSeriesTags (fkHeader);""")    
         
-        self.DB.commit()
+        self.db.commit()
     
     def insertTimeSeriesHeader(self, description, startTime, tau0Seconds):
         '''
-        Insert a time series header record and return its rowid
+        Insert a time series header record and return its keyId
         :param description: String description of the measurement
         :param startTime:   datetime start time of the measurement 
         :param tau0Seconds: float sampling interval of the measurement
-        :return self.dataSeriesId: int rowid of the new header record.
+        :return self.timeSeriesId: int keyId of the new header record.
         '''
         
         if not description:
             description = ""
         
-        self.DB.query("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds, description) VALUES ('{0}', {1}, '{2}')".format(startTime, str(tau0Seconds), description))
-        self.DB.query("SELECT last_insert_rowid()")
-        self.dataSeriesId = self.DB.fetchone()[0]
-        self.DB.commit()
-        return self.dataSeriesId
+        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds, description) VALUES ('{0}', {1}, '{2}')".format(startTime, str(tau0Seconds), description))
+        self.db.execute("SELECT last_insert_rowid()")
+        self.timeSeriesId = self.db.fetchone()[0]
+        self.db.commit()
+        return self.timeSeriesId
     
     def insertTimeSeries(self, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
         '''
-        Insert a time series associated with the last dataSeriesId returned by insertTimeSeriesHeader
+        Insert a time series associated with the last timeSeriesId returned by insertTimeSeriesHeader
         :param dataSeries:    list of floats.  The main data series
         :param startTime:     datetime of the first measurement.
         :param tau0Seconds:   measurement integration time/sampling interval
@@ -88,8 +111,8 @@ class TimeSeriesDatabase(object):
         :param temperatures1: list of temperature sensor readings taken concurrent with the dataSeries
         :param temperatures2: 2nd list of temperature sensor readings 
         '''
-        if not self.dataSeriesId:
-            raise ValueError('No currently selected dataSeriesId.')
+        if not self.timeSeriesId:
+            raise ValueError('No currently selected timeSeriesId.')
         if not dataSeries:
             raise ValueError('dataSeries is required.')
         
@@ -114,7 +137,7 @@ class TimeSeriesDatabase(object):
             else:
                 q += ", ("
                 
-            q += str(self.dataSeriesId) 
+            q += str(self.timeSeriesId) 
                 
             if TS:
                 q += ", '{0}'".format(TS.strftime(self.TIMESTAMP_FORMAT))
@@ -136,35 +159,35 @@ class TimeSeriesDatabase(object):
                 
             q += ")"
         
-        self.DB.query(q, commit = True)
+        self.db.execute(q, commit = True)
 
-    def retrieveTimeSeriesHeader(self, dataSeriesId):
+    def retrieveTimeSeriesHeader(self, timeSeriesId):
         '''
         Retrieve the specified header row.
-        If successful, populates self.dataSeriesId
-        :param dataSeriesId: rowid of header to fetch
-        :return (dataSeriesId, startTime, tau0Seconds, description) if successful, None otherwise.
+        If successful, populates self.timeSeriesId
+        :param timeSeriesId: keyId of header to fetch
+        :return TimeSeriesHeader object if successful, None otherwise.
         '''
-        if not dataSeriesId:
-            raise ValueError('Invalid dataSeriesId.')
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
         tsParser = ParseTimeStamp.ParseTimeStamp()
-        self.dataSeriesId = None
-        self.DB.query("SELECT startTime, tau0Seconds, description FROM TimeSeriesHeader WHERE rowid = {0}".format(dataSeriesId))
+        self.timeSeriesId = None
+        self.db.execute("SELECT startTime, tau0Seconds, description FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId))
 
         result = None
-        row = self.DB.fetchone()
+        row = self.db.fetchone()
         if row:
-            result = (dataSeriesId, tsParser.parseTimeStamp(row[0]), float(row[1]), row[2])
+            result = TimeSeriesHeader(timeSeriesId, tsParser.parseTimeStamp(row[0]), float(row[1]), row[2])
         return result
     
-    def retrieveTimeSeries(self, dataSeriesId):
+    def retrieveTimeSeries(self, timeSeriesId):
         '''
         Retrieve the selected time series data
-        :param dataSeriesId: rowid of the corresponding header record
-        :return (dataSeries[], timeStamps[], temperatures1[], temperatures2[]) if successful, else None
+        :param timeSeriesId: keyId of the corresponding header record
+        :return TimeSeries object if successful, else None
         '''
-        if not dataSeriesId:
-            raise ValueError('Invalid dataSeriesId.')
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
         
         dataSeries = []
         temperatures1 = []
@@ -174,9 +197,9 @@ class TimeSeriesDatabase(object):
         #object for parsing the timeStamp column:
         tsParser = ParseTimeStamp.ParseTimeStamp()
         
-        self.DB.query("SELECT timeStamp, seriesData, temperatures1, temperatures2 FROM TimeSeries WHERE fkHeader = '{0}'".format(dataSeriesId))
+        self.db.execute("SELECT timeStamp, seriesData, temperatures1, temperatures2 FROM TimeSeries WHERE fkHeader = '{0}'".format(timeSeriesId))
         
-        records = self.DB.fetchmany(self.CHUNK_SIZE)
+        records = self.db.fetchmany(self.CHUNK_SIZE)
         firstTime = True
         while records:
             for TS, data, temp1, temp2 in records:
@@ -193,31 +216,43 @@ class TimeSeriesDatabase(object):
                     temperatures1.append(temp1)
                 if temp2:
                     temperatures2.append(temp2)
-            records = self.DB.fetchmany(self.CHUNK_SIZE)
+            records = self.db.fetchmany(self.CHUNK_SIZE)
         if dataSeries:
-            return (dataSeries, timeStamps, temperatures1, temperatures2)
+            return TimeSeries(dataSeries, timeStamps, temperatures1, temperatures2)
         else:
             return None
 
-    def setTags(self, dataSeriesId, tagDictionary):
+    def deleteTimeSeries(self, timeSeriesId):
+        '''
+        Delete a time series header and all of its associated data and tags.
+        Rows in TimeSeries and TimeSeriesTags tables are deleted by CASCADE.
+        :param timeSeriesId:  int of the time series to update
+        '''
+        q = "DELETE FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId)
+        if not self.db.execute(q, commit = False):
+            self.db.rollback()
+            return
+        self.db.commit()
+
+    def setTags(self, timeSeriesId, tagDictionary):
         '''
         Set, update, or delete tags on the specified time series:
         Tag name keys evaluating to False are ignored.
         Empty string values are stored, but None and False values cause a tag to be deleted.
-        :param dataSeriesId:  integer id of the time series to update
+        :param timeSeriesId:  int of the time series to update
         :param tagDictionary: dictionary of tag names and values.
         '''
-        if not dataSeriesId:
-            raise ValueError('Invalid dataSeriesId.')
-        self.tagsDB.setTags(dataSeriesId, 'TimeSeriesTags', 'fkHeader', tagDictionary)
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
+        self.tagsDb.setTags(timeSeriesId, 'TimeSeriesTags', 'fkHeader', tagDictionary)
         
-    def getTags(self, dataSeriesId, tagNames):
+    def getTags(self, timeSeriesId, tagNames):
         '''
         Retrieve tag values on the specified time series:
-        :param dataSeriesId: integer id of the time series to query
+        :param timeSeriesId: integer id of the time series to query
         :param tagNames: list of strings
         :return dictionary of {tagName, tagValue} where tagValue is None if the tag was not found.  String otherwise.
         '''
-        if not dataSeriesId:
-            raise ValueError('Invalid dataSeriesId.')
-        return self.tagsDB.getTags(dataSeriesId, 'TimeSeriesTags', 'fkHeader', tagNames)
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
+        return self.tagsDb.getTags(timeSeriesId, 'TimeSeriesTags', 'fkHeader', tagNames)

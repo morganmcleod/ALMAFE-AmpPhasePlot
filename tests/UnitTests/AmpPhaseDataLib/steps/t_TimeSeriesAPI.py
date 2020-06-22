@@ -1,34 +1,12 @@
 '''
 Implement test cases for t_TimeSeriesAPI.feature
-Validate TimeSeriesAPI API
+Validate TimeSeriesAPI
 '''
-from behave import given, when, then 
-from AmpPhaseDataLib import TimeSeriesAPI
+from behave import given, when, then
+from datetime import datetime
+from AmpPhaseDataLib.Constants import DataSource, DataStatus
 from Utility import ParseTimeStamp
 from hamcrest import assert_that, equal_to, close_to
-from builtins import int
-from datetime import datetime
-   
-@given('the configuration filename')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    #nothing to do
-    
-@when('the object is created')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
-    
-@then('the database filename is stored')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    assert_that(context.timeSeries.localDatabaseFile)
         
 @given('dataSeries list "{dataList}" and timestamp list "{timeStampList}"')
 def step_impl(context, dataList, timeStampList):
@@ -46,8 +24,7 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
-    context.dataSeriesId = context.timeSeries.insertTimeSeries(dataSeries = context.dataSeries, timeStamps = context.timeStamps)
+    context.timeSeriesId = context.API.insertTimeSeries(dataSeries = context.dataSeries, timeStamps = context.timeStamps)
     
 @then('startTime is "{timeStampString}"')
 def step_impl(context, timeStampString):
@@ -57,7 +34,7 @@ def step_impl(context, timeStampString):
     '''
     tsParser = ParseTimeStamp.ParseTimeStamp()
     timeStamp = tsParser.parseTimeStamp(timeStampString)
-    assert_that(context.timeSeries.startTime, equal_to(timeStamp))
+    assert_that(context.API.startTime, equal_to(timeStamp))
     
 @then('tau0Seconds is "{floatString}"')
 def step_impl(context, floatString):
@@ -66,7 +43,7 @@ def step_impl(context, floatString):
     :param floatString: a float as string
     '''
     tau0Seconds = float(floatString)
-    assert_that(context.timeSeries.tau0Seconds, equal_to(tau0Seconds))
+    assert_that(context.API.tau0Seconds, equal_to(tau0Seconds))
 
 @then('dataSeries is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -75,7 +52,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.timeSeries.dataSeries), equal_to(dataLen))
+    assert_that(len(context.API.dataSeries), equal_to(dataLen))
     
 @then('timeStamps is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -84,7 +61,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.timeSeries.timeStamps), equal_to(dataLen))
+    assert_that(len(context.API.timeStamps), equal_to(dataLen))
 
 @given('a sequence of readings "{dataList}" and tau0 of "{floatString}"')
 def step_impl(context, dataList, floatString):
@@ -106,33 +83,46 @@ def step_impl(context, description):
     context.description = description
     context.now = datetime.now()    
     
-    context.timeSeries = TimeSeriesAPI.TimeSeriesAPI()
-    context.dataSeriesId = context.timeSeries.startTimeSeries(context.tau0Seconds, description=description)
+    context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds, description=description)
     for item in context.dataSeries:
-        context.timeSeries.insertTimeSeriesChunk(float(item))
-    context.timeSeries.finishTimeSeries()
+        context.API.insertTimeSeriesChunk(float(item))
+    context.API.finishTimeSeries()
     
 @then('startTime is close to now')
 def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    delta = max(context.timeSeries.startTime, context.now) - min(context.timeSeries.startTime, context.now)
+    delta = max(context.API.startTime, context.now) - min(context.API.startTime, context.now)
     assert_that(delta.seconds, close_to(0, 0.05))
     
-@then('the time series can be retrieved from the database')
+@when('the time series is retrieved from the database')
 def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    assert_that(context.timeSeries.retrieveTimeSeries(context.dataSeriesId))
+    assert_that(context.API.retrieveTimeSeries(context.timeSeriesId))
+
+@then('the time series can be deleted from the database')
+def step_impl(context):
+    '''
+    :param context: behave.runner.Context
+    '''
+    context.API.deleteTimeSeries(context.timeSeriesId)
+    
+@then('the time series cannot be retrieved from the database')
+def step_impl(context):
+    '''
+    :param context: behave.runner.Context
+    '''
+    assert_that(not context.API.retrieveTimeSeries(context.timeSeriesId))
     
 @then('the description matches')
 def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    assert_that(context.timeSeries.description, equal_to(context.description))
+    assert_that(context.API.description, equal_to(context.description))
     
 @then('the data has timeStamps starting now with steps of "{floatString}"')
 def step_impl(context, floatString):
@@ -141,11 +131,11 @@ def step_impl(context, floatString):
     :param floatString: a float as string
     """
     tau0Seconds = float(floatString)
-    delta = context.timeSeries.timeStamps[0] - context.now
+    delta = context.API.timeStamps[0] - context.now
     deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
     assert_that(deltaSeconds, close_to(0.0, 0.05))
     firstTime = True
-    for TS in context.timeSeries.timeStamps:
+    for TS in context.API.timeStamps:
         if firstTime:
             TS0 = TS
             firstTime = False
@@ -155,7 +145,7 @@ def step_impl(context, floatString):
             assert_that(deltaSeconds, equal_to(tau0Seconds))
             TS0 = TS
 
-@then('we can add tag "{tagName}" with value "{tagValue}"')
+@when('TimeSeries DataSource tag "{tagName}" is set with value "{tagValue}"')
 def step_impl(context, tagName, tagValue):
     """
     :param context: behave.runner.Context
@@ -165,47 +155,66 @@ def step_impl(context, tagName, tagValue):
     if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {}
     context.tagsAdded[tagName] = tagValue
-    context.timeSeries.setTags(context.dataSeriesId, {tagName: tagValue})
+    context.API.setDataSource(context.timeSeriesId, DataSource[tagName], tagValue)
+    
+@then('we can retrieve DataSource tag "{tagName}" and the value matches')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    result = context.API.getDataSource(context.timeSeriesId, DataSource[tagName])
+    assert_that(result, equal_to(context.tagsAdded[tagName]))
+    
+@then('we cannot retrieve DataSource tag "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    result = context.API.getDataSource(context.timeSeriesId, DataSource[tagName])
+    assert_that(not result)
+    
+@then('we can delete DataSource tag "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    del context.tagsAdded[tagName]
+    context.API.setDataSource(context.timeSeriesId, DataSource[tagName], None)
 
-@then('we can add tag "{tagName}" with value ""')
+@then('we can set DataStatus "{tagName}"')
 def step_impl(context, tagName):
     """
     :param context: behave.runner.Context
     :param tagName: str
     """
-    if not getattr(context, 'tagsAdded', False):
-        context.tagsAdded = {}
-    context.tagsAdded[tagName] = ""
-    context.timeSeries.setTags(context.dataSeriesId, {tagName: ""})
-    
-@then('we can retrieve tag "{tagName}" and the value matches')
-def step_impl(context, tagName):
-    """
-    :param context: behave.runner.Context
-    :param tagName: str
-    """
-    if not getattr(context, 'tagsAdded', False):
-        context.tagsAdded = {}
-    tags = context.timeSeries.getTags(context.dataSeriesId, [tagName])
-    assert_that(tagName in tags)
-    assert_that(tags[tagName], equal_to(context.tagsAdded[tagName]))
-    
-@then('we cannot retrieve tag "{tagName}"')
-def step_impl(context, tagName):
-    """
-    :param context: behave.runner.Context
-    :param tagName: str
-    """
-    tags = context.timeSeries.getTags(context.dataSeriesId, [tagName])
-    assert_that(tagName not in tags)
-    
-@then('we can delete tag "{tagName}"')
-def step_impl(context, tagName):
-    """
-    :param context: behave.runner.Context
-    :param tagName: str
-    """
+    dataStatus = DataStatus[tagName]
     if not getattr(context, 'tagsAdded', False):
         context.tagsAdded = {} 
-    del context.tagsAdded[tagName]
-    context.timeSeries.setTags(context.dataSeriesId, {tagName: None})
+    context.tagsAdded[dataStatus.value] = True
+    context.API.setDataStatus(context.timeSeriesId, dataStatus)
+    
+@then('we can read DataStatus "{tagName}" and the value matches')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    dataStatus = DataStatus[tagName]
+    result = context.API.getDataStatus(context.timeSeriesId, dataStatus)
+    expected = True if context.tagsAdded.get(dataStatus.value) else False
+    assert_that(result, equal_to(expected))    
+
+@then('we can clear DataStatus "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    dataStatus = DataStatus[tagName]
+    del context.tagsAdded[dataStatus.value]
+    context.API.clearDataStatus(context.timeSeriesId, dataStatus)
+    result = context.API.getDataStatus(context.timeSeriesId, dataStatus)
+    assert_that(not result)

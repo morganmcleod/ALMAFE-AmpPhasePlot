@@ -2,6 +2,7 @@
 Interface classes for storage and retrieval of Result, Plot, and Trace objects.
 '''
 
+from AmpPhaseDataLib.Constants import PlotKind
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -19,12 +20,12 @@ class Result:
         self.resultId = resultId
         self.description = str(description if description else "")
         self.timeStamp = timeStamp if timeStamp else datetime.now()
-        
+
 class Plot:
     '''
     a Plot has
     values:
-        plotId: int, kind: enum(TimeSeries, AllanVar, AllanDev, PowerSpectrum)
+        plotId, PlotKind
     tags:
         zero or more name-value pairs
     aggregates:
@@ -33,13 +34,8 @@ class Plot:
     references:
         one Result via resultId
     '''
-    KIND_NONE = 0
-    KIND_TIMESERIES = 1
-    KIND_ALLANVAR = 2
-    KIND_ALLANDEV = 3
-    KIND_PWRSPECTRUM = 4
         
-    def __init__(self, plotId, ResultId, kind = KIND_NONE):
+    def __init__(self, plotId, ResultId, kind = PlotKind.NONE):
         self.plotId = plotId
         self.resultId = ResultId
         self.kind = kind
@@ -110,7 +106,7 @@ class ResultInterface(ABC):
         '''
         Create a Plot associated with the specified Result:
         :param resultId: int of the Result to associate with the Plot
-        :param kind: Plot.KIND* specify what type of plot it is
+        :param kind: PlotKind specify what type of plot it is
         :return Plot object if successful, None otherwise.
         '''
         pass

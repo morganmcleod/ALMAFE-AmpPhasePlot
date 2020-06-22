@@ -3,7 +3,6 @@ Implement test cases for t_ParseTimeStamps.feature
 Validate AmpPhaseDataLib.ParseTimeStamps
 '''
 from behave import given, when, then 
-from Utility import ParseTimeStamp
 from hamcrest import assert_that, equal_to, is_not, instance_of
 from datetime import datetime
 
@@ -20,7 +19,6 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    context.tsParser = ParseTimeStamp.ParseTimeStamp()
     context.result = context.tsParser.parseTimeStamp(context.timeStampString)
 
 @then('a valid datetime is returned')

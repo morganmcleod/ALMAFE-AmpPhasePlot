@@ -2,8 +2,9 @@ import Database.Interface.Result as RI
 import Database.Interface.Tags as TI
 import Database.Driver.MySQL as driver
 import Database.TagsDatabase as TagsDB
+from AmpPhaseDataLib.Constants import PlotKind
 
-class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
+class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
     '''
     MySQL implementation of Database.Interface.Result.ResultInterface
     '''
@@ -25,8 +26,10 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
             'host' : host,
             'database' : database
         }
+        self.database = database
         self.DB = driver.DriverMySQL(connectionInfo)
         self.tagsDB = TagsDB.TagsDatabase(self.DB)
+        self.createTables()
 
 #// ResultInterface create, retrieve, update, delete...
 
@@ -46,13 +49,12 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
             q += ", '{0}'".format(timeStamp.strftime(self.TIMESTAMP_FORMAT))
         q += ");"
         
-        self.DB.query(q, commit = True)
-        self.DB.query("SELECT LAST_INSERT_ID()")
+        self.DB.execute(q, commit = True)
+        self.DB.execute("SELECT LAST_INSERT_ID()")
         row = self.DB.fetchone()
         if not row:
             return None
         return RI.Result(row[0], description, timeStamp)
-            
     
     def retrieveResult(self, resultId):
         '''
@@ -61,7 +63,7 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         :return Result object if succesful, None otherwise.
         '''
         q = "SELECT `description`, `timeStamp` FROM `{0}` WHERE `keyId` = '{1}';".format(self.RESULTS_TABLE, resultId)
-        self.DB.query(q)
+        self.DB.execute(q)
         row = self.DB.fetchone()
         if not row:
             return None
@@ -77,7 +79,7 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         if result.timeStamp:
             q += ", `timeStamp` = '{0}'".format(result.timeStamp.strftime(self.TIMESTAMP_FORMAT))
         q += " WHERE `keyId` = '{0}';".format(result.resultId)
-        if self.DB.query(q, commit = True):
+        if self.DB.execute(q, commit = True):
             return result
         else:
             return None
@@ -85,10 +87,30 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
     def deleteResult(self, resultId):
         '''
         Delete a Result object from the database
+        Underlying Plots, PlotImages, Traces, and Tags are deleted via ON DELETE CASCADE
         :param resultId: int to delete
         '''
         q = "DELETE FROM `{0}` WHERE `keyId` = '{1}';".format(self.RESULTS_TABLE, resultId)
-        self.DB.query(q, commit = True)
+        self.DB.execute(q, commit = True)
+
+    def setResultTags(self, resultId, tagDictionary):
+        '''
+        Set, update, or delete tags on the specified Result:
+        Tag name keys evaluating to False are ignored.
+        Empty string values are stored, but None and False values cause a tag to be deleted.
+        :param resultId: int of the Result to update.
+        :param tagDictionary: dictionary of tag names and value strings.
+        '''
+        self.tagsDB.setTags(resultId, self.RESULT_TAGS_TABLE, 'fkResults', tagDictionary)
+        
+    def getResultTags(self, resultId, tagNames = None):       
+        '''
+        Retrieve tags on the specified Result:
+        :param resultId: int of the Result to query
+        :param tagNames: list of strings or None, indicating fetch all tags
+        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
+        '''
+        return self.tagsDB.getTags(resultId, self.RESULT_TAGS_TABLE, 'fkResults', tagNames)
 
 #// Plot create, delete, update, retrieve...
 
@@ -96,12 +118,12 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         '''
         Create a Plot associated with the specified Result:
         :param resultId: int of the Result to associate with the Plot
-        :param kind: Plot.KIND* specify what type of plot it is
+        :param kind: PlotKind specify what type of plot it is
         :return Plot object if successful, None otherwise.
         '''
-        q = "INSERT INTO `{0}` (`fkResults`, `plotKind`) VALUES ({1}, {2});".format(self.PLOTS_TABLE, resultId, kind)
-        self.DB.query(q, commit = True)
-        self.DB.query("SELECT LAST_INSERT_ID()")
+        q = "INSERT INTO `{0}` (`fkResults`, `plotKind`) VALUES ({1}, {2});".format(self.PLOTS_TABLE, resultId, kind.value)
+        self.DB.execute(q, commit = True)
+        self.DB.execute("SELECT LAST_INSERT_ID()")
         row = self.DB.fetchone()
         if not row:
             return None
@@ -114,19 +136,54 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         :return Plot object if successful, None otherwise.
         '''
         q = "SELECT `fkResults`, `plotKind` FROM `{0}` WHERE `keyId` = {1};".format(self.PLOTS_TABLE, plotId)
-        self.DB.query(q)
+        self.DB.execute(q)
         row = self.DB.fetchone()
         if not row:
             return None
-        return RI.Plot(plotId, row[0], row[1])
+        return RI.Plot(plotId, row[0], PlotKind(row[1]))
         
     def deletePlot(self, plotId):
         '''
-        Delete the specified Plot
+        Delete the specified Plot. 
+        Underlying PlotImages, Traces, and Tags are deleted via ON DELETE CASCADE
         :param plotId: int of the plot to delete
         '''
         q = "DELETE FROM `{0}` WHERE `keyId` = {1};".format(self.PLOTS_TABLE, plotId)
-        self.DB.query(q, commit = True)
+        self.DB.execute(q, commit = True)
+        
+    def getAllPlots(self, resultId):
+        '''
+        Retrieve all plots associated with the given resultId 
+        :param resultId: int
+        :return list of Plot objects
+        '''
+        q = "SELECT `keyId`, `fkResults`, `plotKind`, `timeStamp` FROM {0} WHERE fkResults = {1};".format(
+            self.PLOTS_TABLE, resultId)
+        self.DB.execute(q)
+        rows = self.DB.fetchall()
+        result = []
+        for row in rows:
+            result.append(RI.Plot(row[0], row[1], row[2], row[3]))
+        return result
+        
+    def setPlotTags(self, plotId, tagDictionary):
+        '''
+        Set, update, or delete tags on the specified Plot:
+        Tag name keys evaluating to False are ignored.
+        Empty string values are stored, but None and False values cause a tag to be deleted.
+        :param plotId: int of the Plot to update.
+        :param tagDictionary: dictionary of tag names and value strings.
+        '''
+        self.tagsDB.setTags(plotId, self.PLOT_TAGS_TABLE, 'fkPlots', tagDictionary)
+        
+    def getPlotTags(self, plotId, tagNames):       
+        '''
+        Retrieve tags on the specified Plot:
+        :param plotId: int of the Plot to query
+        :param tagNames: list of strings or None, indicating fetch all tags
+        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
+        '''
+        return self.tagsDB.getTags(plotId, self.PLOT_TAGS_TABLE, 'fkPlots', tagNames)
 
 #// Trace create, retrieve, update, delete...
 
@@ -145,10 +202,10 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         q += "'{0}'".format(legend) if legend else "NULL"
         q += ");"
         
-        if not self.DB.query(q, commit = False):
+        if not self.DB.execute(q, commit = False):
             return None
         
-        self.DB.query("SELECT LAST_INSERT_ID()")
+        self.DB.execute("SELECT LAST_INSERT_ID()")
         row = self.DB.fetchone()
         if not row:
             return None
@@ -172,7 +229,7 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
             
         q += ";"        
         
-        if not self.DB.query(q, commit = True):
+        if not self.DB.execute(q, commit = True):
             self.DB.rollback()
             return None
         
@@ -185,7 +242,7 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         :return Trace object if successful, None otherwise
         '''
         q = "SELECT `fkPlots`, `name`, `legend` FROM {0} WHERE `keyId` = {1};".format(self.TRACES_TABLE, traceId)
-        self.DB.query(q)
+        self.DB.execute(q)
         row = self.DB.fetchone()
         if not row:
             return None
@@ -193,7 +250,7 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
         
         q = "SELECT `XValue`, `YValue`, `YErrSize` FROM {0} WHERE `fkTraces` = {1} ORDER BY `keyId`;".format(
             self.TRACE_XYDATA_TABLE, traceId)
-        self.DB.query(q)
+        self.DB.execute(q)
         result = self.DB.fetchall()
         
         xyData = []
@@ -205,63 +262,21 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
 
     def deleteTrace(self, traceId):
         '''
-        Delete the specified trace
+        Delete the specified trace.
+        Underlying TraceXYData are deleted via ON DELETE CASCADE
         :param traceId int to delete
         '''
-        q = "DELETE FROM `{0}` WHERE `fkTraces` = {1};".format(self.TRACE_XYDATA_TABLE, traceId)
-        if self.DB.query(q, commit = False):            
-        
-            q = "DELETE FROM `{0}` WHERE `keyId` = {1};".format(self.TRACES_TABLE, traceId)
-            if not self.DB.query(q, commit = True):
-                self.DB.rollbackTransaction()
-        
-#// TagsInterface        
-    
-    def setResultTags(self, resultId, tagDictionary):
-        '''
-        Set, update, or delete tags on the specified Result:
-        Tag name keys evaluating to False are ignored.
-        Empty string values are stored, but None and False values cause a tag to be deleted.
-        :param resultId: int of the Result to update.
-        :param tagDictionary: dictionary of tag names and value strings.
-        '''
-        self.tagsDB.setTags(resultId, self.RESULT_TAGS_TABLE, 'fkResults', tagDictionary)
-        
-    def getResultTags(self, resultId, tagNames = None):       
-        '''
-        Retrieve tags on the specified Result:
-        :param resultId: int of the Result to query
-        :param tagNames: list of strings or None, indicating fetch all tags
-        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
-        '''
-        return self.tagsDB.getTags(resultId, self.RESULT_TAGS_TABLE, 'fkResults', tagNames)
-        
-    def setPlotTags(self, plotId, tagDictionary):
-        '''
-        Set, update, or delete tags on the specified Plot:
-        Tag name keys evaluating to False are ignored.
-        Empty string values are stored, but None and False values cause a tag to be deleted.
-        :param plotId: int of the Plot to update.
-        :param tagDictionary: dictionary of tag names and value strings.
-        '''
-        self.tagsDB.setTags(plotId, self.PLOT_TAGS_TABLE, 'fkPlots', tagDictionary)
-        
-    def getPlotTags(self, plotId, tagNames):       
-        '''
-        Retrieve tags on the specified Plot:
-        :param plotId: int of the Plot to query
-        :param tagNames: list of strings or None, indicating fetch all tags
-        :return dictionary of dictionary of tag names and value strings, or None if the tag was not found.
-        '''
-        return self.tagsDB.getTags(plotId, self.PLOT_TAGS_TABLE, 'fkPlots', tagNames)
+        q = "DELETE FROM `{0}` WHERE `keyId` = {1};".format(self.TRACES_TABLE, traceId)
+        if not self.DB.execute(q, commit = True):
+            self.DB.rollbackTransaction()
 
 #// Database helper and private methods...
     
     def createTables(self):
-        self.DB.query("USE {0};".format(self.database))
+        self.DB.execute("USE {0};".format(self.database))
         
         # Results table
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `keyId` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `description` TEXT NULL DEFAULT NULL,
@@ -271,31 +286,33 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
             """.format(self.RESULTS_TABLE))
 
         # Plots table        
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `keyId` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `fkResults` INT(10) UNSIGNED NOT NULL DEFAULT '0',
                 `plotKind` TINYINT NOT NULL DEFAULT '0',
                 `timeStamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (`keyId`),
+                FOREIGN KEY (`fkResults`) REFERENCES {1}(`keyId`) ON DELETE CASCADE,
                 INDEX `fkResults` (`fkResults`)
                 ) ENGINE=InnoDB;
-            """.format(self.PLOTS_TABLE))
+            """.format(self.PLOTS_TABLE, self.RESULTS_TABLE))
 
         # Traces table        
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `keyId` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `fkPlots` INT(10) UNSIGNED NOT NULL DEFAULT '0',
                 `name` TEXT NULL DEFAULT NULL,
                 `legend` TEXT NULL DEFAULT NULL,
                 PRIMARY KEY (`keyId`),
+                FOREIGN KEY (`fkPlots`) REFERENCES {1}(`keyId`) ON DELETE CASCADE,
                 INDEX `fkPlots` (`fkPlots`)
                 ) ENGINE=InnoDB;
-            """.format(self.TRACES_TABLE))
+            """.format(self.TRACES_TABLE, self.PLOTS_TABLE))
 
         # TraceXYData table
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `keyId` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
                 `fkTraces` INT(10) UNSIGNED NOT NULL DEFAULT '0',
@@ -303,36 +320,38 @@ class ResultDatabase(object, RI.ResultInterface, TI.TagsInterface):
                 `YValue` FLOAT NOT NULL,
                 `YErrSize` FLOAT NOT NULL DEFAULT '0' COMMENT 'error bar size centered on YValue',
                 PRIMARY KEY (`keyId`),
+                FOREIGN KEY (`fkTraces`) REFERENCES {1}(`keyId`) ON DELETE CASCADE,
                 INDEX `fkTraces` (`fkTraces`)
                 ) ENGINE=InnoDB;
-            """.format(self.TRACE_XYDATA_TABLE))
+            """.format(self.TRACE_XYDATA_TABLE, self.TRACES_TABLE))
 
         # ResultTags table
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `fkResults` INT(10) UNSIGNED NOT NULL DEFAULT '0',
                 `tagName` TINYTEXT NOT NULL,
                 `tagValue` TEXT NOT NULL,
-                INDEX `fkResults` (`fkResults`)                
+                INDEX `fkResults` (`fkResults`),
+                FOREIGN KEY (`fkResults`) REFERENCES {1}(`keyId`) ON DELETE CASCADE
                 ) ENGINE=InnoDB;
-            """.format(self.RESULT_TAGS_TABLE))
+            """.format(self.RESULT_TAGS_TABLE, self.RESULTS_TABLE))
 
         # PlotTags table        
-        self.DB.query("""
+        self.DB.execute("""
                 CREATE TABLE IF NOT EXISTS `{0}` (
                 `fkPlots` INT(10) UNSIGNED NOT NULL DEFAULT '0',
                 `tagName` TINYTEXT NOT NULL,
                 `tagValue` TEXT NOT NULL,
-                INDEX `fkPlots` (`fkPlots`)                
+                INDEX `fkPlots` (`fkPlots`),          
+                FOREIGN KEY (`fkPlots`) REFERENCES {1}(`keyId`) ON DELETE CASCADE
                 ) ENGINE=InnoDB;
-            """.format(self.PLOT_TAGS_TABLE))
+            """.format(self.PLOT_TAGS_TABLE, self.PLOTS_TABLE))
         
     def deleteTables(self):
-        self.DB.query("USE {0};".format(self.database))
-        self.DB.query("DROP TABLE `{0}`".format(self.RESULTS_TABLE))
-        self.DB.query("DROP TABLE `{0}`".format(self.PLOTS_TABLE))
-        self.DB.query("DROP TABLE `{0}`".format(self.TRACES_TABLE))
-        self.DB.query("DROP TABLE `{0}`".format(self.TRACE_XYDATA_TABLE))
-        self.DB.query("DROP TABLE `{0}`".format(self.RESULT_TAGS_TABLE))
-        self.DB.query("DROP TABLE `{0}`".format(self.PLOT_TAGS_TABLE))
-
+        self.DB.execute("USE {0};".format(self.database))
+        self.DB.execute("DROP TABLE `{0}`".format(self.PLOT_TAGS_TABLE))
+        self.DB.execute("DROP TABLE `{0}`".format(self.RESULT_TAGS_TABLE))
+        self.DB.execute("DROP TABLE `{0}`".format(self.TRACE_XYDATA_TABLE))
+        self.DB.execute("DROP TABLE `{0}`".format(self.TRACES_TABLE))
+        self.DB.execute("DROP TABLE `{0}`".format(self.PLOTS_TABLE))
+        self.DB.execute("DROP TABLE `{0}`".format(self.RESULTS_TABLE))

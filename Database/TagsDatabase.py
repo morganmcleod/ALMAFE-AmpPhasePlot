@@ -33,9 +33,9 @@ class TagsDatabase(object):
         
         for key, value in tagDictionary.items():
             if key:
-                deleteList.append(key)
+                deleteList.append(str(key))
                 if not (value is None or value is False):
-                    insertList.append((key, value))
+                    insertList.append((str(key), str(value)))
         
         if deleteList:
             q = "DELETE FROM `{0}` WHERE `{1}` = {2} AND (".format(targetTable, fkColName, fkId)
@@ -47,7 +47,7 @@ class TagsDatabase(object):
                     q += " OR "
                 q += "tagName = '{0}'".format(key)
             q += ");"
-            self.driver.query(q, commit = False)
+            self.driver.execute(q, commit = False)
     
         if insertList:
             q = "INSERT INTO `{0}` (`{1}`, `tagName`, `tagValue`) VALUES (".format(targetTable, fkColName)
@@ -59,7 +59,9 @@ class TagsDatabase(object):
                     q += "), ("
                 q += "{0}, '{1}', '{2}'".format(fkId, item[0], item[1])
             q += ");"
-            self.driver.query(q, commit = True)
+            self.driver.execute(q, commit = False)
+            
+        self.driver.commit()
         
     def getTags(self, fkId, targetTable, fkColName, tagNames):
         '''
@@ -72,6 +74,8 @@ class TagsDatabase(object):
         '''
         if not fkId:
             raise ValueError('Invalid fkId.')
+        if not isinstance(tagNames, list):
+            raise ValueError('tagNames must be a list.')
         
         q = "SELECT tagName, tagValue FROM `{0}` WHERE `{1}` = {2}".format(targetTable, fkColName, fkId)
         
@@ -88,10 +92,10 @@ class TagsDatabase(object):
                 q += "tagName = '{0}'".format(str(tagName))
             q += ");"
         
-        self.driver.query(q)        
+        self.driver.execute(q)        
         records = self.driver.fetchall()
         result = {}
         for tagName, tagValue in records:
-            result[tagName] = tagValue
+            result[tagName] = str(tagValue) if tagValue is not None else None
         return result
     

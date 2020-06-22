@@ -43,9 +43,9 @@ class DriverMySQL():
             print(f"MySQL error: {e}")
             return False
         
-    def query(self, query, commit = False):
+    def execute(self, query, params = None, commit = False):
         try:
-            self.cursor.execute(query)
+            self.cursor.execute(query, params)
             if commit:
                 self.connection.commit()
             return True

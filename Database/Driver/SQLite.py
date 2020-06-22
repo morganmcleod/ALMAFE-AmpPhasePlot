@@ -21,6 +21,8 @@ class DriverSQLite():
         self.connection = None
         try:
             self.connection = sqlite3.connect(self.localDatabaseFile)
+            cursor = self.connection.cursor()
+            cursor.execute("PRAGMA foreign_keys = ON;")
             return True
         except Exception as e:
             print(f"SQLite error: {e}")
@@ -36,10 +38,13 @@ class DriverSQLite():
             print(f"SQLite error: {e}")
             return False
         
-    def query(self, query, commit = False):
+    def execute(self, query, params = None, commit = False):
         self.cursor = self.connection.cursor()
         try:
-            self.cursor.execute(query)
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
             if commit:
                 self.connection.commit()
             return True
