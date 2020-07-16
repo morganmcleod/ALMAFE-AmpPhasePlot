@@ -33,10 +33,11 @@ kind is enum defined in Constants.py
 imageData is binary and/or a image file on disk;
 XYData is float list of tuples (x, y, yError)
 '''
-from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotElement
+from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotEl
 from Database import ResultDatabase
 from Database import PlotImageDatabase
 from Database.Interface.Result import Result
+from Database.TagsTools import applyDataStatusRules
 import configparser
 
 class ResultAPI(object):
@@ -110,7 +111,7 @@ class ResultAPI(object):
         '''
         if not isinstance(dataStatus, DataStatus):
             raise ValueError('Use DataStatus enum from Constants.py')
-        self.db.setResultTags(resultId, { dataStatus.value : "1" })
+        self.db.setResultTags(resultId, applyDataStatusRules(dataStatus))
     
     def getResultDataStatus(self, resultId, dataStatus):
         '''
@@ -205,34 +206,34 @@ class ResultAPI(object):
         '''
         self.db.deletePlot(plotId)   
 
-    def setPlotElement(self, plotId, plotElement, value):
+    def setPlotEl(self, plotId, plotElement, value):
         '''
         Set the value of a plot element, overriding the default value
         :param plotId: int
         :param plotElement: enum from Constants.py
         :param value: str or None to delete
         '''
-        if not isinstance(plotElement, PlotElement):
-            raise ValueError('Use PlotElement enum from Constants.py')
+        if not isinstance(plotElement, PlotEl):
+            raise ValueError('Use PlotEl enum from Constants.py')
         self.db.setPlotTags(plotId, { plotElement.value : value })
 
-    def clearPlotElement(self, plotId, plotElement):
+    def clearPlotEl(self, plotId, plotElement):
         '''
         Clear the value of a plot element
         :param plotId: int
         :param plotElement: enum from Constants.py
         '''
-        self.setPlotElement(plotId, plotElement, None)
+        self.setPlotEl(plotId, plotElement, None)
 
-    def getPlotElement(self, plotId, plotElement):
+    def getPlotEl(self, plotId, plotElement):
         '''
         Get the value of a plot element
         :param plotId:
         :param plotElement:
         :return str the value
         '''
-        if not isinstance(plotElement, PlotElement):
-            raise ValueError('Use PlotElement enum from Constants.py')
+        if not isinstance(plotElement, PlotEl):
+            raise ValueError('Use PlotEl enum from Constants.py')
         result = self.db.getPlotTags(plotId, [plotElement.value])
         return result.get(plotElement.value, None)
 

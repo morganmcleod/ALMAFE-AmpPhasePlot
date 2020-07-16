@@ -5,11 +5,10 @@ from datetime import timedelta
 import itertools
 
 class TimeSeriesHeader(object):
-    def __init__(self, timeSeriesId, startTime, tau0Seconds, description):
+    def __init__(self, timeSeriesId, startTime, tau0Seconds):
         self.timeSeriesId = timeSeriesId
         self.startTime = startTime
         self.tau0Seconds = tau0Seconds
-        self.description = description
     
 class TimeSeries(object):
     def __init__(self, dataSeries, timeStamps, temperatures1, temperatures2):
@@ -48,8 +47,7 @@ class TimeSeriesDatabase(object):
                                 keyId INTEGER PRIMARY KEY,
                                 TS TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 startTime TIMESTAMP,
-                                tau0Seconds FLOAT, 
-                                description TEXT);
+                                tau0Seconds FLOAT);
                             """)
         
         # find or create TimeSeries table:
@@ -83,19 +81,14 @@ class TimeSeriesDatabase(object):
         
         self.db.commit()
     
-    def insertTimeSeriesHeader(self, description, startTime, tau0Seconds):
+    def insertTimeSeriesHeader(self, startTime, tau0Seconds):
         '''
         Insert a time series header record and return its keyId
-        :param description: String description of the measurement
         :param startTime:   datetime start time of the measurement 
         :param tau0Seconds: float sampling interval of the measurement
         :return self.timeSeriesId: int keyId of the new header record.
         '''
-        
-        if not description:
-            description = ""
-        
-        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds, description) VALUES ('{0}', {1}, '{2}')".format(startTime, str(tau0Seconds), description))
+        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ('{0}', {1})".format(startTime, str(tau0Seconds)))
         self.db.execute("SELECT last_insert_rowid()")
         self.timeSeriesId = self.db.fetchone()[0]
         self.db.commit()
@@ -172,12 +165,12 @@ class TimeSeriesDatabase(object):
             raise ValueError('Invalid timeSeriesId.')
         tsParser = ParseTimeStamp.ParseTimeStamp()
         self.timeSeriesId = None
-        self.db.execute("SELECT startTime, tau0Seconds, description FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId))
+        self.db.execute("SELECT startTime, tau0Seconds FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId))
 
         result = None
         row = self.db.fetchone()
         if row:
-            result = TimeSeriesHeader(timeSeriesId, tsParser.parseTimeStamp(row[0]), float(row[1]), row[2])
+            result = TimeSeriesHeader(timeSeriesId, tsParser.parseTimeStamp(row[0]), float(row[1]))
         return result
     
     def retrieveTimeSeries(self, timeSeriesId):

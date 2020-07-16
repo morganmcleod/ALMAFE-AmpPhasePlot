@@ -6,7 +6,7 @@ from behave import fixture, use_fixture
 from AmpPhaseDataLib import ResultAPI
 from AmpPhaseDataLib import TimeSeriesAPI
 from Utility import ParseTimeStamp
-from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotElement
+from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotEl
 
 @fixture
 def resultAPI(context, **kwargs):
@@ -22,8 +22,8 @@ def resultAPI(context, **kwargs):
         if DataSource.exists(tag):
             context.API.clearResultDataSource(context.resultId, DataSource[tag])
     for tag in context.plotTags:
-        if PlotElement.exists(tag):
-            context.API.clearPlotElement(context.plotId, PlotElement[tag])
+        if PlotEl.exists(tag):
+            context.API.clearPlotEl(context.plotId, PlotEl[tag])
     if context.resultId:
         context.API.deleteResult(context.resultId)
 

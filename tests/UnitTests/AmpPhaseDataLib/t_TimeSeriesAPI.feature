@@ -62,3 +62,19 @@ Feature: Validate TimeSeriesAPI
     And we can set DataStatus "MEET_SPEC"
     And we can read DataStatus "MEET_SPEC" and the value matches
     And we can clear DataStatus "MEET_SPEC"
+
+    @fixture.timeSeriesAPI
+    Scenario: Some DataStatus tags are mutually exclusive
+    Given dataSeries list "6.0, 6.1, 5.9" and timestamp list "2020:05:28 14:15:00, 2020:05:28 14:15:01, 2020:05:28 14:15:02"
+    When the data is inserted
+    Then we can set DataStatus "UNKNOWN"
+    And we can read DataStatus "UNKNOWN" and the value matches
+    When we set the DataStatus "ERROR"
+    Then the DataStatus "UNKNOWN" gets removed
+    When we set the DataStatus "MEET_SPEC"
+    And we set the DataStatus "FAIL_SPEC"
+    Then the DataStatus "MEET_SPEC" gets removed
+    When we set the DataStatus "TO_RETAIN"
+    And we set the DataStatus "TO_DELETE"
+    Then the DataStatus "TO_RETAIN" gets removed
+        

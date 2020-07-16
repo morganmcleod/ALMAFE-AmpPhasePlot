@@ -152,8 +152,6 @@ def step_impl(context, tagName, tagValue):
     :param tagName: str
     :param tagValue: str
     """
-    if not getattr(context, 'tagsAdded', False):
-        context.tagsAdded = {}
     context.tagsAdded[tagName] = tagValue
     context.API.setDataSource(context.timeSeriesId, DataSource[tagName], tagValue)
     
@@ -191,8 +189,6 @@ def step_impl(context, tagName):
     :param tagName: str
     """
     dataStatus = DataStatus[tagName]
-    if not getattr(context, 'tagsAdded', False):
-        context.tagsAdded = {} 
     context.tagsAdded[dataStatus.value] = True
     context.API.setDataStatus(context.timeSeriesId, dataStatus)
     
@@ -216,5 +212,25 @@ def step_impl(context, tagName):
     dataStatus = DataStatus[tagName]
     del context.tagsAdded[dataStatus.value]
     context.API.clearDataStatus(context.timeSeriesId, dataStatus)
+    result = context.API.getDataStatus(context.timeSeriesId, dataStatus)
+    assert_that(not result)
+
+@when('we set the DataStatus "{tagName}"')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    dataStatus = DataStatus[tagName]
+    context.tagsAdded[dataStatus.value] = True
+    context.API.setDataStatus(context.timeSeriesId, dataStatus)
+    
+@then('the DataStatus "{tagName}" gets removed')
+def step_impl(context, tagName):
+    """
+    :param context: behave.runner.Context
+    :param tagName: str
+    """
+    dataStatus = DataStatus[tagName]
     result = context.API.getDataStatus(context.timeSeriesId, dataStatus)
     assert_that(not result)

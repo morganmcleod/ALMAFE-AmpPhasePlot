@@ -7,7 +7,6 @@ Exposes the following data model:
 | +timeSeriesId    |
 | +tau0Seconds     |
 | +startTime       |
-| +description     |
 | +tags            |
 +------------------+
         | 1
@@ -29,10 +28,12 @@ Or it can be inserted in chunks or single values using startTimeSeries(),
   insertTimeSeriesChunk(), finishTimeSeries()
 '''
 
-from AmpPhaseDataLib.Constants import DataStatus, DataSource
+from AmpPhaseDataLib.Constants import DataStatus, DataSource, Units
 from Database import TimeSeriesDatabase
+from Database.TagsTools import applyDataStatusRules
 from Utility import ParseTimeStamp
 from datetime import datetime
+from math import log10
 import configparser
 
 # TODO: define our own exceptions instead of using ValueError
@@ -52,10 +53,11 @@ class TimeSeriesAPI(object):
         self.db = TimeSeriesDatabase.TimeSeriesDatabase(self.localDatabaseFile)
         self.tsParser = ParseTimeStamp.ParseTimeStamp()
     
-    def startTimeSeries(self, tau0Seconds = None, startTime = None, description = None):
+    def startTimeSeries(self, tau0Seconds = None, startTime = None):
         '''
+        Create the TimeSeriesHeader and prepare to start inserting data points
         :param tau0Seconds:   float: integration time of each reading
-        :param startTime:     dateTime string of first point in dataSeries
+        :param startTime:     dateTime str when the measurement started
         :return: timeSeriesId int if successful, otherwise None
         if tau0Seconds is not provided, then subsequent data inserts must include timeStamps.
         '''
@@ -66,9 +68,8 @@ class TimeSeriesAPI(object):
         self.tau0Seconds = tau0Seconds
         self.__initializeStartTime(startTime)
         self.timeSeriesId = None
-        self.description = description
         # create a time series header record and return the timeSeriesId:
-        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
+        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
         return self.timeSeriesId
     
     def insertTimeSeriesChunk(self, dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None):
@@ -103,8 +104,7 @@ class TimeSeriesAPI(object):
                          temperatures2 = None, 
                          timeStamps = None, 
                          tau0Seconds = None, 
-                         startTime = None,
-                         description = None):
+                         startTime = None):
         '''
         Insert a complete time series.
         :param dataSeries:    list of floats: the main data series to store   
@@ -114,7 +114,6 @@ class TimeSeriesAPI(object):
                               several formats supported, YYYY/MM/DD HH:MM:SS.mmm preferred
         :param tau0Seconds:   float: integration time of each reading
         :param startTime:     dateTime string of first point in dataSeries
-        :param description:   string description of the data set
         :return:              integer timeSeriesId if successful.
         :raise ValueError:    if any data series is not at least two points.
         Either timeStamps or tau0seconds must be provided.
@@ -127,14 +126,13 @@ class TimeSeriesAPI(object):
         self.timeStamps = []
         self.startTime = None
         self.timeSeriesId = None
-        self.description = description
         
         self.__validateTimeSeries()
         self.__loadTimeStamps(timeStamps)
         self.__validateTimeStampsStartTime()
         self.__initializeStartTime(startTime)
         self.__initializeTau0Seconds()
-        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.description, self.startTime, self.tau0Seconds)
+        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
         self.db.insertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
         return self.timeSeriesId
     
@@ -150,17 +148,101 @@ class TimeSeriesAPI(object):
         self.timeSeriesId = header.timeSeriesId
         self.startTime = header.startTime
         self.tau0Seconds = header.tau0Seconds
-        self.description = header.description
         
         result = self.db.retrieveTimeSeries(self.timeSeriesId)
         if not result:
             return None
-        self.dataSeries = result.dataSeries
         self.timeStamps = result.timeStamps
+        self.dataSeries = result.dataSeries
         self.temperatures1 = result.temperatures1
         self.temperatures2 = result.temperatures2
         return self.timeSeriesId
+
+    def getDataSeries(self, requiredUnits = None):
+        '''
+        Get the dataSeries array, optionally converted to requiredUnits
+        :param requiredUnits: enum Units from Constants.py
+        :return list derived from self.dataSeries converted, if possible
+        '''
+        units = self.getDataSource(self.timeSeriesId, DataSource.UNITS)
+
+        if not units or not requiredUnits:
+            # we don't know how to convert:
+            return self.dataSeries
+        
+        units = Units.fromStr(units)
+        
+        if units == requiredUnits:
+            # no coversion needed:
+            return self.dataSeries
+        
+        if requiredUnits and not isinstance(requiredUnits, Units):
+            raise ValueError('Use Units enum from Constants.py')
+            
+        result = None
+        
+        if units == Units.WATTS:
+            if requiredUnits == Units.MW:
+                # convert from watt to mW:
+                result = [y * 1000 for y in self.dataSeries]
+            
+            if requiredUnits == Units.DBM:
+                # convert from watt to dBm:
+                result = [10 * log10(y * 1000) for y in self.dataSeries]
+        
+        elif units == Units.MW:
+            if requiredUnits == Units.WATTS:
+                # convert from mW to watt:
+                result = [y / 1000 for y in self.dataSeries]
+            
+            if requiredUnits == Units.DBM:
+                # convert from mW to dBm:
+                result = [10 * log10(y) for y in self.dataSeries]
+        
+        elif units == Units.DBM:
+            if requiredUnits == Units.WATTS:
+                # convert from dBm to watt:
+                result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
+            
+            if requiredUnits == Units.MW:
+                # convert from dBm to mW:
+                result = [pow(10, y / 10) for y in self.dataSeries]
+        else:
+            # not supported:
+            raise ValueError('Unsupported units conversion')
+        
+        return result
     
+    def getTimeStamps(self, requiredUnits = None):
+        '''
+        Get the timeStamps array, optionally converted to requiredUnits
+        :param requiredUnits: enum Units from Constants.py
+        :return list derived from self.dataSeries converted, if possible
+        '''
+        # timestamps are always stored as datetime:
+        units = Units.LOCALTIME
+
+        if not requiredUnits or units == requiredUnits: 
+            # no conversion:
+            return self.timeStamps
+        
+        if requiredUnits and not isinstance(requiredUnits, Units):
+            raise ValueError('Use Units enum from Constants.py')
+            
+        result = []
+        
+        div = 60 if requiredUnits == Units.MINUTES else 1  
+        if requiredUnits == Units.SECONDS or requiredUnits == Units.MINUTES: 
+            # convert from datetime to seconds or minutes:
+            x0 = self.timeStamps[0]
+            for x in self.timeStamps:
+                result.append((x - x0).seconds / div)
+        else:
+            # not supported:
+            raise ValueError('Unsupported units conversion')
+        
+        return result        
+            
     def deleteTimeSeries(self, timeSeriesId):
         '''
         :param timeSeriesId: of time series to delete
@@ -175,7 +257,8 @@ class TimeSeriesAPI(object):
         '''
         if not isinstance(dataStatus, DataStatus):
             raise ValueError('Use DataStatus enum from Constants.py')
-        self.db.setTags(timeSeriesId, { dataStatus.value : "1" })
+        
+        self.db.setTags(timeSeriesId, applyDataStatusRules(dataStatus))
     
     def getDataStatus(self, timeSeriesId, dataStatus):
         '''
@@ -198,6 +281,19 @@ class TimeSeriesAPI(object):
             raise ValueError('Use DataStatus enum from Constants.py')
         self.db.setTags(timeSeriesId, { dataStatus.value : None })
     
+    def getAllDataStatus(self, timeSeriesId):
+        '''
+        Get all DataStatus tags for a timeSeries:
+        :param timeSeriesId: int
+        :return dict of {DataStatus : str}
+        '''
+        retrieved = self.db.getTags(timeSeriesId, [el.value for el in DataStatus])
+        result = {}
+        # replace key str values with DataStatus enum values:
+        for tag, value in retrieved.items():
+            result[DataStatus(tag)] = value
+        return result
+    
     def setDataSource(self, timeSeriesId, dataSource, value):
         '''
         Set a DataSource tag for a TimeSeries.
@@ -219,7 +315,7 @@ class TimeSeriesAPI(object):
             raise ValueError('Use DataSource enum from Constants.py')
         result = self.db.getTags(timeSeriesId, [dataSource.value])
         return result.get(dataSource.value, None)
-        
+    
     def clearDataSource(self, timeSeriesId, dataSource):
         '''
         Remove a DataSource tag for a TimeSeries
@@ -227,6 +323,19 @@ class TimeSeriesAPI(object):
         :param dataSource:   DataSource enum from Constants.py
         '''
         self.setDataSource(timeSeriesId, dataSource, None)
+    
+    def getAllDataSource(self, timeSeriesId):
+        '''
+        Get all DataSource tags for a TimeSeries
+        :param timeSeriesId: int
+        :return dict of {DataSource : str}
+        '''
+        retrieved = self.db.getTags(timeSeriesId, [el.value for el in DataSource])
+        result = {}
+        # replace key str values with DataSource enum values:
+        for tag, value in retrieved.items():
+            result[DataSource(tag)] = value
+        return result
         
 #// private implementation methods...
     
@@ -235,15 +344,14 @@ class TimeSeriesAPI(object):
         Initialize all data members to just-constructed state.
         Called in constructor and retrieveTimeSeries()  
         '''
-        self.dataSeries = None
-        self.temperatures1 = None
-        self.temperatures2 = None
-        self.timeStamps = None
+        self.dataSeries = []
+        self.temperatures1 = []
+        self.temperatures2 = []
+        self.timeStamps = []
         self.tau0Seconds = None
         self.startTime = None
         self.timeStampFormat = None
         self.timeSeriesId = None
-        self.description = None
     
     def __loadConfiguration(self):
         '''

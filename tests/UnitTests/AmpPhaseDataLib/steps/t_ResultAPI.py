@@ -3,7 +3,7 @@ Implement test cases for t_TimeSeriesAPI.feature
 Validate TimeSeriesAPI
 '''
 from behave import given, when, then 
-from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotElement
+from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotEl
 from hamcrest import assert_that, equal_to
 
 @given('the description "{description}"')
@@ -211,18 +211,18 @@ def step_impl(context, element, value):
     '''
     :param context: behave.runner.Context
     '''
-    plotElement = PlotElement[element]
+    plotElement = PlotEl[element]
     context.plotTags[plotElement.value] = value
-    context.API.setPlotElement(context.plotId, plotElement, value)
+    context.API.setPlotEl(context.plotId, plotElement, value)
 
 @then('we can retrieve plot element "{element}" and the value matches')
 def step_impl(context, element):
     '''
     :param context: behave.runner.Context
     '''
-    plotElement = PlotElement[element]
+    plotElement = PlotEl[element]
     expected = context.plotTags.get(plotElement.value, None)
-    result = context.API.getPlotElement(context.plotId, plotElement)
+    result = context.API.getPlotEl(context.plotId, plotElement)
     assert_that(result, equal_to(expected))
 
 @then('we can delete plot element "{element}"')
@@ -230,9 +230,9 @@ def step_impl(context, element):
     '''
     :param context: behave.runner.Context
     '''
-    plotElement = PlotElement[element]
+    plotElement = PlotEl[element]
     del context.plotTags[plotElement.value]
-    context.API.clearPlotElement(context.plotId, plotElement)
-    result = context.API.getPlotElement(context.plotId, plotElement)
+    context.API.clearPlotEl(context.plotId, plotElement)
+    result = context.API.getPlotEl(context.plotId, plotElement)
     assert_that(result, equal_to(None))
     

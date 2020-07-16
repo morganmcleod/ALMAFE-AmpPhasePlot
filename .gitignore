@@ -1,4 +1,6 @@
 *.pyc
 *.sqlite
+*.png
 AmpPhaseDataLib.ini
+SampleData/
 

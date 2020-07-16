@@ -7,3 +7,4 @@ sqlite==3.31.1
 plotly==4.8.1
 psutil==5.7.0
 requests==2.24.0
+allantools==2019.9

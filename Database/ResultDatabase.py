@@ -318,7 +318,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
                 `fkTraces` INT(10) UNSIGNED NOT NULL DEFAULT '0',
                 `XValue` FLOAT NOT NULL,
                 `YValue` FLOAT NOT NULL,
-                `YErrSize` FLOAT NOT NULL DEFAULT '0' COMMENT 'error bar size centered on YValue',
+                `YErrSize` FLOAT NOT NULL DEFAULT '0' COMMENT '+/- error bar size',
                 PRIMARY KEY (`keyId`),
                 FOREIGN KEY (`fkTraces`) REFERENCES {1}(`keyId`) ON DELETE CASCADE,
                 INDEX `fkTraces` (`fkTraces`)

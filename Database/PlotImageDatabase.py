@@ -3,6 +3,7 @@ Database for storage and retrieval of plot image files
 '''
 import Database.Interface.PlotImage as PI
 import Database.Driver.MySQL as driver
+from Utility.StripQuotes import stripQuotes
 
 class PlotImageDatabase(PI.PlotImageInterface):
     '''
@@ -64,11 +65,9 @@ class PlotImageDatabase(PI.PlotImageInterface):
         if not row:
             return None
         name = row[1]
-        if name.startswith("'") and name.endswith("'"):
-            name = name[1:-1]
+        name = stripQuotes(name)
         path = row[2]
-        if path.startswith("'") and path.endswith("'"):
-            path = path[1:-1]
+        path = stripQuotes(path)
         return PI.PlotImage(row[0], plotImageId, row[3], name, path)
 
     def deletePlotImage(self, plotImageId):
