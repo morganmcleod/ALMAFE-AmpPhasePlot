@@ -74,16 +74,14 @@ def step_impl(context, dataList, floatString):
     context.dataSeries = dataList.strip('][').split(', ')
     context.tau0Seconds = float(floatString)
     
-@when('the measurement loop runs using description "{description}"')
-def step_impl(context, description):
+@when('the measurement loop runs')
+def step_impl(context):
     """
     :param context: behave.runner.Context
-    :param description: string
     """
-    context.description = description
     context.now = datetime.now()    
     
-    context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds, description=description)
+    context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds)
     for item in context.dataSeries:
         context.API.insertTimeSeriesChunk(float(item))
     context.API.finishTimeSeries()
@@ -116,13 +114,6 @@ def step_impl(context):
     :param context: behave.runner.Context
     '''
     assert_that(not context.API.retrieveTimeSeries(context.timeSeriesId))
-    
-@then('the description matches')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    assert_that(context.API.description, equal_to(context.description))
     
 @then('the data has timeStamps starting now with steps of "{floatString}"')
 def step_impl(context, floatString):

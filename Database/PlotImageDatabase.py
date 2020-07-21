@@ -9,8 +9,8 @@ class PlotImageDatabase(PI.PlotImageInterface):
     '''
     Database for storage and retrieval of plot image files
     '''
-    PLOTS_TABLE = 'Plots'
-    PLOT_IMAGES_TABLE = 'PlotImages'
+    PLOTS_TABLE = 'AmpPhase_Plots'
+    PLOT_IMAGES_TABLE = 'AmpPhase_PlotImages'
 
     def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData'): 
         '''

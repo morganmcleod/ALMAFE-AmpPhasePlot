@@ -12,14 +12,13 @@ Feature: Validate TimeSeriesAPI
     @fixture.timeSeriesAPI
     Scenario: Insert a time series in real-time mode
     Given a sequence of readings "4.02, 4.04, 4.03, 4.10, 3.99, 4.03" and tau0 of "0.05"
-    When the measurement loop runs using description "the measurement loop runs"
+    When the measurement loop runs
     Then startTime is close to now
     And tau0Seconds is "0.05"
     And dataSeries is a list of "6" elements
     # check everything again after retrieval:
     When the time series is retrieved from the database
-    Then the description matches
-    And startTime is close to now
+    Then startTime is close to now
     And tau0Seconds is "0.05"
     And dataSeries is a list of "6" elements
     And timeStamps is a list of "6" elements

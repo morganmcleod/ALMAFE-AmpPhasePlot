@@ -64,22 +64,7 @@ Feature: Validate ResultAPI
     Scenario: Create, update, delete plot elements
     Given the description "Plot Result"
     When the Result and Plot are created
-    Then we can add plot element "CONFIG_ID" with value "456"
-    And we can retrieve plot element "CONFIG_ID" and the value matches
-    And we can delete plot element "CONFIG_ID"
-    And we can add plot element "DATA_SOURCE" with value "HOME BASE"
-    And we can retrieve plot element "DATA_SOURCE" and the value matches
-    And we can delete plot element "DATA_SOURCE"
-    And we can add plot element "SUBSYSTEM" with value "WCA3"
-    And we can retrieve plot element "SUBSYSTEM" and the value matches
-    And we can delete plot element "SUBSYSTEM"
-    And we can add plot element "MEAS_SW_VERSION" with value "500000.2"
-    And we can retrieve plot element "MEAS_SW_VERSION" and the value matches
-    And we can delete plot element "MEAS_SW_VERSION"
-    And we can add plot element "MEAS_SW_VERSION" with value "500000.2"
-    And we can retrieve plot element "MEAS_SW_VERSION" and the value matches
-    And we can delete plot element "MEAS_SW_VERSION"
-    And we can add plot element "X_AXIS_LABEL" with value "Seconds elapsed"
+    Then we can add plot element "X_AXIS_LABEL" with value "Seconds elapsed"
     And we can retrieve plot element "X_AXIS_LABEL" and the value matches
     And we can delete plot element "X_AXIS_LABEL"
     And we can add plot element "Y_AXIS_LABEL" with value "Amplitude (W)"
