@@ -30,13 +30,13 @@ class PlotAPI(object):
         self.yResult = None
         self.yError = None
         self.imageData = None
-        self.plotterElementsFinal = None
+        self.plotElementsFinal = None
         
     def plotTimeSeries(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
         Create a TIME_SERIES plot
         The resulting image binary data (.png) is stored in self.imageData.
-        The applied plotElements are stored in self.plotterElementsFinal.
+        The applied plotElements are stored in self.plotElementsFinal.
         :param timeSeriesId: a timeSeriesId to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -53,14 +53,14 @@ class PlotAPI(object):
         
         # get the results:
         self.imageData = self.plotter.imageData
-        self.plotterElementsFinal = plotElements
+        self.plotElementsFinal = plotElements
         return True
     
     def plotPowerSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
         Create a POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
-        The applied plotElements are stored in self.plotterElementsFinal.
+        The applied plotElements are stored in self.plotElementsFinal.
         :param timeSeriesId: a timeSeriesId to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -100,14 +100,14 @@ class PlotAPI(object):
 
         # get the results:
         self.imageData = self.plotter.imageData
-        self.plotterElementsFinal = plotElements
+        self.plotElementsFinal = plotElements
         return True
     
     def plotAmplitudeStability(self, timeSeriesIds, plotElements = {}, outputName = None, show = False):
         '''
         Create an AMP_STABILITY plot
         The resulting image data is stored in self.imageData.
-        The applied plotElements are stored in self.plotterElementsFinal.
+        The applied plotElements are stored in self.plotElementsFinal.
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -148,7 +148,7 @@ class PlotAPI(object):
 
         # get the results:
         self.imageData = self.plotter.imageData
-        self.plotterElementsFinal = plotElements
+        self.plotElementsFinal = plotElements
         return True
         
     def __plotAmplitudeStabilitySingle(self, timeSeriesId, plotElements):
@@ -181,7 +181,7 @@ class PlotAPI(object):
         '''
         Create an PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
-        The applied plotElements are stored in self.plotterElementsFinal.
+        The applied plotElements are stored in self.plotElementsFinal.
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -222,7 +222,7 @@ class PlotAPI(object):
         
         # get the results:
         self.imageData = self.plotter.imageData
-        self.plotterElementsFinal = plotElements
+        self.plotElementsFinal = plotElements
         return True
     
     def __plotPhaseStabilitySingle(self, timeSeriesId, plotElements):
