@@ -9,12 +9,12 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
     MySQL implementation of Database.Interface.Result.ResultInterface
     '''
     TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
-    RESULTS_TABLE = 'Results'
-    PLOTS_TABLE = 'Plots'
-    TRACES_TABLE = 'Traces'
-    TRACE_XYDATA_TABLE = 'TraceXYData'
-    RESULT_TAGS_TABLE = 'ResultTags'
-    PLOT_TAGS_TABLE = 'PlotTags'
+    RESULTS_TABLE = 'AmpPhase_Results'
+    PLOTS_TABLE = 'AmpPhase_Plots'
+    TRACES_TABLE = 'AmpPhase_Traces'
+    TRACE_XYDATA_TABLE = 'AmpPhase_TraceXYData'
+    RESULT_TAGS_TABLE = 'AmpPhase_ResultTags'
+    PLOT_TAGS_TABLE = 'AmpPhase_PlotTags'
 
     def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData'): 
         '''
