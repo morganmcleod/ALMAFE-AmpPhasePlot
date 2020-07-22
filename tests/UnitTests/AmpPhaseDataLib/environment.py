@@ -3,8 +3,7 @@ Environment for behave.
 Provides fixtures to set up and tear down the objects under test.
 '''
 from behave import fixture, use_fixture
-from AmpPhaseDataLib import ResultAPI
-from AmpPhaseDataLib import TimeSeriesAPI
+from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
 from Utility import ParseTimeStamp
 from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotEl
 

@@ -44,8 +44,8 @@ class Trace:
     '''
     a Trace has
     values: 
-        traceId:int, name, legend, 
-        xyData: float list of tuples (x, y) or (x, y, yError)
+        traceId:int, name, legend,
+        xyData: tuple of float lists ([x], [y], [yError]) with yError optional 
     references:
         one Plot via plotId
     '''
@@ -135,7 +135,7 @@ class ResultInterface(ABC):
         '''
         Create a trace on the specified Plot
         :param plotId: Plot to which the trace belongs
-        :param xyData: float list of tuples (x, y) or (x, y, yError)
+        :param xyData: tuple of float lists ([x], [y], [yError]) with yError optional 
         :param name: trace name
         :param legend: trace legend for display
         :return Trace object if successful, None otherwise

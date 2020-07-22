@@ -88,5 +88,5 @@ class PlotPowerSpectrum(object):
         addFooters(fig, footer1, footer2, footer3)
         
         # make and show plot:
-        makePlotOutput(fig, plotElements, outputName, show)
+        self.imageData = makePlotOutput(fig, plotElements, outputName, show)
         return True

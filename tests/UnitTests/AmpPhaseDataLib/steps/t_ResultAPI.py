@@ -49,8 +49,8 @@ def step_impl(context):
     context.plotKind = PlotKind.TIME_SERIES
     context.plotId = context.API.createPlot(context.resultId, context.plotKind)
     assert_that(context.plotId)
-    context.xyData = [(0, 2.1, 0), (1, 2.2, 0), (2, 1.9, 0), (3, 2.0, 0)]
-    context.xyData2 = [(0, 5.1, 0), (1, 5.2, 0), (2, 5.9, 0), (3, 5.0, 0)]
+    context.xyData = ([0, 1, 2, 3], [2.1, 2.2, 1.9, 2.0], [0, 0, 0, 0])
+    context.xyData2 = ([0, 1, 2, 3], [5.1, 5.2, 5.9, 5.0], [0, 0, 0, 0]) 
     context.traceName = "time series"
     context.traceName2 = "temperature"
     context.traceId = context.API.createTrace(context.plotId, context.xyData, context.traceName)

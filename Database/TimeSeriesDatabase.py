@@ -2,7 +2,7 @@ import Database.Driver.SQLite as driver
 import Database.TagsDatabase as TagsDB
 from Utility import ParseTimeStamp
 from datetime import timedelta
-import itertools
+from itertools import zip_longest
 
 class TimeSeriesHeader(object):
     def __init__(self, timeSeriesId, startTime, tau0Seconds):
@@ -123,7 +123,7 @@ class TimeSeriesDatabase(object):
         timeCount = startTime
         firstTime = True
         
-        for TS, data, temp1, temp2 in itertools.zip_longest(timeStamps, dataSeries, temperatures1, temperatures2):
+        for TS, data, temp1, temp2 in zip_longest(timeStamps, dataSeries, temperatures1, temperatures2):
             if firstTime:
                 q += "("
                 firstTime = False

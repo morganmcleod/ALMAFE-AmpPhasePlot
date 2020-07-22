@@ -1,8 +1,8 @@
 '''
 PlotAPI for calling applications to generate plots.
 '''
-from AmpPhaseDataLib import TimeSeriesAPI
-from AmpPhaseDataLib.Constants import Units, PlotEl, DataSource, SpecLines
+from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
+from AmpPhaseDataLib.Constants import PlotKind, Units, PlotEl, DataSource, SpecLines
 from Calculate import AmplitudeStability, PhaseStability, PowerSpectrum
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotPowerSpectrum
 from datetime import datetime
@@ -10,7 +10,6 @@ from datetime import datetime
 class PlotAPI(object):
     '''
     PlotAPI for calling applications to generate plots.
-    classdocs
     '''
 
     def __init__(self):
@@ -119,15 +118,17 @@ class PlotAPI(object):
         self.calc = AmplitudeStability.AmplitudeStability()
         self.plotter = PlotStability.PlotStability()
         
+        # use this to find the earliest start time if multiple traces:
+        startTime = None
+        
         # is it a single time series plot?
         if isinstance(timeSeriesIds, int):
             timeSeriesId = timeSeriesIds
             plotElements[PlotEl.ERROR_BARS] = "1"
             self.plotter.startPlot(plotElements)
-            if self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements):
-                return self.plotter.finishPlot(self.tsAPI.startTime, plotElements, outputName, show)
-            else:
+            if not self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements):
                 return False
+            startTime = self.tsAPI.startTime
 
         # is it a list:
         elif isinstance(timeSeriesIds, list):
@@ -141,15 +142,16 @@ class PlotAPI(object):
                         startTime = self.tsAPI.startTime
                 else:
                     return False
+            # set a generic title:
             plotElements[PlotEl.TITLE] = "Amplitude Stability"
-            return self.plotter.finishPlot(startTime, plotElements, outputName, show)
-        else:
-            return False
 
         # get the results:
-        self.imageData = self.plotter.imageData
-        self.plotElementsFinal = plotElements
-        return True
+        if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+            self.imageData = self.plotter.imageData
+            self.plotElementsFinal = plotElements
+            return True
+        else:
+            return False
         
     def __plotAmplitudeStabilitySingle(self, timeSeriesId, plotElements):
         # get the TimeSeries data:
@@ -192,16 +194,18 @@ class PlotAPI(object):
         self.__reset()
         self.calc = PhaseStability.PhaseStability()
         self.plotter = PlotStability.PlotStability()
-        
+
+        # use this to find the earliest start time if multiple traces:
+        startTime = None
+
         # is it a single time series plot?
         if isinstance(timeSeriesIds, int):
             timeSeriesId = timeSeriesIds
             plotElements[PlotEl.ERROR_BARS] = "1"
             self.plotter.startPlot(plotElements)
-            if self.__plotPhaseStabilitySingle(timeSeriesId, plotElements):
-                return self.plotter.finishPlot(self.tsAPI.startTime, plotElements, outputName, show)
-            else:
+            if not self.__plotPhaseStabilitySingle(timeSeriesId, plotElements):
                 return False
+            startTime = self.tsAPI.startTime
 
         # is it a list:
         elif isinstance(timeSeriesIds, list):
@@ -215,15 +219,16 @@ class PlotAPI(object):
                         startTime = self.tsAPI.startTime
                 else:
                     return False
+            # set a generic title:
             plotElements[PlotEl.TITLE] = "Phase Stability"
-            return self.plotter.finishPlot(startTime, plotElements, outputName, show)
-        else:
-            return False
         
         # get the results:
-        self.imageData = self.plotter.imageData
-        self.plotElementsFinal = plotElements
-        return True
+        if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+            self.imageData = self.plotter.imageData
+            self.plotElementsFinal = plotElements
+            return True
+        else:
+            return False
     
     def __plotPhaseStabilitySingle(self, timeSeriesId, plotElements):
         # get the TimeSeries data:
@@ -258,3 +263,43 @@ class PlotAPI(object):
         # add the trace:
         return self.plotter.addTrace(timeSeriesId, self.xResult, self.yResult, self.yError, plotElements)
     
+    def rePlot(self, plotId, plotElements = {}, outputName = None, show = False):
+        '''
+        Make a plot from whatever data is in the Result database for plotId        
+        :param plotId: int to fetch and plot
+        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param outputName: Filename where to write the plot .PNG file, optional.
+        :param show: if True, displays the plot using the default renderer.
+        :return True if succesful, False otherwise
+        '''
+        self.__reset()
+        ra = ResultAPI.ResultAPI()
+        
+        plot = ra.retrievePlot(plotId)
+        if not plot:
+            return False
+        assert plot[0] == plotId
+        kind = plot[1]
+
+        if kind == PlotKind.TIME_SERIES:
+            self.plotter = PlotTimeSeries.PlotTimeSeries()
+            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
+                return False
+
+        elif kind == PlotKind.POWER_SPECTRUM:
+            self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
+            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
+                return False
+            
+        elif kind == PlotKind.AMP_STABILITY or kind == PlotKind.PHASE_STABILITY: 
+            self.plotter = PlotStability.PlotStability()
+            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
+                return False
+
+        else:
+            return False
+        
+        # get the results:
+        self.imageData = self.plotter.imageData
+        self.plotElementsFinal = plotElements
+        return True

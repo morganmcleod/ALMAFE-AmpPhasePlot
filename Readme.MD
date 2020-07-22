@@ -27,3 +27,5 @@ https://www.sqlite.org/download.html
 Requires MySQL or compatible server for Results storage.
 User account will need CREATE TABLE, CREATE, UPDATE, INSERT, DELETE privs.
 Or alternately run once with CREATE TABLE privs and then restrict thereafter.
+
+The file AmpPhaseDataLib.ini must be set up with the MySQL database credentials on your client.

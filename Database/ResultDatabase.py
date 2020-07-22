@@ -3,6 +3,7 @@ import Database.Interface.Tags as TI
 import Database.Driver.MySQL as driver
 import Database.TagsDatabase as TagsDB
 from AmpPhaseDataLib.Constants import PlotKind
+from itertools import zip_longest
 
 class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
     '''
@@ -191,7 +192,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         '''
         Create a trace on the specified Plot
         :param plotId: Plot to which the trace belongs
-        :param xyData: float list of tuples (x, y) or (x, y, yError)
+        :param xyData: tuple of float lists ([x], [y], [yError]) with yError optional
         :param name: trace name
         :param legend: trace legend for display
         :return Trace object if successful, None otherwise
@@ -213,20 +214,15 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         
         q = "INSERT INTO `{0}` (`fkTraces`, `XValue`, `YValue`, `YErrSize`) VALUES ".format(self.TRACE_XYDATA_TABLE)
 
+        yError = xyData[2] if len(xyData) and xyData[2] else []  
         firstTime = True
-        for point in xyData:
+        for x, y, err in zip_longest(xyData[0], xyData[1], yError):
             if firstTime:
                 q += "("
                 firstTime = False
             else:
                 q += ", ("
-            
-            q += "{0}, {1}, {2}, {3})".format(
-                traceId, 
-                point[0], 
-                point[1],
-                "0" if len(point) < 3 else "{0}".format(point[2]))
-            
+            q += "{0}, {1}, {2}, {3})".format(traceId, x, y, err if err else 0) 
         q += ";"        
         
         if not self.DB.execute(q, commit = True):
@@ -253,13 +249,80 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         self.DB.execute(q)
         result = self.DB.fetchall()
         
-        xyData = []
+        x = []
+        y = []
+        yError = []
         if result:
             for row in result:
-                xyData.append((row[0], row[1], row[2]))
-        
-        return RI.Trace(traceId, plotId, xyData, name, legend)
+                x.append(row[0])
+                y.append(row[1])
+                yError.append(row[2])
 
+        return RI.Trace(traceId, plotId, (x, y, yError), name, legend)
+
+    def retrieveTraces(self, plotId):
+        '''
+        Retrieve all traces associated with a plotId
+        :param traceId int to retrieve
+        :return list of Trace objects if successful, None otherwise.
+        '''
+        q = "SELECT `keyId`, `name`, `legend` FROM {0} WHERE `fkPlots` = {1};".format(self.TRACES_TABLE, plotId)
+        self.DB.execute(q)
+        rows = self.DB.fetchall()
+        if not rows:
+            return None
+        
+        traces = []
+        traceIds = ""
+        for row in rows:
+            traceId, name, legend = row[0], row[1], row[2]
+            traces += RI.Trace(traceId, plotId, None, name, legend)
+            if traceIds:
+                traceIds += ", "
+            traceIds += "'{0}'".format(traceId)
+        
+        q = "SELECT `fkTraces`, `XValue`, `YValue`, `YErrSize` FROM {0} WHERE `fkTraces` in ({1}) ORDER BY `keyId`;".format(
+            self.TRACE_XYDATA_TABLE, traceIds)
+        self.DB.execute(q)
+        result = self.DB.fetchall()
+        
+        #append a dummy value to the end so we can store the last set inside the loop:
+        result.append(('0', '0', '0', '0'))
+        
+        #start with empty xyData component lists:
+        xArray = []
+        yArray = []
+        yError = []
+        
+        #use result to update traces[]: 
+        if result:
+            #to detect new traceId in result:
+            lastId = None
+            for row in result:
+                traceId, x, y, err = row[0], row[1], row[2], row[3]
+                
+                #detect new traceId:
+                if traceId != lastId:
+                    #not first time:
+                    if lastId:
+                        #find matching Trace object in traces[] and assign:
+                        trace = next((tr for tr in traces if tr.traceId == lastId), None)
+                        trace.xyData = (xArray, yArray, yError)
+                        #empty the component lists:
+                        xArray = []
+                        yArray = []
+                        yError = []
+                    #update for next iterations:
+                    lastId = traceId
+                
+                # only append if it's not the dummy value appended above:
+                if traceId:
+                    xArray.append(x)
+                    yArray.append(y)
+                    yError.append(err)
+        
+        return traces
+    
     def deleteTrace(self, traceId):
         '''
         Delete the specified trace.

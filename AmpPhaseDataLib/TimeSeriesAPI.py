@@ -207,6 +207,16 @@ class TimeSeriesAPI(object):
             if requiredUnits == Units.MW:
                 # convert from dBm to mW:
                 result = [pow(10, y / 10) for y in self.dataSeries]
+        
+        elif units == Units.VOLTS:
+            if requiredUnits == Units.MV:
+                # convert from Volt to mV
+                result = [y * 1000 for y in self.dataSeries]
+        
+        elif units == Units.MV:
+            if requiredUnits == Units.VOLTS:
+                # convert from mV to Volt
+                result = [y / 1000 for y in self.dataSeries]
         else:
             # not supported:
             raise ValueError('Unsupported units conversion')

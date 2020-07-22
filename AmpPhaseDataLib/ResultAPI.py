@@ -25,13 +25,13 @@ Exposes the following data model:
 | Trace   |
 | +name   |
 | +legend | 
-| +XYData |
+| +xyData |
 +---------+
 
 Where tags is a collection of name-value pairs, names given in Constants.py
 kind is enum defined in Constants.py
 imageData is binary and/or a image file on disk;
-XYData is float list of tuples (x, y, yError)
+xyData is a tuple of float lists ([x], [y], [yError]) with yError optional 
 '''
 from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotEl
 from Database import ResultDatabase
@@ -237,13 +237,26 @@ class ResultAPI(object):
         result = self.db.getPlotTags(plotId, [plotElement.value])
         return result.get(plotElement.value, None)
 
+    def getAllPlotEl(self, plotId):
+        '''
+        Get all plotElements for plotId
+        :param plotId: int
+        :return dict of {PlotEl : str} or None if error
+        '''
+        retrieved = self.db.getTags(plotId, [el.value for el in PlotEl])
+        result = {}
+        # replace key str values with PlotEl enum values:
+        for tag, value in retrieved.items():
+            result[PlotEl(tag)] = value
+        return result
+
 #// Plot Trace functions:
-    
+
     def createTrace(self, plotId, xyData, name, legend = None):
         '''
         Create a trace associated with a Plot
         :param plotId: int Plot to which to add the trace.
-        :param xyData: float list of tuples (x, y) or (x, y, yError)
+        :param xyData: xyData is a tuple of float lists ([x], [y], [yError]) with yError optional
         :param name: str
         :param legend: str, defaults to same as name
         :return traceId int
@@ -265,6 +278,18 @@ class ResultAPI(object):
             return None
         else:
             return (traceId, trace.xyData, trace.name, trace.legend)
+        
+    def retrieveTraces(self, plotId):
+        '''
+        Retrieve all traces associated with the plotId.
+        :param plotId: int
+        :return list of tuples (traceId, xyData, name, legend) if successful, None otherwise.
+        '''
+        traces = self.db.retrieveTraces(plotId)
+        if not traces:
+            return None
+        else:
+            return [(trace.traceId, trace.xyData, trace.name, trace.legend) for trace in traces]
     
     def deleteTrace(self, traceId):
         '''

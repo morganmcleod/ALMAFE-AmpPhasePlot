@@ -96,6 +96,7 @@ class Units(EnumHelper):
     WATTS       = 'W'           # watts
     MW          = 'mW'          # milliwatts
     VOLTS       = 'V'           # volts
+    MV          = 'mV'          # millivolts
     DBM         = 'dBm'         # dBm
     DEG         = 'deg'         # degrees of phase
     FS          = 'fs'          # femtoseconds of phase
@@ -120,5 +121,5 @@ class SpecLines(object):
     #BAND6_PHASE_STABILITY1
     #BAND6_PHASE_STABILITY2
     #BIAS_MOD_VOLT_STABILITY
-    XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SEC, default XRANGE_PLOT for amp.
-    XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SEC, default XRANGE_PLOT for phase.
+    XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.
+    XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SECONDS, default XRANGE_PLOT for phase.
