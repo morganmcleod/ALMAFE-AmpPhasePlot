@@ -1,0 +1,14 @@
+[header]
+band = 2
+TS = "2018-04-10 08:16:17.637"
+lo = "74.000000"
+meas_length_minutes = "25.00"
+ifatten_pol0_usb = 33
+ifatten_pol0_lsb = 22
+ifatten_pol1_usb = 33
+ifatten_pol1_lsb = 27
+powermeter_unit = "W"
+pol = 0
+sb = 1
+notes = "IF0 (Pol0 USB) SN 1125  / IF1 (Pol0 LSB)      SN1285"
+keySubheader = "0"

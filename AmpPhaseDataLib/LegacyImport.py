@@ -91,7 +91,7 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, import_dBm = 
     
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
     api.setDataSource(timeSeriesId, DataSource.KIND, "amplitude")
-    api.setDataSource(timeSeriesId, DataSource.T_UNITS, "W")
+    api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.WATTS).value)
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "HP E4418B Power Measurement.vi")
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "2009-03-13 changelist 6851")
     if notes:

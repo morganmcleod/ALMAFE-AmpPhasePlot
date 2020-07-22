@@ -1,0 +1,11 @@
+[header]
+band = 6
+TS = "2020-02-05 15:56:08.619"
+lo = "221.000000"
+rf = "215.000000"
+pol = 1
+sb = 2
+tilt_angle = "0.0"
+meas_length_minutes = "20.00"
+notes = ""
+integration_time = 940.742163

@@ -13,6 +13,11 @@ The intent of these libraries is to produce full-featured plots plus manage the 
 
 See FEND-40.09.03.00-0522-A-SPE for additional background.
 
+## Demo Jupyter Notebook
+
+Copy [ALMAFE-AmpPhasePlot-demo.ipynb](https://www.dropbox.com/s/0gi4soxm0om50hy/ALMAFE-AmpPhasePlot-demo.ipynb?dl=0) to your user directory then launch Jupyter Notebook.
+Open the notebook and fix up the working directory in the first frame to match your system. 
+
 ## Installation / Deployment
 
 Requires locally installed SQLite
