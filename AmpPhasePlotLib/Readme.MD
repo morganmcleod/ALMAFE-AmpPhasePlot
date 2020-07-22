@@ -22,18 +22,18 @@ imageData = binary image data in .png format
 plotElementsFinal = plotElements input dict merged with additional PlotEl values computed automatically.
 
 
-###plotTimeSeries(timeSeriesId, plotElements = {}, outputName = None, show = False)  
+### plotTimeSeries(timeSeriesId, plotElements = {}, outputName = None, show = False)  
 Produce a time series plot for a single timeSeries.
 
-###plotPowerSpectrum(timeSeriesId, plotElements = {}, outputName = None, show = False)  
+### plotPowerSpectrum(timeSeriesId, plotElements = {}, outputName = None, show = False)  
 Produce a power spectrum plot for a single timeSeries.
 
-###plotAmplitudeStability(timeSeriesIds, plotElements = {}, outputName = None, show = False)  
+### plotAmplitudeStability(timeSeriesIds, plotElements = {}, outputName = None, show = False)  
 Produce an normalized Allan Variance plot of amplitude stability.  
 timeSeriesIds can be a single id or a list.  
 Error bars are shown by default if it is a single id and hidden otherwise.  
 
-###plotPhaseStability(timeSeriesIds, plotElements = {}, outputName = None, show = False)  
+### plotPhaseStability(timeSeriesIds, plotElements = {}, outputName = None, show = False)  
 Produce a 2-point Allan Standard Deviation plot of phase stability.  
 This is a plot specifically required by ALMA and is not the same as the standard ADEV(phase).  
 timeSeriesIds can be a single id or a list.  
