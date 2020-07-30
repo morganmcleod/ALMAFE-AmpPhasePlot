@@ -25,9 +25,7 @@ class PlotAPI(object):
         '''
         self.calc = None
         self.plotter = None
-        self.xResult = None
-        self.yResult = None
-        self.yError = None
+        self.traces = []
         self.imageData = None
         self.plotElementsFinal = None
         
@@ -36,6 +34,8 @@ class PlotAPI(object):
         Create a TIME_SERIES plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
+        Unlike the other methods in this class, self.traces is not updated by this method. 
+        (It would be the same as the raw data, and huge.)
         :param timeSeriesId: a timeSeriesId to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -60,6 +60,7 @@ class PlotAPI(object):
         Create a POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
+        The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         :param timeSeriesId: a timeSeriesId to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -98,6 +99,7 @@ class PlotAPI(object):
             return False
 
         # get the results:
+        self.traces = self.plotter.traces
         self.imageData = self.plotter.imageData
         self.plotElementsFinal = plotElements
         return True
@@ -107,6 +109,7 @@ class PlotAPI(object):
         Create an AMP_STABILITY plot
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
+        The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -147,6 +150,7 @@ class PlotAPI(object):
 
         # get the results:
         if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+            self.traces = self.plotter.traces
             self.imageData = self.plotter.imageData
             self.plotElementsFinal = plotElements
             return True
@@ -170,20 +174,16 @@ class PlotAPI(object):
         
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax):
             return False
-        
-        # get the calculated trace:
-        self.xResult = self.calc.xResult
-        self.yResult = self.calc.yResult
-        self.yError = self.calc.yError
 
         # add the trace:
-        return self.plotter.addTrace(timeSeriesId, self.xResult, self.yResult, self.yError, plotElements)
+        return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
 
     def plotPhaseStability(self, timeSeriesIds, plotElements = {}, outputName = None, show = False):
         '''
         Create an PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
+        The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -224,6 +224,7 @@ class PlotAPI(object):
         
         # get the results:
         if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+            self.traces = self.plotter.traces
             self.imageData = self.plotter.imageData
             self.plotElementsFinal = plotElements
             return True
@@ -254,18 +255,14 @@ class PlotAPI(object):
         
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax, freqRFGHz):
             return False
-        
-        # get the calculated trace:
-        self.xResult = self.calc.xResult
-        self.yResult = self.calc.yResult
-        self.yError = self.calc.yError
 
         # add the trace:
-        return self.plotter.addTrace(timeSeriesId, self.xResult, self.yResult, self.yError, plotElements)
+        return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
     
     def rePlot(self, plotId, plotElements = {}, outputName = None, show = False):
         '''
-        Make a plot from whatever data is in the Result database for plotId        
+        Make a plot from whatever data is in the Result database for plotId.
+        Not supported for TIME_SERIES plots.       
         :param plotId: int to fetch and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: Filename where to write the plot .PNG file, optional.
@@ -281,12 +278,7 @@ class PlotAPI(object):
         assert plot[0] == plotId
         kind = plot[1]
 
-        if kind == PlotKind.TIME_SERIES:
-            self.plotter = PlotTimeSeries.PlotTimeSeries()
-            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
-                return False
-
-        elif kind == PlotKind.POWER_SPECTRUM:
+        if kind == PlotKind.POWER_SPECTRUM:
             self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
             if not self.plotter.rePlot(plotId, plotElements, outputName, show):
                 return False

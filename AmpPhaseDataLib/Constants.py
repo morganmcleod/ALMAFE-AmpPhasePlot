@@ -82,6 +82,8 @@ class PlotEl(EnumHelper):
     Y2_AXIS_LABEL   = 'y2AxisLabel' # overrides automatically generated
     XRANGE_PLOT     = 'xRangePlot'  # range of x values to plot, overriding auto defaults:
                                     #  value is 'float, float'. Use for TMin, TMax for stability plots
+    XRANGE_WINDOW   = 'xRangeWindow' # boundaries X-Y space to display.
+    YRANGE_WINDOW   = 'yRangeWindow' #  often needs to be larger than the data and spec lines so they are not at the edge.
     SPEC_LINE1      = 'specLine1'   # list of two points to draw a spec line, overriding defaults:
                                     #  value is 'x1, y1, x2, y2'.
     SPEC_LINE2      = 'specLine2'   # list of two points to draw a second spec line, overriding defaults:
@@ -108,14 +110,16 @@ class Units(EnumHelper):
     KELVIN      = 'K'           # temperature
     CELCIUS     = 'C'           # temperature
     AVAR        = u'σ²(T)'      # Allan variance units
-    ADEV        = u'σ(2, t=10s, T)'  # Allan deviation units
+    ADEV        = u'σ(2, t=10s, T)'  # 2-pt Allan dev. definition. Actual units will be DEG or FS.
 
 class SpecLines(object):
     FE_AMP_STABILITY1 = "0.05, 5e-7, 100, 5e-7"     # Units = AVAR
     FE_AMP_STABILITY2 = "300, 4e-6, 300, 4e-6"      # Units = AVAR
     FE_PHASE_STABILITY = "10, 10, 300, 10"          # Units = FS
     IFPROC_AMP_STABILITY1 = "0.05, 1e-7, 100, 1e-7" # Units = AVAR
-    IFPROC_AMP_STABILITY1 = "300, 1e-6, 300, 1e-6"  # Units = AVAR
+    IFPROC_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"  # Units = AVAR
+    WCA_AMP_STABILITY1 = "0.05, 9e-8, 100, 9e-9"    # Units = AVAR
+    WCA_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"     # Units = AVAR
     #BAND6_AMP_STABILITY1
     #BAND6_AMP_STABILITY2
     #BAND6_PHASE_STABILITY1

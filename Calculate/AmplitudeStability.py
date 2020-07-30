@@ -53,14 +53,17 @@ class AmplitudeStability(object):
             minM = 2
             maxK = N // minM
         
-        self.xResult = []
+        taus = []
         # make list of taus to calculate for:
         for K in range(1, maxK):        
-            self.xResult.append(K * tau0Seconds)
+            taus.append(K * tau0Seconds)
         
         # non-overlapping ADEV using allantools 'freq' mode.
         # https://github.com/aewallin/allantools
-        (self.xResult, adev, aderr, adn) = allantools.adev(dataSeries, 1 / tau0Seconds, data_type = "freq", taus = self.xResult)
+        (taus, adev, aderr, adn) = allantools.adev(dataSeries, 1 / tau0Seconds, data_type = "freq", taus = taus)
+        
+        # convert from numpy.ndarray to list:
+        self.xResult = taus.tolist()
         
         # convert adevs to avars:
         self.yResult = []

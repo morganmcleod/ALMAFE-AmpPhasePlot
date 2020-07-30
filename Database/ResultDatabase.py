@@ -113,22 +113,38 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         '''
         return self.tagsDB.getTags(resultId, self.RESULT_TAGS_TABLE, 'fkResults', tagNames)
 
+#// Plot ID lookup:
+    def retrievePlotIds(self, resultId, plotKind = PlotKind.ALL):
+        '''
+        Retrive a list of plotIds associated with the resultId
+        :param resultId: int to use in search
+        :param plotKind: from PlotKind in Constants.py, to filter by kind of plot
+        :return list of int plotId
+        '''
+        q = "SELECT `keyId` from `{0}` WHERE `fkResults` = {1}".format(self.PLOTS_TABLE, resultId)
+        if plotKind is not PlotKind.ALL:
+            q += " AND `plotKind` = {0}".format(plotKind.value)
+        q += ";"
+        self.DB.execute(q)
+        rows = self.DB.fetchall()
+        return [row[0] for row in rows]
+
 #// Plot create, delete, update, retrieve...
 
-    def createPlot(self, resultId, kind = None):
+    def createPlot(self, resultId, plotKind):
         '''
         Create a Plot associated with the specified Result:
         :param resultId: int of the Result to associate with the Plot
-        :param kind: PlotKind specify what type of plot it is
+        :param plotKind: PlotKind specify what type of plot it is
         :return Plot object if successful, None otherwise.
         '''
-        q = "INSERT INTO `{0}` (`fkResults`, `plotKind`) VALUES ({1}, {2});".format(self.PLOTS_TABLE, resultId, kind.value)
+        q = "INSERT INTO `{0}` (`fkResults`, `plotKind`) VALUES ({1}, {2});".format(self.PLOTS_TABLE, resultId, plotKind.value)
         self.DB.execute(q, commit = True)
         self.DB.execute("SELECT LAST_INSERT_ID()")
         row = self.DB.fetchone()
         if not row:
             return None
-        return RI.Plot(row[0], resultId, kind)
+        return RI.Plot(row[0], resultId, plotKind)
     
     def retrievePlot(self, plotId):
         '''
@@ -212,24 +228,47 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
             return None
         traceId = row[0]
         
-        q = "INSERT INTO `{0}` (`fkTraces`, `XValue`, `YValue`, `YErrSize`) VALUES ".format(self.TRACE_XYDATA_TABLE)
+        q0 = "INSERT INTO `{0}` (`fkTraces`, `XValue`, `YValue`, `YErrSize`) VALUES ".format(self.TRACE_XYDATA_TABLE)
 
-        yError = xyData[2] if len(xyData) and xyData[2] else []  
+        yError = xyData[2] if len(xyData) > 2 and xyData[2] else []  
         firstTime = True
+        error = False
+        maxRec = 500
+        recNum = 0
+        # loop on xyData arrays:
         for x, y, err in zip_longest(xyData[0], xyData[1], yError):
-            if firstTime:
-                q += "("
-                firstTime = False
-            else:
-                q += ", ("
-            q += "{0}, {1}, {2}, {3})".format(traceId, x, y, err if err else 0) 
-        q += ";"        
-        
-        if not self.DB.execute(q, commit = True):
+            # guard against x or y array being shorter:
+            if x is not None and y is not None:
+                # build a chunk of maxRec insert literals:
+                if firstTime:
+                    q = ""
+                    firstTime = False
+                else:
+                    q += ","
+                q += "({0},{1},{2},{3})".format(traceId, x, y, err if err else 0) 
+                recNum += 1
+            # if maxRec reached, perform the insert:
+            if recNum == maxRec:
+                # insert statement invariant part is q0 and record chunk is q:
+                if not self.DB.execute(q0 + q + ";", commit = False):
+                    error = True
+                # reset record counter:
+                recNum = 0
+                # reset flag to suppress comma:
+                firstTime = True
+        # it's likely theres a partial chunk at the end.  Insert it:
+        if recNum:
+            if not self.DB.execute(q0 + q + ";", commit = False):
+                error = True
+
+        # no error seen, commit the transaction and return a Trace object:
+        if not error:
+            self.DB.commit()
+            return RI.Trace(traceId, plotId, xyData, name, legend)
+        # if error, rollback:
+        else:
             self.DB.rollback()
             return None
-        
-        return RI.Trace(traceId, plotId, xyData, name, legend)
     
     def retrieveTrace(self, traceId):
         '''
@@ -276,7 +315,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         traceIds = ""
         for row in rows:
             traceId, name, legend = row[0], row[1], row[2]
-            traces += RI.Trace(traceId, plotId, None, name, legend)
+            traces.append(RI.Trace(traceId, plotId, None, name, legend))
             if traceIds:
                 traceIds += ", "
             traceIds += "'{0}'".format(traceId)

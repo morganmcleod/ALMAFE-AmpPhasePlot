@@ -168,7 +168,32 @@ class ResultAPI(object):
             raise ValueError('Use DataSource enum from Constants.py')
         result = self.db.getResultTags(resultId, [dataSource.value])
         return result.get(dataSource.value, None)
+
+    def getAllResultDataSource(self, resultId):
+        '''
+        Get all DataSource tags for a TimeSeries
+        :param timeSeriesId: int
+        :return dict of {DataSource : str}
+        '''
+        retrieved = self.db.getTags(resultId, [el.value for el in DataSource])
+        result = {}
+        # replace key str values with DataSource enum values:
+        for tag, value in retrieved.items():
+            result[DataSource(tag)] = value
+        return result
         
+#// PlotId functions:
+    
+    def retrievePlotIds(self, resultId, plotKind = PlotKind.ALL):
+        '''
+        Retrive a list of plotIds associated with the resultId
+        :param resultId: int to use in search
+        :param plotKind: from PlotKind in Constants.py, to filter by kind of plot
+        :return list of int plotId
+        '''
+        if not isinstance(plotKind, PlotKind):
+            raise ValueError('Use PlotKind enum from Constants.py')
+        return self.db.retrievePlotIds(resultId, plotKind)
         
 #// Plot (header) functions
     
@@ -237,13 +262,28 @@ class ResultAPI(object):
         result = self.db.getPlotTags(plotId, [plotElement.value])
         return result.get(plotElement.value, None)
 
+    def setAllPlotEl(self, plotId, plotElements):
+        '''
+        Set all plotElements for plotId
+        :param plotId: int
+        :param plotElements: dict of {PlotEl : str}
+        '''
+        # make a dict which will clear all PlotEl:
+        allElements = {}
+        for el in PlotEl:
+            allElements[el.value] = None
+        # merge in the provided dict:
+        for key, value in plotElements.items():
+            allElements[key.value] = value
+        self.db.setPlotTags(plotId, allElements)
+
     def getAllPlotEl(self, plotId):
         '''
         Get all plotElements for plotId
         :param plotId: int
         :return dict of {PlotEl : str} or None if error
         '''
-        retrieved = self.db.getTags(plotId, [el.value for el in PlotEl])
+        retrieved = self.db.getPlotTags(plotId, [el.value for el in PlotEl])
         result = {}
         # replace key str values with PlotEl enum values:
         for tag, value in retrieved.items():
@@ -300,6 +340,24 @@ class ResultAPI(object):
         
 #// Plot Image functions:
         
+    def insertPlotImage(self, plotId, imageData, name = None, srcPath = None):
+        '''
+        Insert a PLotImage from binary image data.
+        :param plotId: int Plot header to associate with the PlotImage
+        :param imageData: binary image data in .png format
+        :param name: str optional.
+        :param srcPath: path source file on disk. Optional
+        :return plotImageId int if successful, None otherwise. 
+        '''
+        if not imageData:
+            raise ValueError("Must provide binary imageData")
+
+        plotImage = self.imageDb.createPlotImage(plotId, imageData, name, srcPath)
+        if not plotImage:
+            return None
+        
+        return plotImage.plotImageId
+
     def insertPlotImageFromFile(self, plotId, srcPath, name = None):
         '''
         Insert a PlotImage from an image file.

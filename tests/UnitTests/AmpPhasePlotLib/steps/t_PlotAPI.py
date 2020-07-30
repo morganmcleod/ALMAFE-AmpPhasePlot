@@ -1,6 +1,6 @@
 '''
-Implement test cases for t_TimeSeriesAPI.feature
-Validate TimeSeriesAPI
+Implement test cases for t_PlotAPI.feature
+Validate PlotAPI
 '''
 from behave import given, when, then
 from AmpPhaseDataLib.Constants import DataSource
@@ -81,6 +81,7 @@ def step_impl(context):
     context.timeSeriesId = context.tAPI.insertTimeSeries(dataSeries, timeStamps = timeStamps)
     assert_that(context.timeSeriesId)
     
+    context.tAPI.setDataSource(context.timeSeriesId, DataSource.DATA_SOURCE, context.dataFile)
     if hasattr(context, 'units'):
         context.tAPI.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
 
@@ -89,8 +90,6 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    if not hasattr(context, 'outputName'):
-        context.outputName = None
     assert_that(context.pAPI.plotTimeSeries(context.timeSeriesId, outputName = context.outputName, show = context.show))
     
 @when('the power spectrum plot is generated')
@@ -98,8 +97,6 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    if not hasattr(context, 'outputName'):
-        context.outputName = None
     assert_that(context.pAPI.plotPowerSpectrum(context.timeSeriesId, outputName = context.outputName, show = context.show))
 
 @when('the amplitude stability plot is generated')
@@ -107,9 +104,6 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    if not hasattr(context, 'outputName'):
-        context.outputName = None
-
     assert_that(context.pAPI.plotAmplitudeStability(context.timeSeriesId, outputName = context.outputName, show = context.show))
 
 @when('the phase stability plot is generated')
@@ -117,9 +111,6 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    if not hasattr(context, 'outputName'):
-        context.outputName = None
-
     assert_that(context.pAPI.plotPhaseStability(context.timeSeriesId, outputName = context.outputName, show = context.show))
     
 ##### THEN #####

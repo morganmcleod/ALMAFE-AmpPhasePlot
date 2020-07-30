@@ -30,6 +30,6 @@ class PowerSpectrum(object):
         timePeriod = tpCount / samplingFrequency
         frequencies = values / timePeriod
         
-        self.xResult = frequencies;
-        self.yResult = abs(fourierTransform)
+        self.xResult = frequencies.tolist();
+        self.yResult = abs(fourierTransform).tolist()
         return True

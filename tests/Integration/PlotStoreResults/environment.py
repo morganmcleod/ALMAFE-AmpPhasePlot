@@ -12,10 +12,16 @@ def plotStoreResults(context, **kwargs):
     context.tAPI = TimeSeriesAPI.TimeSeriesAPI()
     context.rAPI = ResultAPI.ResultAPI()
     context.pAPI = PlotAPI.PlotAPI()
+    context.show = False
+    context.timeSeriesId = None
+    context.resultId = None
     yield context.pAPI
     # -- CLEANUP-FIXTURE PART:
-    pass
-
+    if context.timeSeriesId:
+        context.tAPI.deleteTimeSeries(context.timeSeriesId)
+    if context.resultId:
+        context.rAPI.deleteResult(context.resultId)
+        
 def before_tag(context, tag):
     '''
     Select the fixture to use depending on tags in the .feature file.

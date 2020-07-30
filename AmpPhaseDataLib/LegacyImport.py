@@ -10,7 +10,7 @@ import configparser
 import csv
 import os
 
-def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, import_dBm = False, import_mW = False, import_W = False):
+def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, importUnits = Units.WATTS):
     '''
     Import power meter measurements taken with the legacy 'HP E4418B Power Measurement.vi'
     
@@ -24,9 +24,8 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, import_dBm = 
     :param notes:       str if provided will be assigned to the time series NOTES tag
     :param tau0Seconds: float, if provided sets the integration time per sample
                         if None, determine integration time from the timestamps
-    :param import_dBm:  if True, always convert the power column from dBm to W.
-    :param import_mW:   if True, convert the power column from mW to W.
-    :param import_W:    if True, power column is in W so no convert.
+    :param importUnits: units in the raw data file.  Supported values:  WATTS, MW, DBM
+                        data will be converted to WATTS before insert. 
     :return timeSeriesId if succesful, False otherwise. 
     '''
     if not os.path.exists(file):
@@ -56,24 +55,20 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, import_dBm = 
         return False
     
     # convert from mW to W:
-    if import_mW:
+    if importUnits == Units.MW:
         print("Importing mW")
         for i in range(len(dataSeries)):
             dataSeries[i] = dataSeries / 1000.0
     
-    elif import_W: 
-        print("Importing Watts")
-
-    # decide whether to convert from dBm to W:
-    elif not import_dBm:    
-        if abs(dataSeries[0]) > 1:
-            import_dBm = True
-
     # convert from dBm to W:        
-    if import_dBm:
+    elif importUnits == Units.DBM: 
         print("Importing dBm")
         for i in range(len(dataSeries)):
             dataSeries[i] = (10 ** (dataSeries[i] / 10)) / 1000.0
+
+    # no conversion:
+    else:
+        print("Importing Watts")
     
     # calculate tau0Seconds from timeStamps in file:
     if not tau0Seconds:
