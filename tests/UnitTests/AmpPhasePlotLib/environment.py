@@ -15,6 +15,8 @@ def plotAPI(context, **kwargs):
     context.show = False
     yield context.pAPI
     # -- CLEANUP-FIXTURE PART:
+    if context.timeSeriesId:
+        context.tAPI.deleteTimeSeries(context.timeSeriesId)
     if hasattr(context, 'outputName'):
         if context.outputName and os.path.isfile(context.outputName):
             os.remove(context.outputName)
