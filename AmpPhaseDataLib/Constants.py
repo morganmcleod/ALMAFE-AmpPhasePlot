@@ -126,6 +126,8 @@ class SpecLines(object):
     BAND6_AMP_STABILITY2 = "300, 3e-6, 300, 3e-6"   # Units = AVAR
     BAND6_PHASE_STABILITY1 = "10, 0.5, 300, 0.5"    # Units = DEG
     BAND6_PHASE_STABILITY2 = "10, 0.5, 300, 5"      # Band6 test limit DEG
-    #BIAS_MOD_VOLT_STABILITY
+    BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6"        # Since this is AVAR, may need to use sqrt(0.2e-6)
+    BIAS_LNA_VOLT_STABILITY1 = "1, 0.8e-6, 1, 0.8e-6"           # 800 nV/√Hz, max @ 1 Hz
+    BIAS_LNA_VOLT_STABILITY2 = "0.1 to 800 Hz: 20 uV rms max"   # TODO: Still need to interpret this
     XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.
     XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SECONDS, default XRANGE_PLOT for phase.
