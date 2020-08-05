@@ -433,5 +433,6 @@ class TimeSeriesAPI(object):
         initialize tau0Seconds from timeStamps
         '''
         if not self.tau0Seconds:
-            delta = self.timeStamps[1] - self.timeStamps[0]
-            self.tau0Seconds = delta.seconds + (delta.microseconds / 1.0e6)
+            duration = (self.timeStamps[-1] - self.timeStamps[0]).total_seconds()
+            self.tau0Seconds = duration / (len(self.timeStamps) - 1)
+

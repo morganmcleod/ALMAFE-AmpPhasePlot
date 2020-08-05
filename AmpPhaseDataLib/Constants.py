@@ -88,6 +88,8 @@ class PlotEl(EnumHelper):
                                     #  value is 'x1, y1, x2, y2'.
     SPEC_LINE2      = 'specLine2'   # list of two points to draw a second spec line, overriding defaults:
                                     #  value is 'x1, y1, x2, y2'.
+    SPEC1_NAME      = 'spec1Name'   # label for SPEC_LINE1
+    SPEC2_NAME      = 'spec2Name'   # label for SPEC_LINE2
     FOOTER1         = 'footer1'     # footer line 1
     FOOTER2         = 'footer2'     # footer line 2 
     FOOTER3         = 'footer3'     # footer line 3 
@@ -120,10 +122,10 @@ class SpecLines(object):
     IFPROC_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"  # Units = AVAR
     WCA_AMP_STABILITY1 = "0.05, 9e-8, 100, 9e-9"    # Units = AVAR
     WCA_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"     # Units = AVAR
-    #BAND6_AMP_STABILITY1
-    #BAND6_AMP_STABILITY2
-    #BAND6_PHASE_STABILITY1
-    #BAND6_PHASE_STABILITY2
+    BAND6_AMP_STABILITY1 = "0.05, 4e-7, 100, 4e-7"  # Units = AVAR
+    BAND6_AMP_STABILITY2 = "300, 3e-6, 300, 3e-6"   # Units = AVAR
+    BAND6_PHASE_STABILITY1 = "10, 0.5, 300, 0.5"    # Units = DEG
+    BAND6_PHASE_STABILITY2 = "10, 0.5, 300, 5"      # Band6 test limit DEG
     #BIAS_MOD_VOLT_STABILITY
     XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.
     XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SECONDS, default XRANGE_PLOT for phase.

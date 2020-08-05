@@ -109,50 +109,78 @@ class TimeSeriesDatabase(object):
         if not dataSeries:
             raise ValueError('dataSeries is required.')
         
-        q = "INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) VALUES "
+        q0 = "INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) VALUES "
         
         if not timeStamps:
             timeStamps = []
         if not temperatures1:
             temperatures1 = []
-        if not temperatures1:
+        if not temperatures2:
             temperatures2 = []
 
         # timeDelta and timeCount are for generating timeStamps if not provided
         timeDelta = timedelta(seconds = tau0Seconds)
         timeCount = startTime
         firstTime = True
-        
+        error = False
+        maxRec = 500
+        recNum = 0        
+        # loop on data arrays:
         for TS, data, temp1, temp2 in zip_longest(timeStamps, dataSeries, temperatures1, temperatures2):
             if firstTime:
-                q += "("
+                q = ""
                 firstTime = False
             else:
-                q += ", ("
+                q += ","
+            
+            # append fkHeader:    
+            q += "({0}".format(self.timeSeriesId) 
                 
-            q += str(self.timeSeriesId) 
-                
+            # append timeStamp:
             if TS:
-                q += ", '{0}'".format(TS.strftime(self.TIMESTAMP_FORMAT))
+                q += ",'{0}'".format(TS.strftime(self.TIMESTAMP_FORMAT))
             else:
-                q += ", '{0}'".format(timeCount.strftime(self.TIMESTAMP_FORMAT))
+                q += ",'{0}'".format(timeCount.strftime(self.TIMESTAMP_FORMAT))
                 timeCount += timeDelta
             
-            q += ", {0}".format(str(data))
+            # append seriesData:
+            q += ",{0}".format(data)
             
+            # append temperatures1:
             if temp1:
-                q += ", {0}".format(str(temp1))
+                q += ",{0}".format(temp1)
             else:
-                q += ", NULL"
+                q += ",NULL"
             
+            # append temperatures2:
             if temp2:
-                q += ", {0}".format(str(temp2))
+                q += ",{0}".format(temp2)
             else:
-                q += ", NULL"
+                q += ",NULL"
                 
             q += ")"
+            recNum += 1
+
+            # if maxRec reached, perform the insert:
+            if recNum == maxRec:
+                # insert statement invariant part is q0 and record chunk is q:
+                if not self.db.execute(q0 + q + ";", commit = False):
+                    error = True
+                # reset record counter:
+                recNum = 0
+                # reset flag to suppress comma:
+                firstTime = True
         
-        self.db.execute(q, commit = True)
+        # it's likely theres a partial chunk at the end.  Insert it:
+        if recNum:
+            if not self.db.execute(q0 + q + ";", commit = False):
+                error = True
+        
+        # no error seen, commit the transaction:
+        if not error:
+            self.db.commit()
+        else:
+            self.db.rollback()
 
     def retrieveTimeSeriesHeader(self, timeSeriesId):
         '''

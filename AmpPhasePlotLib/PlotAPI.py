@@ -162,7 +162,18 @@ class PlotAPI(object):
         if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
             return False
         
-        dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS)
+        kind = self.tsAPI.getDataSource(timeSeriesId, DataSource.KIND)
+        if not kind:
+            kind = "amplitude"
+        
+        if kind == "voltage":
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
+        else:
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS)
+
+        if not dataSeries:
+            return False
+
         freqLOGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.LO_GHZ)
         if freqLOGHz:
             freqLOGHz = float(freqLOGHz)

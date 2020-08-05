@@ -71,7 +71,11 @@ class PlotTimeSeries(object):
         
         # get timestamps and data, possibly with unit conversions:        
         timeStamps = ts.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
+        if not timeStamps:
+            return False
         dataSeries = ts.getDataSeries(requiredUnits = Units.fromStr(yUnits))
+        if not dataSeries:
+            return False
             
         # add the trace(s), compute temperature trace spans:
         y2min = None

@@ -22,14 +22,16 @@ class PowerSpectrum(object):
         self.yResult = None
         
     def calculate(self, dataSeries, tau0Seconds):
-        samplingFrequency = 1 / tau0Seconds
-        tpCount = len(dataSeries)
-        
-        fourierTransform = np.fft.rfft(dataSeries) / tpCount          # Normalize amplitude
-        values = np.arange(int(tpCount / 2))
-        timePeriod = tpCount / samplingFrequency
-        frequencies = values / timePeriod
-        
+        n = len(dataSeries)
+        fSampling = 1 / tau0Seconds
+        # real FFT, normalized amplitude:
+        fourierTransform = np.fft.rfft(dataSeries) / n
+        # make array of bin numbers:
+        values = np.arange(int(n / 2))
+        # scale bin numbers to frequencies: 
+        frequencies = values / (n / fSampling) 
+        # return frequencies as xResult:
         self.xResult = frequencies.tolist();
+        # return amplitude power spectrum as yResult:
         self.yResult = abs(fourierTransform).tolist()
         return True

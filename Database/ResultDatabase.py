@@ -228,6 +228,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
             return None
         traceId = row[0]
         
+        # this part of the query is used for every chunk inserted:
         q0 = "INSERT INTO `{0}` (`fkTraces`, `XValue`, `YValue`, `YErrSize`) VALUES ".format(self.TRACE_XYDATA_TABLE)
 
         yError = xyData[2] if len(xyData) > 2 and xyData[2] else []  

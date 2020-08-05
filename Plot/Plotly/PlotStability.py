@@ -85,7 +85,11 @@ class PlotStability(object):
             name += "RF" + RF
         
         if not name:
-            name = dataSources.get(DataSource.KIND, "amplitude")
+            kind = dataSources.get(DataSource.KIND, "amplitude")
+            if kind == "phase":
+                name = "ADEV({0})".format(kind)
+            else:
+                name = "AVAR({0})".format(kind)
 
         # add the trace:
         self.fig.add_trace(go.Scatter(x = xArray, y = yArray, mode = 'lines', name = name))
@@ -93,8 +97,8 @@ class PlotStability(object):
         # update overall dimensions:
         self.minXY[0] = min(self.minXY[0], min(xArray))
         self.minXY[1] = min(self.minXY[1], min(yArray))
-        self.maxXY[0] = max(self.minXY[0], max(xArray))
-        self.maxXY[1] = max(self.minXY[1], max(yArray))
+        self.maxXY[0] = max(self.maxXY[0], max(xArray))
+        self.maxXY[1] = max(self.maxXY[1], max(yArray))
         
         # add error bars:
         showErrorBars = int(plotElements.get(PlotEl.ERROR_BARS, "0"))
@@ -120,8 +124,8 @@ class PlotStability(object):
             # update overall dimensions (not accounting for errorBarsE but probably good enough):
             self.minXY[0] = min(self.minXY[0], min(errorBarsX))
             self.minXY[1] = min(self.minXY[1], min(errorBarsY))
-            self.maxXY[0] = max(self.minXY[0], max(errorBarsX))
-            self.maxXY[1] = max(self.minXY[1], max(errorBarsY))
+            self.maxXY[0] = max(self.maxXY[0], max(errorBarsX))
+            self.maxXY[1] = max(self.maxXY[1], max(errorBarsY))
 
         # append to traces:
         trace = (xArray, yArray, yError if yError else [], name)
@@ -142,8 +146,8 @@ class PlotStability(object):
         '''
         # add spec lines/points
         specLines = dict(color='black', width=3)
-        specMarks = dict(color='black', symbol='square', size=7)
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
+        specName = plotElements.get(PlotEl.SPEC1_NAME, 'Specification')
         if specLine:
             specLine = specLine.split(', ')
             x1 = float(specLine[0])
@@ -151,15 +155,18 @@ class PlotStability(object):
             x2 = float(specLine[2])
             y2 = float(specLine[3])
 
-            self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = 'Specification'))
+            self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = specName))
 
             # update overall dimensions:
             self.minXY[0] = min(self.minXY[0], min(x1, x2))
             self.minXY[1] = min(self.minXY[1], min(y1, y2))
-            self.maxXY[0] = max(self.minXY[0], max(x1, x2))
-            self.maxXY[1] = max(self.minXY[1], max(y1, y2))
-        
+            self.maxXY[0] = max(self.maxXY[0], max(x1, x2))
+            self.maxXY[1] = max(self.maxXY[1], max(y1, y2))
+
+        specLines = dict(color='firebrick', width=3)
+        specMarks = dict(color='firebrick', symbol='square', size=7)
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
+        specName = plotElements.get(PlotEl.SPEC2_NAME, None)
         if specLine:
             specLine = specLine.split(', ')
             x1 = float(specLine[0])
@@ -167,17 +174,18 @@ class PlotStability(object):
             x2 = float(specLine[2])
             y2 = float(specLine[3])
 
-            name = "Spec {:.1e}".format(y1)
+            if not specName:
+                specName = "Spec {:.1e}".format(y2)
             if x1 == x2 and y1 == y2:
-                self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'markers', marker = specMarks, name = name))
+                self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'markers', marker = specMarks, name = specName))
             else:
-                self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = name))
+                self.fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = specName))
 
             # update overall dimensions:
             self.minXY[0] = min(self.minXY[0], min(x1, x2))
             self.minXY[1] = min(self.minXY[1], min(y1, y2))
-            self.maxXY[0] = max(self.minXY[0], max(x1, y2))
-            self.maxXY[1] = max(self.minXY[1], max(y1, y2))
+            self.maxXY[0] = max(self.maxXY[0], max(x1, y2))
+            self.maxXY[1] = max(self.maxXY[1], max(y1, y2))
         
         # X axis label:
         kind = self.tsAPI.getDataSource(self.timeSeriesIds[0], DataSource.KIND)
