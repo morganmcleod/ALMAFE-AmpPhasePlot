@@ -57,7 +57,7 @@ class PlotAPI(object):
     
     def plotPowerSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
-        Create a POWER_SPECTRUM plot
+        Create an AMPLITUDE_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
@@ -80,13 +80,17 @@ class PlotAPI(object):
         # Get the timeseries in linear units:
         if srcUnits == (Units.DEG).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.DEG)
-            plotElements[PlotEl.TITLE] = "Phase Stability"
+            dfltTitle = "Phase Spectral Density"
         elif srcUnits == (Units.VOLTS).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
-            plotElements[PlotEl.TITLE] = "Voltage Noise Density"
+            dfltTitle = "Voltage Spectral Density"
         else:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS)
-            plotElements[PlotEl.TITLE] = "Amplitude Stability"
+            dfltTitle = "Power Spectral Density"
+        
+        # set the plot title:
+        if not plotElements.get(PlotEl.TITLE, False):        
+            plotElements[PlotEl.TITLE] = dfltTitle
         
         # make the plot:
         self.calc = PowerSpectrum.PowerSpectrum()

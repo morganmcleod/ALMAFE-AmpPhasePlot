@@ -14,6 +14,7 @@ Feature: Validate PlotAPI
     Scenario: Test plotting a power spectrum
     Given a time series data file on disk
 #    And we want to show the plot
+    And we specify units "W"
     When the time series data is inserted
     And the power spectrum plot is generated
     Then the image data can be retrieved

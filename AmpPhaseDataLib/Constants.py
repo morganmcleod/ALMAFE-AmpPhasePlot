@@ -11,7 +11,8 @@ class PlotKind(Enum):
     TIME_SERIES = 1
     AMP_STABILITY = 2
     PHASE_STABILITY = 3
-    POWER_SPECTRUM = 4
+    AMPLITUDE_SPECTRUM = 4  # ASD for voltage or phase
+    POWER_SPECTRUM = 5      # PSD for power
     ALL = 99
 
 class EnumHelper(Enum):
@@ -113,6 +114,7 @@ class Units(EnumHelper):
     CELCIUS     = 'C'           # temperature
     AVAR        = u'σ²(T)'      # Allan variance units
     ADEV        = u'σ(2, t=10s, T)'  # 2-pt Allan dev. definition. Actual units will be DEG or FS.
+    PER_ROOT_HZ = u'{0}/√Hz'    # Spectral density units.  Replace {0} with V, DEG, W
 
 class SpecLines(object):
     FE_AMP_STABILITY1 = "0.05, 5e-7, 100, 5e-7"     # Units = AVAR
@@ -125,7 +127,7 @@ class SpecLines(object):
     BAND6_AMP_STABILITY1 = "0.05, 4e-7, 100, 4e-7"  # Units = AVAR
     BAND6_AMP_STABILITY2 = "300, 3e-6, 300, 3e-6"   # Units = AVAR
     BAND6_PHASE_STABILITY1 = "10, 0.5, 300, 0.5"    # Units = DEG
-    BAND6_PHASE_STABILITY2 = "10, 0.5, 300, 5"      # Band6 test limit DEG
+    BAND6_PHASE_STABILITY2 = "10, 0.5, 300, 5"      # Band6 test limit. Units = DEG
     BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6"        # Since this is AVAR, may need to use sqrt(0.2e-6)
     BIAS_LNA_VOLT_STABILITY1 = "1, 0.8e-6, 1, 0.8e-6"           # 800 nV/√Hz, max @ 1 Hz
     BIAS_LNA_VOLT_STABILITY2 = "0.1 to 800 Hz: 20 uV rms max"   # TODO: Still need to interpret this

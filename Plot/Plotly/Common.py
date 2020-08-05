@@ -1,9 +1,49 @@
 '''
 Plot.Plotly.Common:  functions used in more than one plot
 '''
+import plotly.graph_objects as go
 from AmpPhaseDataLib.Constants import PlotEl
 
+def addSpecLines(fig, plotElements):
+    '''
+    Common Plotly implemenation for adding spec lines 
+    :param fig: plotly.graph_objects.Figure
+    :param plotElements: dict of {PlotEl : str}
+    '''
+    # add spec line 1, if defined:
+    specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
+    specName = plotElements.get(PlotEl.SPEC1_NAME, "Specification")
+    if specLine:
+        specLine = specLine.split(', ')
+        x1 = float(specLine[0])
+        y1 = float(specLine[1])
+        x2 = float(specLine[2])
+        y2 = float(specLine[3])
+        specLines = dict(color='black', width=3)
+        fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = specName))
+
+    # add spec line 2, if defined:
+    specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
+    specName = plotElements.get(PlotEl.SPEC2_NAME, None)
+    if specLine:
+        specLine = specLine.split(', ')
+        x1 = float(specLine[0])
+        y1 = float(specLine[1])
+        x2 = float(specLine[2])
+        y2 = float(specLine[3])
+        
+        # name for spec line 2 defaults to y2:
+        if not specName:
+            specName = "Spec {:.1e}".format(y2)
+
 def addFooters(fig, footer1, footer2, footer3):
+    '''
+    Common Plotly implementation for adding footers
+    :param fig: plotly.graph_objects.Figure
+    :param footer1: str
+    :param footer2: str
+    :param footer3: str
+    '''
     # make room at the bottom for footers:
     fig.update_layout(margin=dict(b=110))
     
@@ -43,6 +83,14 @@ def addFooters(fig, footer1, footer2, footer3):
         ])
 
 def makePlotOutput(fig, plotElements, outputName = None, show = False):
+    '''
+    Common Plotly implementation for producing plot output
+    :param fig: plotly.graph_objects.Figure
+    :param plotElements: dict of {PlotEl : str}
+    :param outputName: optional filename where to write the plot .PNG file
+    :param show: if True, displays the plot using the default renderer.
+    :return binary imageData
+    '''
     # show interactive:
     if show:
         fig.show()
@@ -61,4 +109,3 @@ def makePlotOutput(fig, plotElements, outputName = None, show = False):
             file.write(imageData)
             
     return imageData
-        

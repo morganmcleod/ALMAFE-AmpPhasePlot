@@ -27,11 +27,11 @@ class PowerSpectrum(object):
         # real FFT, normalized amplitude:
         fourierTransform = np.fft.rfft(dataSeries) / n
         # make array of bin numbers:
-        values = np.arange(int(n / 2))
+        binNums = np.arange(int(n / 2))
         # scale bin numbers to frequencies: 
-        frequencies = values / (n / fSampling) 
+        frequencies = binNums * fSampling / n 
         # return frequencies as xResult:
         self.xResult = frequencies.tolist();
-        # return amplitude power spectrum as yResult:
+        # return amplitude spectral density as yResult:
         self.yResult = abs(fourierTransform).tolist()
         return True

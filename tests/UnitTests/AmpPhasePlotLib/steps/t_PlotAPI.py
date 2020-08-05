@@ -20,6 +20,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'
+    context.kind = "amplitude"
     
 @given('a phase time series data file on disk')
 def step_impl(context):
@@ -30,6 +31,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'    
+    context.kind = "phase"
 
 @given('we want to show the plot')
 def step_impl(context):
@@ -82,6 +84,7 @@ def step_impl(context):
     assert_that(context.timeSeriesId)
     
     context.tAPI.setDataSource(context.timeSeriesId, DataSource.DATA_SOURCE, context.dataFile)
+    context.tAPI.setDataSource(context.timeSeriesId, DataSource.KIND, context.kind)
     if hasattr(context, 'units'):
         context.tAPI.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
 
