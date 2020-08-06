@@ -1,7 +1,7 @@
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import PlotKind, PlotEl, DataSource, Units
+from AmpPhaseDataLib.Constants import *
 from Plot.Common import makeTitle, makeFooters
-from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
+from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
 
 class PlotPowerSpectrum(object):
@@ -47,7 +47,7 @@ class PlotPowerSpectrum(object):
 
         # Get the DataSource tags:
         dataSources = ts.getAllDataSource(timeSeriesId)
-        kind = dataSources.get(DataSource.KIND, "amplitude")
+        dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
         
         # set the X axis units:
         xUnits = (Units.HZ).value
@@ -56,19 +56,21 @@ class PlotPowerSpectrum(object):
         # set the Y axis units:
         yUnits = dataSources.get(DataSource.UNITS, None)
         if not yUnits:
-            if kind == "voltage":
+            if dataKind == (DataKind.VOLTAGE).value:
                 yUnits = (Units.VOLTS).value
-            elif kind == "phase":
+            elif dataKind == (DataKind.PHASE).value:
                 yUnits = (Units.DEG).value
+            elif dataKind == (DataKind.POWER).value:
+                yUnits = (Units.WATTS).value
             else:
                 yUnits = (Units.AMPLITUDE).value
         plotElements[PlotEl.YUNITS] = yUnits
         
         # set the trace legend:
-        if kind == "voltage" or kind == "phase":
-            legend = "ASD({0})".format(yUnits)            
+        if dataKind == (DataKind.POWER).value:
+            legend = "PSD({0})".format(yUnits)            
         else:
-            legend = "PSD({0})".format(yUnits)
+            legend = "ASD({0})".format(yUnits)
 
         # set the Y axis label:
         plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_ROOT_HZ).value.format(yUnits)
@@ -182,9 +184,18 @@ class PlotPowerSpectrum(object):
             plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel
         fig.update_yaxes(title_text = yAxisLabel)
 
-        # log-log plot, scientific notation on Y:
-        fig.update_layout(xaxis_type="log", yaxis_type="log", showlegend=True, 
+        # default to log-log plot, but allow overrides:
+        xaxis_type = "linear" if plotElements.get(PlotEl.X_LINEAR, False) else "log"
+        yaxis_type = "linear" if plotElements.get(PlotEl.Y_LINEAR, False) else "log"
+        
+        # scientific notation on Y:
+        fig.update_layout(xaxis_type = xaxis_type, yaxis_type = yaxis_type, showlegend = True, 
                           yaxis = dict(showexponent = 'all', exponentformat = 'e'))
+        
+        # Compliance string:
+        compliance = plotElements.get(PlotEl.SPEC_COMPLIANCE, None)
+        if compliance:
+            addComplianceString(fig, compliance) 
         
         # Plot title:
         title = plotElements.get(PlotEl.TITLE, "")

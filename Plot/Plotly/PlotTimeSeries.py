@@ -1,5 +1,5 @@
 from AmpPhaseDataLib import TimeSeriesAPI
-from AmpPhaseDataLib.Constants import PlotEl, DataSource, Units
+from AmpPhaseDataLib.Constants import *
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, makePlotOutput
 import plotly.graph_objects as go
@@ -43,8 +43,8 @@ class PlotTimeSeries(object):
 
         # Get the DataSource tags:
         dataSources = ts.getAllDataSource(timeSeriesId)
-        kind = dataSources.get(DataSource.KIND, "amplitude")
-        legends = [dataSources.get(DataSource.SUBSYSTEM, kind)]
+        dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind)]
         if ts.temperatures1:
             legends.append('Sensor1')
         if ts.temperatures2:
@@ -56,12 +56,14 @@ class PlotTimeSeries(object):
         
         yUnits = plotElements.get(PlotEl.YUNITS, None)
         if not yUnits:
-            if kind == "phase":
-                yUnits = dataSources.get(DataSource.UNITS, (Units.DEG).value)
-            elif kind == "voltage":
-                yUnits = dataSources.get(DataSource.UNITS, (Units.VOLTS).value)
+            if dataKind == (DataKind.VOLTAGE).value:
+                yUnits = (Units.VOLTS).value
+            elif dataKind == (DataKind.PHASE).value:
+                yUnits = (Units.DEG).value
+            elif dataKind == (DataKind.POWER).value:
+                yUnits = (Units.WATTS).value
             else:
-                yUnits = dataSources.get(DataSource.UNITS, (Units.WATTS).value)
+                yUnits = (Units.AMPLITUDE).value
             plotElements[PlotEl.YUNITS] = yUnits
             
         y2Units = plotElements.get(PlotEl.Y2UNITS, None)
@@ -98,7 +100,7 @@ class PlotTimeSeries(object):
         if not xAxisLabel:
             if xUnits == (Units.LOCALTIME).value:
                 xAxisLabel = xUnits
-            elif xUnits == (Units.SECONDS).value or xUnits == (Units.MINUTES).value:
+            else:
                 xAxisLabel = "time [" + xUnits + "]"  
         fig.update_xaxes(title_text = xAxisLabel)
         plotElements[PlotEl.X_AXIS_LABEL] = xAxisLabel
@@ -106,8 +108,10 @@ class PlotTimeSeries(object):
         # Y axis label:
         yAxisLabel = plotElements.get(PlotEl.Y_AXIS_LABEL, None)
         if not yAxisLabel:
-            yAxisLabel = kind if kind else "amplitude"
-            yAxisLabel += " [" + yUnits + "]"
+            if yUnits == (Units.AMPLITUDE).value:
+                yAxisLabel = yUnits
+            else:
+                yAxisLabel = dataKind + " [" + yUnits + "]"
         tickformat = ".3f" if yUnits == (Units.DBM).value else ""
         fig.update_yaxes(title_text = yAxisLabel, tickformat=tickformat, secondary_y=False)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel

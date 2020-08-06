@@ -70,7 +70,11 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
     measSwVer = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_VERSION)
     if not measSwVer:
         measSwVer = "unknown"   
+    testSystem = tsAPI.getDataSource(timeSeriesIds[0], DataSource.TEST_SYSTEM)
+    if not testSystem:
+        testSystem = "unknown"   
     dataStatus = getDataStatusString(allDataStatus) 
+    
     
     idStr = ""
     configStr = ""
@@ -96,7 +100,7 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
     plotElements[PlotEl.FOOTER1] = footer1
 
     # Footer2 text:
-    footer2 = "Meas SW: {0} | Ver: {1}".format(measSwname if measSwname else "unknown", measSwVer if measSwVer else "unknown")
+    footer2 = "Meas SW: {0} | Ver: {1} | TestSys: {2}".format(measSwname, measSwVer, testSystem)
     plotElements[PlotEl.FOOTER2] = footer2
 
     # Footer3 text:

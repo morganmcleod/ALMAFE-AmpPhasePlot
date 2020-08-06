@@ -36,6 +36,15 @@ def addSpecLines(fig, plotElements):
         if not specName:
             specName = "Spec {:.1e}".format(y2)
 
+        specLines = dict(color='firebrick', width=3)
+        specMarks = dict(color='firebrick', symbol='square', size=7)
+        
+        # use a square marker if both endpoints are the same:
+        if x1 == x2 and y1 == y2:
+            fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'markers', marker = specMarks, name = specName))
+        else:
+            fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = specName))
+
 def addFooters(fig, footer1, footer2, footer3):
     '''
     Common Plotly implementation for adding footers
@@ -79,6 +88,19 @@ def addFooters(fig, footer1, footer2, footer3):
                 yref="paper",
                 xshift=-50,
                 yshift=-110
+            )
+        ])
+    
+def addComplianceString(fig, compliance):
+    fig.update_layout(
+        annotations=[
+            dict(
+                x=0,
+                y=0,
+                showarrow=False,
+                text=compliance,
+                xshift=0,
+                yshift=0
             )
         ])
 

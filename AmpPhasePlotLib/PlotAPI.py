@@ -2,7 +2,7 @@
 PlotAPI for calling applications to generate plots.
 '''
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import PlotKind, Units, PlotEl, DataSource, SpecLines
+from AmpPhaseDataLib.Constants import *
 from Calculate import AmplitudeStability, PhaseStability, PowerSpectrum
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotPowerSpectrum
 from datetime import datetime
@@ -92,12 +92,27 @@ class PlotAPI(object):
         if not plotElements.get(PlotEl.TITLE, False):        
             plotElements[PlotEl.TITLE] = dfltTitle
         
+        # check for a special RMS spec:
+        rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
+        if rmsSpec:
+            rmsSpec = rmsSpec.split(', ')
+            bwLower = float(rmsSpec[0])
+            bwUpper = float(rmsSpec[1])
+            rmsSpec = float(rmsSpec[2])
+        
         # make the plot:
         self.calc = PowerSpectrum.PowerSpectrum()
         self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
         
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds):
             return False
+
+        if rmsSpec:
+            RMS = self.calc.calculateRMS(bwLower, bwUpper)
+            compliance = "{0:.3e} {1} RMS in {2} to {3} Hz.  Max {4:.3e} : {5}".format(
+                RMS, srcUnits, bwLower, bwUpper, rmsSpec, 
+                "PASS" if RMS <= rmsSpec else "FAIL")
+            plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
 
         if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, plotElements, outputName, show):
             return False
@@ -166,14 +181,16 @@ class PlotAPI(object):
         if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
             return False
         
-        kind = self.tsAPI.getDataSource(timeSeriesId, DataSource.KIND)
-        if not kind:
-            kind = "amplitude"
+        dataKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND)
+        if not dataKind:
+            dataKind = (DataKind.AMPLITUDE).value
         
-        if kind == "voltage":
+        if dataKind == (DataKind.VOLTAGE).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
-        else:
+        elif dataKind == (DataKind.POWER).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS)
+        else:
+            dataSeries = self.tsAPI.dataSeries
 
         if not dataSeries:
             return False

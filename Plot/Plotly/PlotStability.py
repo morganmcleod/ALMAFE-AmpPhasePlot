@@ -1,5 +1,5 @@
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import PlotKind, PlotEl, DataSource, Units
+from AmpPhaseDataLib.Constants import *
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
@@ -60,8 +60,6 @@ class PlotStability(object):
         '''
         # Get the DataSource tags from the TimeSeries:
         dataSources = self.tsAPI.getAllDataSource(timeSeriesId)
-        if not dataSources:
-            return False
         
         # Determine yUnits:
         yUnits = plotElements.get(PlotEl.YUNITS, None)
@@ -69,18 +67,22 @@ class PlotStability(object):
             yUnits = dataSources.get(DataSource.UNITS, yUnits)
             plotElements[PlotEl.YUNITS] = yUnits
         
-        # If we still don't know, guess based on DataSource.KIND:
-        kind = dataSources.get(DataSource.KIND, "amplitude")
+        # If we still don't know, guess based on DataSource.DATA_KIND:
+        dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
         if not yUnits:
-            if kind == "phase":
+            if dataKind == (DataKind.VOLTAGE).value:
+                yUnits = (Units.VOLTS).value
+            elif dataKind == (DataKind.PHASE).value:
                 yUnits = (Units.DEG).value
+            elif dataKind == (DataKind.POWER).value:
+                yUnits = (Units.WATTS).value
             else:
                 yUnits = (Units.AMPLITUDE).value
             plotElements[PlotEl.YUNITS] = yUnits
 
         # update self.plotKind:
         if not self.plotKind:
-            if kind == "phase":
+            if dataKind == (DataKind.PHASE).value:
                 self.plotKind = PlotKind.PHASE_STABILITY
             else:
                 self.plotKind = PlotKind.AMP_STABILITY
@@ -104,7 +106,7 @@ class PlotStability(object):
             name += "RF" + RF
         
         if not name:
-            if kind == "phase":
+            if dataKind == (DataKind.PHASE).value:
                 name = "ADEV({0})".format(yUnits)
             else:
                 name = "AVAR({0})".format(yUnits)
@@ -298,9 +300,9 @@ class PlotStability(object):
         yAxisLabel = plotElements.get(PlotEl.Y_AXIS_LABEL, None)
         if not yAxisLabel:
             if self.plotKind == PlotKind.PHASE_STABILITY:
-                yAxisLabel = "2-Pt ADEV " + (Units.ADEV).value + " [" + yUnits + "]"                
+                yAxisLabel = "2-Pt ADEV: " + (Units.ADEV).value + " [" + yUnits + "]"                
             else:
-                yAxisLabel = "Allan variance" + " [" + yUnits + "]"
+                yAxisLabel = "AVAR: " + (Units.AVAR).value + " [" + yUnits + "]"
         fig.update_yaxes(title_text = yAxisLabel)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel
 

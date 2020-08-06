@@ -239,11 +239,15 @@ class TimeSeriesAPI(object):
         if requiredUnits and not isinstance(requiredUnits, Units):
             raise ValueError('Use Units enum from Constants.py')
             
-        div = 60 if requiredUnits == Units.MINUTES else 1  
         if requiredUnits == Units.SECONDS or requiredUnits == Units.MINUTES: 
             # convert from datetime to seconds or minutes:
+            div = 60 if requiredUnits == Units.MINUTES else 1  
             x0 = self.timeStamps[0]
             result = [(x - x0).seconds / div for x in self.timeStamps]
+        elif requiredUnits == Units.MS:
+            # convert from datetime to ms:
+            x0 = self.timeStamps[0]
+            result = [(x - x0).microseconds / 1000 for x in self.timeStamps]
         else:
             # not supported:
             raise ValueError('Unsupported units conversion')

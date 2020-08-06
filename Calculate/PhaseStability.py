@@ -30,25 +30,29 @@ class PhaseStability(object):
     def calculate(self, dataSeries, tau0Seconds = 1.0, TMin = 10.0, TMax = 300.0, freqRFGHz = None):
         '''
         :param dataSeries:  list of float degrees phases to analyze
-        :param tau0Seconds: integtration time of the dataSeries
+        :param tau0Seconds: integration time of the dataSeries
         :param TMin: float shortest integration time to plot
         :param TMax: float longest integration time to plot
         :param freqRFGHz:  if provided, the Allan dev yResult will be returned in fs rather than degreees
+        :return True if successful, otherwise False
         '''
         # clear anything kept from last run:
         self.__reset()
-        dataSeries = dataSeries
         self.freqRFGHz = freqRFGHz if freqRFGHz and freqRFGHz > 0.0 else None
         
-        # before processing, make sure that the phase data doesn't wrap around:
-        unwrapPhase(dataSeries)
-
         # number of whole tau0 intervals in TMin: 
         NMin = int(TMin / tau0Seconds)
 
+        # if we have less than 2 * NMin samples, abort:
+        if len(dataSeries) < (2 * NMin):
+            return False
+
         # compute new TMin rounded down to whole tau0 intervals:
         TMin = tau0Seconds * NMin        
-           
+
+        # before processing, make sure that the phase data doesn't wrap around:
+        unwrapPhase(dataSeries)
+        
         # If more than one sample fits in the new TMin
         if NMin > 1:
             # integrate TMin worth of samples: 

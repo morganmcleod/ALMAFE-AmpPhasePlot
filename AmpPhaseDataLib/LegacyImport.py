@@ -3,7 +3,7 @@ LegacyImport: methods to import legacy TimeSeries and Result data files
 '''
 
 from AmpPhaseDataLib import TimeSeriesAPI
-from AmpPhaseDataLib.Constants import DataSource, DataStatus, Units
+from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, Units
 from Utility import ParseTimeStamp
 from Utility.StripQuotes import stripQuotes
 import configparser
@@ -85,7 +85,7 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, importUnits =
         return False
     
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
-    api.setDataSource(timeSeriesId, DataSource.KIND, "amplitude")
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.POWER).value)
     api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.WATTS).value)
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "HP E4418B Power Measurement.vi")
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "2009-03-13 changelist 6851")
@@ -246,7 +246,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
         return False
             
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
-    api.setDataSource(timeSeriesId, DataSource.KIND, "amplitude")
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.POWER).value)
     api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.WATTS).value)
     if LO:
         api.setDataSource(timeSeriesId, DataSource.LO_GHZ, str(LO))
@@ -414,7 +414,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
         return False
             
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
-    api.setDataSource(timeSeriesId, DataSource.KIND, "phase")
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.PHASE).value)
     api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.DEG).value)
     if LO:
         api.setDataSource(timeSeriesId, DataSource.LO_GHZ, str(LO))
@@ -434,7 +434,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId
 
-def importTimeSeriesBand6CTS_experimental(file, notes = None, kind = "voltage"):
+def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = "voltage"):
     '''
     Import power meter measurements extracted from a CTS spreadsheet.
     This is experimental and will likely not be used in the future CTS implementation
@@ -476,10 +476,13 @@ def importTimeSeriesBand6CTS_experimental(file, notes = None, kind = "voltage"):
         return False
     
     # no conversion:
-    if kind == "phase":
-        print("Importing degrees")
+    if dataKind == (DataKind.PHASE).value:
+        units = (Units.DEG).value
+        print("Importing phase in degrees")
     else:
-        print("Importing Volts")
+        dataKind = (DataKind.VOLTAGE).value
+        units = (Units.VOLTS).value
+        print("Importing voltage")
     
     api = TimeSeriesAPI.TimeSeriesAPI()
     timeSeriesId = api.insertTimeSeries(dataSeries, temperatures, timeStamps = timeStamps)
@@ -488,11 +491,8 @@ def importTimeSeriesBand6CTS_experimental(file, notes = None, kind = "voltage"):
         return False
     
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
-    api.setDataSource(timeSeriesId, DataSource.KIND, kind)
-    if kind == "phase":
-        api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.DEG).value)
-    else:
-        api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.VOLTS).value)
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, dataKind)
+    api.setDataSource(timeSeriesId, DataSource.UNITS, units)
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "Band 6 CTS")
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "6.3")
     if notes:
