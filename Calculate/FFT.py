@@ -1,11 +1,11 @@
 '''
-Use the Discrete Fourier Transform functions from numpy.fft; Specifically the rfft(a[, n, axis, norm]) 
+Use the Fast Fourier Transform functions from numpy.fft 
 '''
 import numpy as np
 import bisect
 from math import sqrt
 
-class PowerSpectrum(object):
+class FFT(object):
     '''
     Calculate power spectral density for a time series.
     '''

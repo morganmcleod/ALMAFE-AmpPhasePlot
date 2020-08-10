@@ -3,7 +3,7 @@ PlotAPI for calling applications to generate plots.
 '''
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
 from AmpPhaseDataLib.Constants import *
-from Calculate import AmplitudeStability, PhaseStability, PowerSpectrum
+from Calculate import AmplitudeStability, PhaseStability, FFT
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotPowerSpectrum
 from datetime import datetime
 
@@ -101,7 +101,7 @@ class PlotAPI(object):
             rmsSpec = float(rmsSpec[2])
         
         # make the plot:
-        self.calc = PowerSpectrum.PowerSpectrum()
+        self.calc = FFT.FFT()
         self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
         
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds):
