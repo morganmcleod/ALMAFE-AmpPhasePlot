@@ -64,17 +64,10 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
 
     # Footer1 text:
     whenMeas = startTime.strftime('%a %Y-%m-%d %H:%M:%S')
-    measSwname = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_NAME)
-    if not measSwname:
-        measSwname = "unknown"   
-    measSwVer = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_VERSION)
-    if not measSwVer:
-        measSwVer = "unknown"   
-    testSystem = tsAPI.getDataSource(timeSeriesIds[0], DataSource.TEST_SYSTEM)
-    if not testSystem:
-        testSystem = "unknown"   
+    measSwname = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_NAME, "unknown")
+    measSwVer = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_VERSION, "unknown")
+    testSystem = tsAPI.getDataSource(timeSeriesIds[0], DataSource.TEST_SYSTEM, "unknown")
     dataStatus = getDataStatusString(allDataStatus) 
-    
     
     idStr = ""
     configStr = ""
@@ -105,9 +98,7 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
 
     # Footer3 text:
     if len(timeSeriesIds) == 1:
-        dataSource = tsAPI.getDataSource(timeSeriesIds[0], DataSource.DATA_SOURCE)
-        if not dataSource:
-            dataSource = "unknown"
+        dataSource = tsAPI.getDataSource(timeSeriesIds[0], DataSource.DATA_SOURCE, "unknown")
         footer3 = "Source: " + dataSource
     else:
         footer3 = ""

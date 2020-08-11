@@ -33,7 +33,7 @@ from Database import TimeSeriesDatabase
 from Database.TagsTools import applyDataStatusRules
 from Utility import ParseTimeStamp
 from datetime import datetime
-from math import log10
+from math import log10, sqrt
 import configparser
 
 # TODO: define our own exceptions instead of using ValueError
@@ -158,33 +158,34 @@ class TimeSeriesAPI(object):
         self.temperatures2 = result.temperatures2
         return self.timeSeriesId
 
-    def getDataSeries(self, requiredUnits = None):
+    def getDataSeries(self, requiredUnits = None, isPower = False):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
         :param requiredUnits: enum Units from Constants.py
+        :param isPower:  If true, take the square root of each item.  For values representing a power detector (typically W or V)
         :return list derived from self.dataSeries converted, if possible
         '''
-        units = self.getDataSource(self.timeSeriesId, DataSource.UNITS)
+        units = Units.fromStr(self.getDataSource(self.timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
 
-        if not units or not requiredUnits:
-            # we don't know how to convert:
-            return self.dataSeries
-        
-        units = Units.fromStr(units)
-        
-        if units == requiredUnits:
-            # no coversion needed:
-            return self.dataSeries
-        
         if requiredUnits and not isinstance(requiredUnits, Units):
             raise ValueError('Use Units enum from Constants.py')
+
+        if not requiredUnits or units == requiredUnits:
+            # no coversion needed:
+            if isPower:
+                return [sqrt(y) for y in self.dataSeries]
+            else:
+                return self.dataSeries
+
+        # helper to take the square root or not depending on 'isPower':
+        sqrtMaybe = lambda y: sqrt(y) if isPower else y
             
         result = None
         
         if units == Units.WATTS:
             if requiredUnits == Units.MW:
                 # convert from watt to mW:
-                result = [y * 1000 for y in self.dataSeries]
+                result = [sqrtMaybe(y * 1000) for y in self.dataSeries]
             
             if requiredUnits == Units.DBM:
                 # convert from watt to dBm:
@@ -193,7 +194,7 @@ class TimeSeriesAPI(object):
         elif units == Units.MW:
             if requiredUnits == Units.WATTS:
                 # convert from mW to watt:
-                result = [y / 1000 for y in self.dataSeries]
+                result = [sqrtMaybe(y / 1000) for y in self.dataSeries]
             
             if requiredUnits == Units.DBM:
                 # convert from mW to dBm:
@@ -202,21 +203,21 @@ class TimeSeriesAPI(object):
         elif units == Units.DBM:
             if requiredUnits == Units.WATTS:
                 # convert from dBm to watt:
-                result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
+                result = [sqrtMaybe(pow(10, y / 10) / 1000) for y in self.dataSeries]
             
             if requiredUnits == Units.MW:
                 # convert from dBm to mW:
-                result = [pow(10, y / 10) for y in self.dataSeries]
+                result = [sqrtMaybe(pow(10, y / 10)) for y in self.dataSeries]
         
         elif units == Units.VOLTS:
             if requiredUnits == Units.MV:
                 # convert from Volt to mV
-                result = [y * 1000 for y in self.dataSeries]
+                result = [sqrtMaybe(y * 1000) for y in self.dataSeries]
         
         elif units == Units.MV:
             if requiredUnits == Units.VOLTS:
                 # convert from mV to Volt
-                result = [y / 1000 for y in self.dataSeries]
+                result = [sqrtMaybe(y / 1000) for y in self.dataSeries]
         else:
             # not supported:
             raise ValueError('Unsupported units conversion')
@@ -316,16 +317,17 @@ class TimeSeriesAPI(object):
             raise ValueError('Use DataSource enum from Constants.py')
         self.db.setTags(timeSeriesId, { dataSource.value : value })
         
-    def getDataSource(self, timeSeriesId, dataSource):
+    def getDataSource(self, timeSeriesId, dataSource, default = None):
         '''
         Retrieve a DataSource tag for a TimeSeries
         :param timeSeriesId: int
         :param dataSource:   DataSource enum from Constants.py
+        :param default:      value to return if not found
         '''
         if not isinstance(dataSource, DataSource):
             raise ValueError('Use DataSource enum from Constants.py')
         result = self.db.getTags(timeSeriesId, [dataSource.value])
-        return result.get(dataSource.value, None)
+        return result.get(dataSource.value, default)
     
     def clearDataSource(self, timeSeriesId, dataSource):
         '''
@@ -377,11 +379,8 @@ class TimeSeriesAPI(object):
         '''
         check for dataSeries minimum length
         '''
-        if isinstance(self.dataSeries, list):
-            dataLen = len(self.dataSeries)
-            if dataLen < 2:
-                raise ValueError('dataSeries must be a list of at least 2 points.')
-        else:
+        dataLen = len(self.dataSeries)
+        if dataLen < 2:
             raise ValueError('dataSeries must be a list of at least 2 points.')
         
     def __loadTimeStamps(self, timeStamps):

@@ -95,10 +95,12 @@ def addComplianceString(fig, compliance):
     fig.update_layout(
         annotations=[
             dict(
-                x=0,
-                y=0,
+                x=0.5,
+                y=1,
                 showarrow=False,
                 text=compliance,
+                xref="paper",
+                yref="paper",
                 xshift=0,
                 yshift=0
             )

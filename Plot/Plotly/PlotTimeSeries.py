@@ -131,6 +131,17 @@ class PlotTimeSeries(object):
                 y2center = y2min - (y2span / 2)
                 fig.update_yaxes(range=[y2center - 1, y2center + 3], secondary_y=True)
 
+        # expand plot window:
+        window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
+        if window:
+            window = window.split(', ')
+            fig.update_xaxes(range = [float(window[0]), window[1]])
+
+        window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
+        if window:
+            window = window.split(', ')
+            fig.update_yaxes(range = [float(window[0]), window[1]])
+
         # Plot title:
         title = makeTitle([timeSeriesId], plotElements)
         if title:

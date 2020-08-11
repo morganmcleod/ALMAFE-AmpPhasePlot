@@ -106,8 +106,6 @@ class TimeSeriesDatabase(object):
         '''
         if not self.timeSeriesId:
             raise ValueError('No currently selected timeSeriesId.')
-        if not dataSeries:
-            raise ValueError('dataSeries is required.')
         
         q0 = "INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) VALUES "
         

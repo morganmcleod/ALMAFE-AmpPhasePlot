@@ -67,10 +67,7 @@ class PlotPowerSpectrum(object):
         plotElements[PlotEl.YUNITS] = yUnits
         
         # set the trace legend:
-        if dataKind == (DataKind.POWER).value:
-            legend = "PSD({0})".format(yUnits)            
-        else:
-            legend = "ASD({0})".format(yUnits)
+        legend = "Real FFT({0})".format(yUnits)
 
         # set the Y axis label:
         plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_ROOT_HZ).value.format(yUnits)
@@ -192,6 +189,17 @@ class PlotPowerSpectrum(object):
         fig.update_layout(xaxis_type = xaxis_type, yaxis_type = yaxis_type, showlegend = True, 
                           yaxis = dict(showexponent = 'all', exponentformat = 'e'))
         
+        # expand plot window:
+        window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
+        if window:
+            window = window.split(', ')
+            fig.update_xaxes(range = [float(window[0]), window[1]])
+
+        window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
+        if window:
+            window = window.split(', ')
+            fig.update_yaxes(range = [float(window[0]), window[1]])
+            
         # Compliance string:
         compliance = plotElements.get(PlotEl.SPEC_COMPLIANCE, None)
         if compliance:

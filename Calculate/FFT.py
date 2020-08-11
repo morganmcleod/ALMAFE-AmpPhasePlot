@@ -35,6 +35,8 @@ class FFT(object):
         fSampling = 1 / tau0Seconds
         # real FFT, normalized amplitude:
         fourierTransform = np.fft.rfft(dataSeries) / n
+        # correct for discarding half of two-sided spectrum:
+        fourierTransform[1:] *= 2
         # make array of bin numbers:
         binNums = np.arange(len(fourierTransform))
         # scale bin numbers to frequencies:
@@ -46,27 +48,29 @@ class FFT(object):
         self.yResult = abs(fourierTransform).tolist()
         return True
     
-    def RMSfromFFT(self, bwLower, bwUpper, ASD = False):
+    def RMSfromFFT(self, bwLower = 0, bwUpper = 0):
         '''
         Calculate the RMS noise in the specified bandwidth using the FFT outputs from calculate() 
         Must be called after calculate()
         :param bwLower:
         :param bwUpper:
         '''
-        iLower = bisect.bisect_left(self.xResult, bwLower)
-        iUpper = bisect.bisect_right(self.xResult, bwUpper)
-#         print("iLower={}, iUpper={}".format(iLower, iUpper))
+        iLower = bisect.bisect_left(self.xResult, bwLower) if bwLower else 0
+        iUpper = bisect.bisect_right(self.xResult, bwUpper) if bwUpper else len(self.yResult)
+        print("binSize={}".format(self.binSize))
+
+#         print("iLower={}, iUpper={}, binSize={}".format(iLower, iUpper, self.binSize))
 #         print("xlower={}, xUpper={}".format(self.xResult[iLower], self.xResult[iUpper - 1]))
 #         print("ylower={}, yUpper={}".format(self.yResult[iLower], self.yResult[iUpper - 1]))
         
-        if ASD:
-            # y is in V/rootHz.  y*y is V^2/Hz. binSize is Hz.  result is V
-            sumSq = sum([y * y * self.binSize for y in self.yResult[iLower:iUpper]])
-            return sqrt(sumSq)
-        else: # PSD
-            # y is in V^2/Hz. 
-            tot = sum([(y * self.binSize) for y in self.yResult[iLower:iUpper]])
-            return sqrt(tot)
+        f = lambda y, endPt: (y * (0.5 if endPt else 1) / sqrt(2)) ** 2
+        
+        sumSq = sum([f(y, False) for y in self.yResult[iLower + 1:iUpper - 1]] )
+        sumSq += f(self.yResult[iLower], True) if (iLower > 0) else 0
+        sumSq += f(self.yResult[iUpper-1], True)
+        RMS = sqrt(sumSq) + self.yResult[0] if iLower == 0 else 0
+        return RMS 
+    
         
     def RMS(self, dataSeries, ASD = False):
         '''
