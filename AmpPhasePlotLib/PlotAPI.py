@@ -195,14 +195,14 @@ class PlotAPI(object):
         if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
             return False
         
-        dataKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        # Get the DataSource tags:
+        srcKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        srcUnits = self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value)
         
-        if dataKind == (DataKind.VOLTAGE).value:
+        if srcKind == (DataKind.VOLTAGE).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
-        elif dataKind == (DataKind.POWER).value:
-            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS)
-        else:
-            dataSeries = self.tsAPI.dataSeries
+        else: # for POWER and AMPLITUDE, use the source units, if any:
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.fromStr(srcUnits))
 
         if not dataSeries:
             return False

@@ -57,7 +57,6 @@ class FFT(object):
         '''
         iLower = bisect.bisect_left(self.xResult, bwLower) if bwLower else 0
         iUpper = bisect.bisect_right(self.xResult, bwUpper) if bwUpper else len(self.yResult)
-        print("binSize={}".format(self.binSize))
 
 #         print("iLower={}, iUpper={}, binSize={}".format(iLower, iUpper, self.binSize))
 #         print("xlower={}, xUpper={}".format(self.xResult[iLower], self.xResult[iUpper - 1]))

@@ -173,12 +173,12 @@ class TimeSeriesAPI(object):
         if not requiredUnits or units == requiredUnits:
             # no coversion needed:
             if isPower:
-                return [sqrt(y) for y in self.dataSeries]
+                return [sqrt(abs(y)) for y in self.dataSeries]
             else:
                 return self.dataSeries
 
         # helper to take the square root or not depending on 'isPower':
-        sqrtMaybe = lambda y: sqrt(y) if isPower else y
+        sqrtMaybe = lambda y: sqrt(abs(y)) if isPower else y
             
         result = None
         

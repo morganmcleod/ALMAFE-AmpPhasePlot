@@ -44,6 +44,7 @@ class PlotTimeSeries(object):
         # Get the DataSource tags:
         dataSources = ts.getAllDataSource(timeSeriesId)
         dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        dataUnits = dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value)
         legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind)]
         if ts.temperatures1:
             legends.append('Sensor1')
@@ -57,13 +58,11 @@ class PlotTimeSeries(object):
         yUnits = plotElements.get(PlotEl.YUNITS, None)
         if not yUnits:
             if dataKind == (DataKind.VOLTAGE).value:
-                yUnits = (Units.VOLTS).value
+                yUnits = (Units.VOLTS).value                                
             elif dataKind == (DataKind.PHASE).value:
                 yUnits = (Units.DEG).value
-            elif dataKind == (DataKind.POWER).value:
-                yUnits = (Units.WATTS).value
-            else:
-                yUnits = (Units.AMPLITUDE).value
+            else: # for POWER and AMPLITUDE use the source units:
+                yUnits = dataUnits
             plotElements[PlotEl.YUNITS] = yUnits
             
         y2Units = plotElements.get(PlotEl.Y2UNITS, None)

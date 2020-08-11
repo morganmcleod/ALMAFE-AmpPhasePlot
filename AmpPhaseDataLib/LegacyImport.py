@@ -57,14 +57,12 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, importUnits =
     # convert from mW to W:
     if importUnits == Units.MW:
         print("Importing mW")
-        for i in range(len(dataSeries)):
-            dataSeries[i] = dataSeries / 1000.0
+        dataSeries = [y / 1000 for y in dataSeries]
     
     # convert from dBm to W:        
     elif importUnits == Units.DBM: 
         print("Importing dBm")
-        for i in range(len(dataSeries)):
-            dataSeries[i] = (10 ** (dataSeries[i] / 10)) / 1000.0
+        dataSeries = [(10 ** (y / 10)) / 1000 for y in dataSeries]
 
     # no conversion:
     else:
@@ -214,8 +212,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
     # convert from dBm to W:        
     if yUnits == Units.DBM:
         print("Importing dBm")
-        for i in range(len(dataSeries)):
-            dataSeries[i] = (10 ** (dataSeries[i] / 10)) / 1000.0
+        dataSeries = [(10 ** (y / 10)) / 1000 for y in dataSeries]
 
     # make system string:
     system = ""
@@ -434,10 +431,12 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId
 
-def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = "voltage"):
+def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = (DataKind.POWER).value):
     '''
-    Import power meter measurements extracted from a CTS spreadsheet.
+    Import power meter or phase measurements extracted from a CTS spreadsheet.
     This is experimental and will likely not be used in the future CTS implementation
+    Power measurements are imported as voltages, from the CTS square-law detector.
+    Phase measurements are imported as degrees.
     
     Having the following format, tab-delimited:
     MM/DD/YY HH/MM/SS.mmm <tab> seconds <tab> power/phase <tab> tempK 
@@ -480,9 +479,10 @@ def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = "voltag
         units = (Units.DEG).value
         print("Importing phase in degrees")
     else:
-        dataKind = (DataKind.VOLTAGE).value
+        # import as POWER measurements:
+        dataKind = (DataKind.POWER).value
         units = (Units.VOLTS).value
-        print("Importing voltage")
+        print("Importing power as voltage")
     
     api = TimeSeriesAPI.TimeSeriesAPI()
     timeSeriesId = api.insertTimeSeries(dataSeries, temperatures, timeStamps = timeStamps)
