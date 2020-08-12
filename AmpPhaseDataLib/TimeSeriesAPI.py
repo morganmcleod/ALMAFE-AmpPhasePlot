@@ -87,11 +87,11 @@ class TimeSeriesAPI(object):
             except:
                 l.append(r)
 
-        self.dataSeries.appendOrConcat(dataSeries)
+        appendOrConcat(self.dataSeries, dataSeries)
         if temperatures1:
-            self.temperatures1.appendOrConcat(temperatures1)
+            appendOrConcat(self.temperatures1, temperatures1)
         if temperatures2:
-            self.temperatures2.appendOrConcat(temperatures2)
+            appendOrConcat(self.temperatures2, temperatures2)
         self.__loadTimeStamps(timeStamps)
 
     def finishTimeSeries(self):
