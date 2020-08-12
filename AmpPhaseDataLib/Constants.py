@@ -125,6 +125,7 @@ class Units(EnumHelper):
     WATTS       = 'W'           # watts
     MW          = 'mW'          # milliwatts
     VOLTS       = 'V'           # volts
+    VOLTS_SQ    = 'V²'          # volts squared such as from a square-law detector
     MV          = 'mV'          # millivolts
     DBM         = 'dBm'         # dBm
     DEG         = 'deg'         # degrees of phase
@@ -140,6 +141,7 @@ class Units(EnumHelper):
     AVAR        = u'σ²(T)'      # Allan variance definition. Actual units will be W or V etc.
     ADEV        = u'σ(2,t=10s,T)' # 2-pt Allan std dev. definition. Actual units will be DEG or FS.
     PER_ROOT_HZ = u'{0}/√Hz'    # Amplitude spectral density units. Replace {0} with actual units.
+    PER_HZ      = '{0}/Hz'      # Power spectral density units
 
 class SpecLines(object):
     '''

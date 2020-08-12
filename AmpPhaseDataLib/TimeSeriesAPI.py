@@ -81,11 +81,17 @@ class TimeSeriesAPI(object):
         :param timeStamps:    single or list of dateTime strings corresponding to the points in dataSeries
                               several formats supported, YYYY/MM/DD HH:MM:SS.mmm preferred
         '''
-        self.dataSeries.append(dataSeries)
+        def appendOrConcat(l, r):
+            try:
+                l += r
+            except:
+                l.append(r)
+
+        self.dataSeries.appendOrConcat(dataSeries)
         if temperatures1:
-            self.temperatures1.append(temperatures1)
+            self.temperatures1.appendOrConcat(temperatures1)
         if temperatures2:
-            self.temperatures2.append(temperatures2)
+            self.temperatures2.appendOrConcat(temperatures2)
         self.__loadTimeStamps(timeStamps)
 
     def finishTimeSeries(self):
@@ -158,11 +164,10 @@ class TimeSeriesAPI(object):
         self.temperatures2 = result.temperatures2
         return self.timeSeriesId
 
-    def getDataSeries(self, requiredUnits = None, isPower = False):
+    def getDataSeries(self, requiredUnits = None):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
         :param requiredUnits: enum Units from Constants.py
-        :param isPower:  If true, take the square root of each item.  For values representing a power detector (typically W or V)
         :return list derived from self.dataSeries converted, if possible
         '''
         units = Units.fromStr(self.getDataSource(self.timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
@@ -172,20 +177,14 @@ class TimeSeriesAPI(object):
 
         if not requiredUnits or units == requiredUnits:
             # no coversion needed:
-            if isPower:
-                return [sqrt(abs(y)) for y in self.dataSeries]
-            else:
-                return self.dataSeries
+            return self.dataSeries
 
-        # helper to take the square root or not depending on 'isPower':
-        sqrtMaybe = lambda y: sqrt(abs(y)) if isPower else y
-            
         result = None
         
         if units == Units.WATTS:
             if requiredUnits == Units.MW:
                 # convert from watt to mW:
-                result = [sqrtMaybe(y * 1000) for y in self.dataSeries]
+                result = [y * 1000 for y in self.dataSeries]
             
             if requiredUnits == Units.DBM:
                 # convert from watt to dBm:
@@ -194,7 +193,7 @@ class TimeSeriesAPI(object):
         elif units == Units.MW:
             if requiredUnits == Units.WATTS:
                 # convert from mW to watt:
-                result = [sqrtMaybe(y / 1000) for y in self.dataSeries]
+                result = [y / 1000 for y in self.dataSeries]
             
             if requiredUnits == Units.DBM:
                 # convert from mW to dBm:
@@ -203,21 +202,21 @@ class TimeSeriesAPI(object):
         elif units == Units.DBM:
             if requiredUnits == Units.WATTS:
                 # convert from dBm to watt:
-                result = [sqrtMaybe(pow(10, y / 10) / 1000) for y in self.dataSeries]
+                result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
             
             if requiredUnits == Units.MW:
                 # convert from dBm to mW:
-                result = [sqrtMaybe(pow(10, y / 10)) for y in self.dataSeries]
+                result = [pow(10, y / 10) for y in self.dataSeries]
         
         elif units == Units.VOLTS:
             if requiredUnits == Units.MV:
                 # convert from Volt to mV
-                result = [sqrtMaybe(y * 1000) for y in self.dataSeries]
+                result = [y * 1000 for y in self.dataSeries]
         
         elif units == Units.MV:
             if requiredUnits == Units.VOLTS:
                 # convert from mV to Volt
-                result = [sqrtMaybe(y / 1000) for y in self.dataSeries]
+                result = [y / 1000 for y in self.dataSeries]
         else:
             # not supported:
             raise ValueError('Unsupported units conversion')

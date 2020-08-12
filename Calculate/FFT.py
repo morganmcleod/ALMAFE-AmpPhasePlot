@@ -48,12 +48,13 @@ class FFT(object):
         self.yResult = abs(fourierTransform).tolist()
         return True
     
-    def RMSfromFFT(self, bwLower = 0, bwUpper = 0):
+    def RMSfromFFT(self, bwLower = 0, bwUpper = 0, includeDC = False):
         '''
         Calculate the RMS noise in the specified bandwidth using the FFT outputs from calculate() 
         Must be called after calculate()
-        :param bwLower:
-        :param bwUpper:
+        :param bwLower:  Lowest frequency to include.  If 0, may include the DC term.
+        :param bwUpper:  Highest frequency to include. If 0, include all frequencies.
+        :param includeDC: If True, add the DC term to the RMS, otherwise dont include it even if bwLower == 0
         '''
         iLower = bisect.bisect_left(self.xResult, bwLower) if bwLower else 0
         iUpper = bisect.bisect_right(self.xResult, bwUpper) if bwUpper else len(self.yResult)
@@ -67,18 +68,16 @@ class FFT(object):
         sumSq = sum([f(y, False) for y in self.yResult[iLower + 1:iUpper - 1]] )
         sumSq += f(self.yResult[iLower], True) if (iLower > 0) else 0
         sumSq += f(self.yResult[iUpper-1], True)
-        RMS = sqrt(sumSq) + self.yResult[0] if iLower == 0 else 0
+        RMS = sqrt(sumSq)
+        if includeDC and iLower == 0:
+            RMS += self.yResult[0]
         return RMS 
-    
         
-    def RMS(self, dataSeries, ASD = False):
+    def RMS(self, dataSeries):
         '''
         Utility function to calculate RMS from the given dataSeries
         :param dataSeries: list of float
         '''
-        if ASD:
-            variance = sum([y*y for y in dataSeries]) / len(dataSeries)
-        else: # PSD
-            variance = sum([y for y in dataSeries]) / len(dataSeries)
+        variance = sum([y*y for y in dataSeries]) / len(dataSeries)
         return sqrt(variance)
         

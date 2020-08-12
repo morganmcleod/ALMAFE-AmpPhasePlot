@@ -47,30 +47,35 @@ class PlotPowerSpectrum(object):
 
         # Get the DataSource tags:
         dataSources = ts.getAllDataSource(timeSeriesId)
-        dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
         
         # set the X axis units:
         xUnits = (Units.HZ).value
         plotElements[PlotEl.XUNITS] = xUnits
 
         # set the Y axis units:
-        yUnits = dataSources.get(DataSource.UNITS, None)
-        if not yUnits:
-            if dataKind == (DataKind.VOLTAGE).value:
-                yUnits = (Units.VOLTS).value
-            elif dataKind == (DataKind.PHASE).value:
-                yUnits = (Units.DEG).value
-            elif dataKind == (DataKind.POWER).value:
-                yUnits = (Units.WATTS).value
+        if dataKind == DataKind.POWER:
+            if dataUnits == Units.VOLTS:
+                yUnits = (Units.VOLTS_SQ).value
             else:
-                yUnits = (Units.AMPLITUDE).value
+                yUnits = dataUnits.value
+        elif dataKind == DataKind.VOLTAGE:
+            yUnits = (Units.VOLTS).value
+        elif dataKind == DataKind.PHASE:
+            yUnits = (Units.DEG).value
+        else:
+            yUnits = dataUnits.value
         plotElements[PlotEl.YUNITS] = yUnits
         
         # set the trace legend:
         legend = "Real FFT({0})".format(yUnits)
 
         # set the Y axis label:
-        plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_ROOT_HZ).value.format(yUnits)
+        if yUnits == (Units.VOLTS_SQ).value:
+            plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_HZ).value.format(yUnits)
+        else:
+            plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_ROOT_HZ).value.format(yUnits)
         
         # save the trace:
         self.traces = [(xArray, yArray, [], legend)] 

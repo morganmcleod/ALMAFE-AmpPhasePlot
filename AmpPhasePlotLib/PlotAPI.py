@@ -75,40 +75,26 @@ class PlotAPI(object):
             return False
 
         # Get the DataSource tags:
-        srcKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
-        srcUnits = self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value)
+        srcKind = DataKind.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        srcUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
         
-        # If true, we'll plot ASD of the square root of the dataSeries:
-        isPower = (srcKind == (DataKind.POWER).value)
-        
-        # Get the timeseries in linear units:
-        if srcUnits == (Units.DEG).value:
-            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.DEG)
-            dfltTitle = "Phase Spectral Density"
-        elif srcUnits == (Units.VOLTS).value:
-            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS, isPower = isPower)
-            dfltTitle = "Voltage Spectral Density"
-        elif srcUnits == (Units.WATTS).value:
-            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.WATTS, isPower = True)
-            isPower = True
-        else:
-            dataSeries = self.tsAPI.getDataSeries()
-            dfltTitle = None            
-
-        if isPower:
+        # Get the time series and set the default title:
+        if srcKind == DataKind.POWER:
             dfltTitle = "Power Spectral Density"
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = srcUnits)  # could be W or V
+        elif srcKind == DataKind.PHASE:
+            dfltTitle = "Phase Spectral Density"
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.DEG)
+        elif srcKind == DataKind.VOLTAGE:
+            dfltTitle = "Voltage Spectral Density"
+            dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
+        else:
+            dfltTitle = "Amplitude Spectral Density"
+            dataSeries = self.tsAPI.getDataSeries()
         
         # set the plot title:
         if not plotElements.get(PlotEl.TITLE, False) and dfltTitle:
             plotElements[PlotEl.TITLE] = dfltTitle
-        
-        # check for a special RMS spec:
-        rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
-        if rmsSpec:
-            rmsSpec = rmsSpec.split(', ')
-            bwLower = float(rmsSpec[0])
-            bwUpper = float(rmsSpec[1])
-            rmsSpec = float(rmsSpec[2])
         
         # make the plot:
         self.calc = FFT.FFT()
@@ -117,15 +103,24 @@ class PlotAPI(object):
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds):
             return False
 
+        # check for a special RMS spec:
+        rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
         if rmsSpec:
+            rmsSpec = rmsSpec.split(', ')
+            bwLower = float(rmsSpec[0])
+            bwUpper = float(rmsSpec[1])
+            rmsSpec = float(rmsSpec[2])
             RMS = self.calc.RMSfromFFT(bwLower, bwUpper)
-            compliance = "{0:.3e} {1} RMS in {2} to {3} Hz.  Max {4:.3e} : {5}".format(
-                RMS, srcUnits, bwLower, bwUpper, rmsSpec, 
+            compliance = "{0:.2e} {1} RMS in {2} to {3} Hz.  Max {4:.2e} : {5}".format(
+                RMS, srcUnits.value, bwLower, bwUpper, rmsSpec, 
                 "PASS" if RMS <= rmsSpec else "FAIL")
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
         else:
             RMS = self.calc.RMSfromFFT()
-            compliance = "RMS = {0:.3}".format(RMS)
+            if RMS < 1e-3:
+                compliance = "RMS = {0:.2e}".format(RMS)
+            else:
+                compliance = "RMS = {0:.3}".format(RMS)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
 
         if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, plotElements, outputName, show):
