@@ -20,7 +20,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'
-    context.kind = "amplitude"
+    context.kind = "AMPLITUDE"
     
 @given('a phase time series data file on disk')
 def step_impl(context):
@@ -31,7 +31,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'    
-    context.kind = "phase"
+    context.kind = "PHASE"
 
 @given('we want to show the plot')
 def step_impl(context):
@@ -100,7 +100,7 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    assert_that(context.pAPI.plotPowerSpectrum(context.timeSeriesId, outputName = context.outputName, show = context.show))
+    assert_that(context.pAPI.plotSpectrum(context.timeSeriesId, outputName = context.outputName, show = context.show))
 
 @when('the amplitude stability plot is generated')
 def step_impl(context):

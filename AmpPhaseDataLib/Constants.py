@@ -5,8 +5,6 @@ Admittedly, a few other things are stashed here to avoid literals in the code.
 '''
 from enum import Enum
 
-#TODO: !!!***@*@**@*   the literals should be the same as the enums.   No reason to create a mapping here!s
-
 class PlotKind(Enum):
     '''
     Known plot kinds and wildcards.
@@ -50,73 +48,75 @@ class DataKind(EnumHelper):
     The most peculiar case is POWER, normalll WATTS but could be a measured voltage from a square-law detector, 
       in which case the DataSource.UNITS would probably be Units.VOLTS or maybe Units.AMPLITUDE.
     '''
-    AMPLITUDE   = "amplitude"   # unitless or unknown units. Treated as linear. 
-    POWER       = "power"       # typically W or dBm but could be V of a square-law detector.
-    PHASE       = "phase"       # linear degrees or radians.
-    VOLTAGE     = "voltage"     # linear volts.
+    AMPLITUDE   = "AMPLITUDE"   # unitless or unknown units. Treated as linear. 
+    POWER       = "POWER"       # typically W or dBm but could be V of a square-law detector.
+    PHASE       = "PHASE"       # linear degrees or radians.
+    VOLTAGE     = "VOLTAGE"     # linear volts.
 
 class DataStatus(EnumHelper):
     '''
     Data status flags for categorizing Time Series and Results    
     '''
-    UNKNOWN     = 'unknown'     # setting any other tag will clear UNKNOWN
-    ERROR       = 'error'       # an error occurred during the measurement
-    TO_DELETE   = 'toDelete'    # setting TO_DELETE will clear TO_RETAIN
-    TO_RETAIN   = 'toRetain'    # setting TO_RETAIN will clear TO_DELETE
-    MEET_SPEC   = 'meetSpec'    # setting MEET_SPEC will clear FAIL_SPEC
-    FAIL_SPEC   = 'failSpec'    # setting FAIL_SPEC will clear MEET_SPEC
+    UNKNOWN     = 'UNKNOWN'     # setting any other tag will clear UNKNOWN
+    ERROR       = 'ERROR'       # an error occurred during the measurement
+    TO_DELETE   = 'TO_DELETE'   # setting TO_DELETE will clear TO_RETAIN
+    TO_RETAIN   = 'TO_RETAIN'   # setting TO_RETAIN will clear TO_DELETE
+    MEET_SPEC   = 'MEET_SPEC'   # setting MEET_SPEC will clear FAIL_SPEC
+    FAIL_SPEC   = 'FAIL_SPEC'   # setting FAIL_SPEC will clear MEET_SPEC
     
 class DataSource(EnumHelper):
     '''
     Data source flags for annotating Time Series and Results
     '''
-    CONFIG_ID       = 'configId'    # of the device under test
-    DATA_SOURCE     = 'dataSource'  # source data file on disk, if applicable.  Otherwise describe where this came from.
-    DATA_KIND       = 'dataKind'    # of the primary data series. Values from DataKind enum.
-    TEST_SYSTEM     = 'testSystem'  # name of measurement system or computer where the data was created.
-    UNITS           = 'units'       # of the primary data series, like "dBm" or "deg".  Values from Units enum.
-    T_UNITS         = 't_units'     # of the temperature data series, like "K".  Values from Units enum.
-    LO_GHZ          = 'lo_GHz'      # the LO frequency in GHz
-    RF_GHZ          = 'rf_GHz'      # if phase data, the RF in GHz
-    TILT_ANGLE      = 'tiltAngle'   # tilt angle when measured
-    SYSTEM          = 'system'      # like "FE-20, Band 6"
-    SUBSYSTEM       = 'subsystem'   # like "pol0, USB"
-    SERIALNUM       = 'serialNum'   # of a serialized part under test
-    OPERATOR        = 'operator'    # name or initials
-    NOTES           = 'notes'       # operator notes
-    MEAS_SW_NAME    = 'measSwName'  # name of measurement software
-    MEAS_SW_VERSION = 'measSwVer'   # version of measurement software
+    CONFIG_ID       = 'CONFIG_ID'   # of the device under test
+    DATA_SOURCE     = 'DATA_SOURCE' # source data file on disk, if applicable.  Otherwise describe where this came from.
+    DATA_KIND       = 'DATA_KIND'   # of the primary data series. Values from DataKind enum.
+    TEST_SYSTEM     = 'TEST_SYSTEM' # name of measurement system or computer where the data was created.
+    UNITS           = 'UNITS'       # of the primary data series, like "dBm" or "deg".  Values from Units enum.
+    T_UNITS         = 'T_UNITS'     # of the temperature data series, like "K".  Values from Units enum.
+    LO_GHZ          = 'LO_GHZ'      # the LO frequency in GHz
+    RF_GHZ          = 'RF_GHZ'      # if phase data, the RF in GHz
+    TILT_ANGLE      = 'TILT_ANGLE'  # tilt angle when measured
+    SYSTEM          = 'SYSTEM'      # like "FE-20, Band 6"
+    SUBSYSTEM       = 'SUBSYSTEM'   # like "pol0, USB"
+    SERIALNUM       = 'SERIALNUM'   # of a serialized part under test
+    OPERATOR        = 'OPERATOR'    # name or initials
+    NOTES           = 'NOTES'       # operator notes
+    MEAS_SW_NAME    = 'MEAS_SW_NAME'    # name of measurement software
+    MEAS_SW_VERSION = 'MEAS_SW_VERSION' # version of measurement software
 
 class PlotEl(EnumHelper):
     '''
     Plot elements to be used when rendering
     '''
-    XUNITS          = 'xUnits'      # of the primary x axis, like "seconds"
-    YUNITS          = 'yUnits'      # of the primary y axis, like "dBm"
-    Y2UNITS         = 'y2Units'     # of secondary y axis, like "K"
-    ERROR_BARS      = 'errorBars'   # show error bars?  like "1" or "0"
-    TITLE           = 'title'       # plot title, overrides automatically generated
-    X_AXIS_LABEL    = 'xAxisLabel'  # overrides automatically generated
-    Y_AXIS_LABEL    = 'yAxisLabel'  # overrides automatically generated
-    Y2_AXIS_LABEL   = 'y2AxisLabel' # overrides automatically generated
-    XRANGE_PLOT     = 'xRangePlot'  # range of x values to plot, overriding auto defaults:
-                                    #  value is 'float, float'. Use for TMin, TMax for stability plots
-    XRANGE_WINDOW   = 'xRangeWindow' # boundaries X-Y space to display.
-    YRANGE_WINDOW   = 'yRangeWindow' #  often needs to be larger than the data and spec lines so they are not at the edge.
-    X_LINEAR        = 'xLinear'     # force the X axis to be linear when it would normally be log
-    Y_LINEAR        = 'yLinear'     # force the Y axis to be linear when it would normally be log
-    SPEC_LINE1      = 'specLine1'   # list of two points to draw a spec line. Value is 'x1, y1, x2, y2'.
-    SPEC_LINE2      = 'specLine2'   # list of two points to draw a second spec line. Value is 'x1, y1, x2, y2'.
-    SPEC1_NAME      = 'spec1Name'   # label for SPEC_LINE1
-    SPEC2_NAME      = 'spec2Name'   # label for SPEC_LINE2
-    RMS_SPEC        = 'rmsSpec'     # for AMPLITUDE_SPECTRUM plots, an RMS spec over a specified bandwidth, 
-                                    #  like "0.1, 800, 20e-6".  See SpecLines.BIAS_LNA_VOLT_RMS below
-    SPEC_COMPLIANCE = 'specCompliance' # string to add to plot indicating compliance
-    FOOTER1         = 'footer1'     # footer line 1
-    FOOTER2         = 'footer2'     # footer line 2 
-    FOOTER3         = 'footer3'     # footer line 3 
-    IMG_WIDTH       = 'imgWidth'    # pixels width of output image
-    IMG_HEIGHT      = 'imgHeight'   # pixels height of output image
+    XUNITS          = 'XUNITS'          # of the primary x axis, like "seconds"
+    YUNITS          = 'YUNITS'          # of the primary y axis, like "dBm"
+    Y2UNITS         = 'Y2UNITS'         # of secondary y axis, like "K"
+    ERROR_BARS      = 'ERROR_BARS'      # show error bars?  like "1" or "0"
+    TITLE           = 'TITLE'           # plot title, overrides automatically generated
+    X_AXIS_LABEL    = 'X_AXIS_LABEL'    # overrides automatically generated
+    Y_AXIS_LABEL    = 'Y_AXIS_LABEL'    # overrides automatically generated
+    Y2_AXIS_LABEL   = 'Y2_AXIS_LABEL'   # overrides automatically generated
+    Y2_LEGEND1      = 'Y2_LEGEND1'      # override legend for first temperature sensor trace
+    Y2_LEGEND2      = 'Y2_LEGEND2'      # override legend for second temperature sensor trace
+    XRANGE_PLOT     = 'XRANGE_PLOT'     # range of x values to plot, overriding auto defaults:
+                                        #  value is 'float, float'. Use for TMin, TMax for stability plots
+    XRANGE_WINDOW   = 'XRANGE_WINDOW'   # boundaries X-Y space to display.
+    YRANGE_WINDOW   = 'YRANGE_WINDOW'   #  often needs to be larger than the data and spec lines so they are not at the edge.
+    X_LINEAR        = 'X_LINEAR'        # force the X axis to be linear when it would normally be log
+    Y_LINEAR        = 'Y_LINEAR'        # force the Y axis to be linear when it would normally be log
+    SPEC_LINE1      = 'SPEC_LINE1'      # list of two points to draw a spec line. Value is 'x1, y1, x2, y2'.
+    SPEC_LINE2      = 'SPEC_LINE2'      # list of two points to draw a second spec line. Value is 'x1, y1, x2, y2'.
+    SPEC1_NAME      = 'SPEC1_NAME'      # label for SPEC_LINE1
+    SPEC2_NAME      = 'SPEC2_NAME'      # label for SPEC_LINE2
+    RMS_SPEC        = 'RMS_SPEC'        # for AMPLITUDE_SPECTRUM plots, an RMS spec over a specified bandwidth, 
+                                        #  like "0.1, 800, 20e-6".  See SpecLines.BIAS_LNA_VOLT_RMS below
+    SPEC_COMPLIANCE = 'SPEC_COMPLIANCE' # string to add to plot indicating compliance
+    FOOTER1         = 'FOOTER1'         # footer line 1
+    FOOTER2         = 'FOOTER2'         # footer line 2 
+    FOOTER3         = 'FOOTER3'         # footer line 3 
+    IMG_WIDTH       = 'IMG_WIDTH'       # pixels width of output image
+    IMG_HEIGHT      = 'IMG_HEIGHT'      # pixels height of output image
 
 class Units(EnumHelper):
     '''
@@ -146,8 +146,8 @@ class Units(EnumHelper):
 class SpecLines(object):
     '''
     Well-known ALMA spec lines.  Most are "x1, y1, x2, y2".  Exceptions being:
-      RMS which is "x1, x2, RMS"
-      XRANGE which is "x1, x2" and limits how far the plot extends, even if it could have been more. 
+      RMS which is "f1, f2, RMS"
+      XRANGE which is "x1, x2" and limits how far the plot extends, even if more data is available. 
     '''
     FE_AMP_STABILITY1 = "0.05, 5e-7, 100, 5e-7"     # Units = AVAR
     FE_AMP_STABILITY2 = "300, 4e-6, 300, 4e-6"      # Units = AVAR
