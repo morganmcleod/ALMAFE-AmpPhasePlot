@@ -43,13 +43,17 @@ class PlotTimeSeries(object):
 
         # Get the DataSource tags:
         dataSources = ts.getAllDataSource(timeSeriesId)
-        dataKind = dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
-        dataUnits = dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value)
-        legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind)]
+        dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
+
+        # Set up trace legends:
+        legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind.value)]
         if ts.temperatures1:
-            legends.append('Sensor1')
+            legend = plotElements.get(PlotEl.Y2_LEGEND1, 'Temperature sensor 1')
+            legends.append(legend)
         if ts.temperatures2:
-            legends.append('Sensor2')
+            legend = plotElements.get(PlotEl.Y2_LEGEND2, 'Temperature sensor 2')
+            legends.append(legend)
                     
         # Get the axis units:
         xUnits = plotElements.get(PlotEl.XUNITS, (Units.LOCALTIME).value)
@@ -57,12 +61,12 @@ class PlotTimeSeries(object):
         
         yUnits = plotElements.get(PlotEl.YUNITS, None)
         if not yUnits:
-            if dataKind == (DataKind.VOLTAGE).value:
+            if dataKind == DataKind.VOLTAGE:
                 yUnits = (Units.VOLTS).value                                
-            elif dataKind == (DataKind.PHASE).value:
+            elif dataKind == DataKind.PHASE:
                 yUnits = (Units.DEG).value
             else: # for POWER and AMPLITUDE use the source units:
-                yUnits = dataUnits
+                yUnits = dataUnits.value
             plotElements[PlotEl.YUNITS] = yUnits
             
         y2Units = plotElements.get(PlotEl.Y2UNITS, None)
@@ -110,7 +114,11 @@ class PlotTimeSeries(object):
             if yUnits == (Units.AMPLITUDE).value:
                 yAxisLabel = yUnits
             else:
-                yAxisLabel = dataKind + " [" + yUnits + "]"
+                yAxisLabel = dataKind.value
+                if dataKind == DataKind.POWER and yUnits == (Units.VOLTS).value:
+                    yAxisLabel += " [detector volts]"
+                else:
+                    yAxisLabel += " [" + yUnits + "]"
         tickformat = ".3f" if yUnits == (Units.DBM).value else ""
         fig.update_yaxes(title_text = yAxisLabel, tickformat=tickformat, secondary_y=False)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel

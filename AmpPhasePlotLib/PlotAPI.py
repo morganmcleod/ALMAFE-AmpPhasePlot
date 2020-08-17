@@ -25,9 +25,11 @@ class PlotAPI(object):
         '''
         self.calc = None
         self.plotter = None
+        self.specLines = []
         self.traces = []
         self.imageData = None
         self.plotElementsFinal = None
+        self.dataStatusFinal = DataStatus.UNKNOWN
         
     def plotTimeSeries(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
@@ -61,6 +63,7 @@ class PlotAPI(object):
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
+        If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
         :param timeSeriesId: a timeSeriesId to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -105,23 +108,45 @@ class PlotAPI(object):
 
         # check for a special RMS spec:
         rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
+        compliance = ""
         if rmsSpec:
             rmsSpec = rmsSpec.split(', ')
             bwLower = float(rmsSpec[0])
             bwUpper = float(rmsSpec[1])
             rmsSpec = float(rmsSpec[2])
             RMS = self.calc.RMSfromFFT(bwLower, bwUpper)
+            if RMS <= rmsSpec:
+                complies = "PASS"
+                self.__updateDataStatusFinal(True)
+            else:
+                complies = "FAIL"
+                self.__updateDataStatusFinal(False)
+            
             compliance = "{0:.2e} {1} RMS in {2} to {3} Hz.  Max {4:.2e} : {5}".format(
-                RMS, srcUnits.value, bwLower, bwUpper, rmsSpec, 
-                "PASS" if RMS <= rmsSpec else "FAIL")
+                RMS, srcUnits.value, bwLower, bwUpper, rmsSpec, complies)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
-        else:
+        
+        # check whether to just display the RMS on the plot:
+        elif plotElements.get(PlotEl.SHOW_RMS, False):
             RMS = self.calc.RMSfromFFT()
             if RMS < 1e-3:
                 compliance = "RMS = {0:.2e}".format(RMS)
             else:
                 compliance = "RMS = {0:.3}".format(RMS)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
+            
+        # check whether there is a spec line to compare to the FFT:
+        fftSpec = plotElements.get(PlotEl.SPEC_LINE1, None)
+        if fftSpec:
+            fftSpec = rmsSpec.split(', ')
+            bwLower = float(rmsSpec[0])
+            bwUpper = float(rmsSpec[1])
+            specLimit = float(rmsSpec[2])  # for now assuming that y2==y1
+            # compare to spec line:
+            if self.calc.checkFFTSpec(bwLower, bwUpper, specLimit):
+                self.__updateDataStatusFinal(True)
+            else:
+                self.__updateDataStatusFinal(True)
 
         if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, plotElements, outputName, show):
             return False
@@ -138,6 +163,7 @@ class PlotAPI(object):
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
+        If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -148,6 +174,18 @@ class PlotAPI(object):
         self.__reset()
         self.calc = AmplitudeStability.AmplitudeStability()
         self.plotter = PlotStability.PlotStability()
+        
+        # parse any spec lines:
+        specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
+        if specLine:
+            specLine = specLine.split(', ')
+            self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
+
+        # parse any spec lines:
+        specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
+        if specLine:
+            specLine = specLine.split(', ')
+            self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
         
         # use this to find the earliest start time if multiple traces:
         startTime = None
@@ -214,6 +252,11 @@ class PlotAPI(object):
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax):
             return False
 
+        # check spec lines:
+        for specLine in self.specLines:
+            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
+            self.__updateDataStatusFinal(complies)
+
         # add the trace:
         return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
 
@@ -223,6 +266,7 @@ class PlotAPI(object):
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
+        If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
         :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
@@ -233,6 +277,18 @@ class PlotAPI(object):
         self.__reset()
         self.calc = PhaseStability.PhaseStability()
         self.plotter = PlotStability.PlotStability()
+
+        # parse any spec lines:
+        specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
+        if specLine:
+            specLine = specLine.split(', ')
+            self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
+
+        # parse any spec lines:
+        specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
+        if specLine:
+            specLine = specLine.split(', ')
+            self.specLines.append((specLine[0], specLine[1], specLine[2], specLine[3]))
 
         # use this to find the earliest start time if multiple traces:
         startTime = None
@@ -295,6 +351,11 @@ class PlotAPI(object):
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax, freqRFGHz):
             return False
 
+        # check spec lines:
+        for specLine in self.specLines:
+            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
+            self.__updateDataStatusFinal(complies)
+
         # add the trace:
         return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
     
@@ -334,3 +395,19 @@ class PlotAPI(object):
         self.imageData = self.plotter.imageData
         self.plotElementsFinal = plotElements
         return True
+
+    def __updateDataStatusFinal(self, passFail):
+        '''
+        Private helper to update self.dataStatusFinal.  Allowed transitions:
+        UNKNOWN -> PASS
+        UNKNOWN -> FAIL
+        PASS -> FAIL
+        :param passFail: True if PASS, False if FAIL
+        '''
+        # can always FAIL:
+        if not passFail:
+            self.dataStatusFinal = DataStatus.FAIL_SPEC
+
+        # don't overwrite previous FAIL:
+        elif self.dataStatusFinal != DataStatus.FAIL_SPEC:
+            self.dataStatusFinal = DataStatus.MEET_SPEC

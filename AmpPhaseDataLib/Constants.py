@@ -43,15 +43,15 @@ class EnumHelper(Enum):
 
 class DataKind(EnumHelper):
     '''
-    Known raw data series kinds.
+    Known raw data series kinds and literals for display.
     These refer to the underlying phenomena of the measurement system:
     The most peculiar case is POWER, normalll WATTS but could be a measured voltage from a square-law detector, 
       in which case the DataSource.UNITS would probably be Units.VOLTS or maybe Units.AMPLITUDE.
     '''
-    AMPLITUDE   = "AMPLITUDE"   # unitless or unknown units. Treated as linear. 
-    POWER       = "POWER"       # typically W or dBm but could be V of a square-law detector.
-    PHASE       = "PHASE"       # linear degrees or radians.
-    VOLTAGE     = "VOLTAGE"     # linear volts.
+    AMPLITUDE   = "amplitude"   # unitless or unknown units. Treated as linear. 
+    POWER       = "power"       # typically W or dBm but could be V of a square-law detector.
+    PHASE       = "phase"       # linear degrees or radians.
+    VOLTAGE     = "voltage"     # linear volts.
 
 class DataStatus(EnumHelper):
     '''
@@ -112,6 +112,7 @@ class PlotEl(EnumHelper):
     RMS_SPEC        = 'RMS_SPEC'        # for AMPLITUDE_SPECTRUM plots, an RMS spec over a specified bandwidth, 
                                         #  like "0.1, 800, 20e-6".  See SpecLines.BIAS_LNA_VOLT_RMS below
     SPEC_COMPLIANCE = 'SPEC_COMPLIANCE' # string to add to plot indicating compliance
+    SHOW_RMS        = 'SHOW_RMS'        # show the RMS of spectrum plots?  like "1" or "0"; default "0"
     FOOTER1         = 'FOOTER1'         # footer line 1
     FOOTER2         = 'FOOTER2'         # footer line 2 
     FOOTER3         = 'FOOTER3'         # footer line 3 
@@ -120,7 +121,7 @@ class PlotEl(EnumHelper):
 
 class Units(EnumHelper):
     '''
-    Units literals.
+    Units literals for display.
     '''
     WATTS       = 'W'           # watts
     MW          = 'mW'          # milliwatts
