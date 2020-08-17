@@ -4,9 +4,9 @@ from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
 
-class PlotPowerSpectrum(object):
+class PlotSpectrum(object):
     '''
-    Plot power spectral density using Plotly
+    Plot amplitude or power spectral density using Plotly
     '''
 
     def __init__(self):

@@ -22,7 +22,7 @@ def step_impl(context):
     context.temp1Column = 4
     context.temp2Column = 5
     context.delimiter = '\t'
-    context.kind = "amplitude"
+    context.kind = "AMPLITUDE"
     context.units = "W"
 
 @given('a phase time series data file on disk')
@@ -37,7 +37,7 @@ def step_impl(context):
     context.temp1Column = 5
     context.temp2Column = 6
     context.delimiter = '\t'
-    context.kind = "phase"
+    context.kind = "PHASE"
     context.units = "deg"
 
 @given('we want to show the plot')
@@ -86,7 +86,7 @@ def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    assert_that(context.pAPI.plotPowerSpectrum(context.timeSeriesId, plotElements = {}, show = context.show))
+    assert_that(context.pAPI.plotSpectrum(context.timeSeriesId, plotElements = {}, show = context.show))
     context.plotKind = PlotKind.POWER_SPECTRUM
     context.imageData = context.pAPI.imageData
 

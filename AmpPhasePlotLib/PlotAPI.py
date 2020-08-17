@@ -4,7 +4,7 @@ PlotAPI for calling applications to generate plots.
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
 from AmpPhaseDataLib.Constants import *
 from Calculate import AmplitudeStability, PhaseStability, FFT
-from Plot.Plotly import PlotTimeSeries, PlotStability, PlotPowerSpectrum
+from Plot.Plotly import PlotTimeSeries, PlotStability, PlotSpectrum
 from datetime import datetime
 
 class PlotAPI(object):
@@ -55,7 +55,7 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotPowerSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
+    def plotSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
         Create an AMPLITUDE_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -98,7 +98,7 @@ class PlotAPI(object):
         
         # make the plot:
         self.calc = FFT.FFT()
-        self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
+        self.plotter = PlotSpectrum.PlotSpectrum()
         
         if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds):
             return False
@@ -318,7 +318,7 @@ class PlotAPI(object):
         kind = plot[1]
 
         if kind == PlotKind.POWER_SPECTRUM:
-            self.plotter = PlotPowerSpectrum.PlotPowerSpectrum()
+            self.plotter = PlotSpectrum.PlotSpectrum()
             if not self.plotter.rePlot(plotId, plotElements, outputName, show):
                 return False
             
