@@ -7,7 +7,7 @@ This module defines constants which are used in the following APIs.
 functions to import legacy TimeSeries data files.
 
 ## [TimeSeriesAPI](TimeSeriesAPI.py) module
-Data management API for Amplitude and Phase stability Time Series
+Data management API for Amplitude and Phase stability Time Series.
 Uses a fast, local SQLite database.
 
 Exposes the following data model:
@@ -126,10 +126,10 @@ DataSource tags:
 * CONFIG_ID: of the device under test. This is usually an integer, but can be any uniquiely identifying string such as a SN.
 * DATA_SOURCE: source data file on disk, if applicable.  Otherwise describe where this data came from.
 * DATA_KIND: of the primary dataSeries. Values from DataKind enum:
-  - "AMPLITUDE" unitless or unknown units. Treated as linear. 
-  - "POWER"     typically W or dBm but could be V of a square-law detector
-  - "PHASE"     linear degrees or radians
-  - "VOLTAGE"   linear volts
+  - "amplitude" unitless or unknown units. Treated as linear. 
+  - "power"     typically W or dBm but could be V of a square-law detector
+  - "phase"     linear degrees or radians
+  - "voltage"   linear volts
 * TEST_SYSTEM: name of measurement system or computer where the data was created
 * UNITS: of the primary data series, like "dBm" or "deg".  Values from Units enum.
 * T_UNITS: of the temperature data series, like "K".  Values from Units enum.

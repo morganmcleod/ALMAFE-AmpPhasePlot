@@ -1,5 +1,6 @@
 from statistics import mean
 import allantools
+import bisect
 
 class AmplitudeStability(object):
     '''
@@ -78,3 +79,47 @@ class AmplitudeStability(object):
 #         print("last point: {0} with error {1} and N={2}".format(self.yResult[-1], self.yError[-1], adn[-1]))
         return True
     
+    def checkSpecLine(self, TMin, TMax, AVMin, AVMax):
+        '''
+        Test whether the calculated AVAR is below a given spec line.
+        Must be called after calculate()
+        :param TMin:  Lower time (x) limit of spec line
+        :param TMax:  Upper time (x) limit of spec line
+        :param AVMin: AVAR (y) value at TMin
+        :param AVMax: AVAR (y) value at TMax
+        :return True/False
+        '''
+        # find the time range spanned:
+        iLower, iUpper = self.__findTimeRange(TMin, TMax)
+        
+        # check for TMin == TMax or out of bounds:
+        if iUpper <= iLower:
+            iUpper = iLower + 1
+            
+        # exit early for single-point spec:
+        if iUpper == iLower + 1:
+            return self.yResult[iLower] <= AVMin
+
+        # get the endpoints:        
+        slope = (AVMax - AVMin) / (iUpper - iLower)
+
+        # compare result to spec:
+        specY = AVMin
+        for y in self.yResult[iLower:iUpper]:
+            if y > specY:
+                return False
+            else:
+                specY += slope
+        return True
+        
+    def __findTimeRange(self, TMin, TMax):
+        '''
+        Private helper to find the indices corresponding to the provided integration time range.
+        :param TMin: lower time limit to find.
+        :param TMax: upper time limit for to find. Must be >= TMin.
+        :return (iLower, iUpper): tuple of the first and last+1 indexes of self.xResult.
+        '''
+        iLower = bisect.bisect_left(self.xResult, TMin) if TMin else 0
+        iUpper = bisect.bisect_right(self.xResult, TMax) if TMax else len(self.xResult)
+        return (iLower, iUpper)        
+        

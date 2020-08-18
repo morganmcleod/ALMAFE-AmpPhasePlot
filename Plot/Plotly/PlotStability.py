@@ -302,7 +302,7 @@ class PlotStability(object):
             if self.plotKind == PlotKind.PHASE_STABILITY:
                 yAxisLabel = "2-Pt ADEV: " + (Units.ADEV).value + " [" + yUnits + "]"                
             else:
-                yAxisLabel = "AVAR: " + (Units.AVAR).value + " [" + yUnits + "]"
+                yAxisLabel = "AVAR: " + (Units.AVAR).value
         fig.update_yaxes(title_text = yAxisLabel)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel
 

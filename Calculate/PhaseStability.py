@@ -1,5 +1,6 @@
 from Calculate.Common import getAveragesArray, unwrapPhase
 from math import sqrt
+import bisect
 
 class PhaseStability(object):
     '''
@@ -113,3 +114,47 @@ class PhaseStability(object):
         aderr = adev / sqrt(numDiffs)
         adn = numDiffs
         return (adev, aderr, adn)
+    
+    def checkSpecLine(self, TMin, TMax, ADMin, ADMax):
+        '''
+        Test whether the calculated AVAR is below a given spec line.
+        Must be called after calculate()
+        :param TMin:  Lower time (x) limit of spec line
+        :param TMax:  Upper time (x) limit of spec line
+        :param ADMin: ADEV (y) value at TMin
+        :param ADMax: ADEV (y) value at TMax
+        :return True/False
+        '''
+        # find the time range spanned:
+        iLower, iUpper = self.__findTimeRange(TMin, TMax)
+        
+        # check for TMin == TMax or out of bounds:
+        if iUpper <= iLower:
+            iUpper = iLower + 1
+            
+        # exit early for single-point spec:
+        if iUpper == iLower + 1:
+            return self.yResult[iLower] <= ADMin
+
+        # get the endpoints:        
+        slope = (ADMax - ADMin) / (iUpper - iLower)
+
+        # compare result to spec:
+        specY = ADMin
+        for y in self.yResult[iLower:iUpper]:
+            if y > specY:
+                return False
+            else:
+                specY += slope
+        return True
+
+    def __findTimeRange(self, TMin, TMax):
+        '''
+        Private helper to find the indices corresponding to the provided time range.
+        :param TMin: lower time limit to find.
+        :param TMax: upper time limit for to find. Must be >= TMin.
+        :return (iLower, iUpper): tuple of the first and last+1 indexes of self.xResult.
+        '''
+        iLower = bisect.bisect_left(self.xResult, TMin) if TMin else 0
+        iUpper = bisect.bisect_right(self.xResult, TMax) if TMax else len(self.xResult)
+        return (iLower, iUpper)    

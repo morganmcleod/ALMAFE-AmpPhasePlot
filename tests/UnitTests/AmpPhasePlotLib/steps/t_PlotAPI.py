@@ -20,7 +20,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'
-    context.kind = "AMPLITUDE"
+    context.kind = "amplitude"
     
 @given('a phase time series data file on disk')
 def step_impl(context):
@@ -31,7 +31,7 @@ def step_impl(context):
     context.tsColumn = 0
     context.dataColumm = 2
     context.delimiter = '\t'    
-    context.kind = "PHASE"
+    context.kind = "phase"
 
 @given('we want to show the plot')
 def step_impl(context):
