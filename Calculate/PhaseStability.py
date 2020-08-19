@@ -115,14 +115,14 @@ class PhaseStability(object):
         adn = numDiffs
         return (adev, aderr, adn)
     
-    def checkSpecLine(self, TMin, TMax, ADMin, ADMax):
+    def checkSpecLine(self, TMin, TMax, specMin, specMax):
         '''
         Test whether the calculated AVAR is below a given spec line.
         Must be called after calculate()
         :param TMin:  Lower time (x) limit of spec line
         :param TMax:  Upper time (x) limit of spec line
-        :param ADMin: ADEV (y) value at TMin
-        :param ADMax: ADEV (y) value at TMax
+        :param specMin: ADEV (y) value at TMin
+        :param specMax: ADEV (y) value at TMax
         :return True/False
         '''
         # find the time range spanned:
@@ -134,13 +134,13 @@ class PhaseStability(object):
             
         # exit early for single-point spec:
         if iUpper == iLower + 1:
-            return self.yResult[iLower] <= ADMin
+            return self.yResult[iLower] <= specMin
 
-        # get the endpoints:        
-        slope = (ADMax - ADMin) / (iUpper - iLower)
+        # get the slope between the endpoints:        
+        slope = (specMax - specMin) / (iUpper - iLower - 1)
 
-        # compare result to spec:
-        specY = ADMin
+        # compare result to spec, advancing the specY limit by slope at each step:
+        specY = specMin
         for y in self.yResult[iLower:iUpper]:
             if y > specY:
                 return False
