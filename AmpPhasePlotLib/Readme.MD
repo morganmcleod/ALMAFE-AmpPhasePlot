@@ -56,7 +56,7 @@ Produce a 2-point Allan Standard Deviation plot of phase stability:
 * SPEC_LINE2: list of two points to draw a second spec line. Value is "x1, y1, x2, y2"
 * SPEC1_NAME: label for SPEC_LINE1
 * SPEC2_NAME: label for SPEC_LINE2
-* RMS_SPEC: for AMPLITUDE_SPECTRUM plots, an RMS spec over a specified Hz bandwidth, like "fMin, fMax, specLimitRMS"
+* RMS_SPEC: for AMP_SPECTRUM plots, an RMS spec over a specified Hz bandwidth, like "fMin, fMax, specLimitRMS"
 * SPEC_COMPLIANCE: string to add to plot indicating compliance
 * SHOW_RMS: show the RMS of spectrum plots?  like "1" or "0"; default "0"
 * FOOTER1: footer line 1

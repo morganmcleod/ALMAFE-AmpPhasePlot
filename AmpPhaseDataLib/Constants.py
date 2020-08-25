@@ -11,11 +11,12 @@ class PlotKind(Enum):
     For specifying what kind of plot this is or for finding a plot from a database.
     '''
     NONE = 0
-    TIME_SERIES = 1
-    AMP_STABILITY = 2
-    PHASE_STABILITY = 3
-    AMPLITUDE_SPECTRUM = 4  # ASD for linear volts, phase
-    POWER_SPECTRUM = 5      # PSD for power, square-law detector volts
+    TIME_SERIES = 1         # measurement units vs. time
+    POWER_STABILITY = 2     # amplitude stability of power (W, V²)
+    VOLT_STABILITY = 3      # voltage stability (V)
+    PHASE_STABILITY = 4     # phase stability (deg, rad)
+    AMP_SPECTRUM = 5        # ASD for linear volts, phase (V, deg, rad)
+    POWER_SPECTRUM = 6      # PSD for power, square-law detector volts (W, V²)
     ALL = 99
 
 class EnumHelper(Enum):
@@ -109,7 +110,7 @@ class PlotEl(EnumHelper):
     SPEC_LINE2      = 'SPEC_LINE2'      # list of two points to draw a second spec line. Value is 'x1, y1, x2, y2'.
     SPEC1_NAME      = 'SPEC1_NAME'      # label for SPEC_LINE1
     SPEC2_NAME      = 'SPEC2_NAME'      # label for SPEC_LINE2
-    RMS_SPEC        = 'RMS_SPEC'        # for AMPLITUDE_SPECTRUM plots, an RMS spec over a specified bandwidth, 
+    RMS_SPEC        = 'RMS_SPEC'        # for AMP_SPECTRUM plots, an RMS spec over a specified bandwidth, 
                                         #  like "0.1, 800, 20e-6".  See SpecLines.BIAS_LNA_VOLT_RMS below
     SPEC_COMPLIANCE = 'SPEC_COMPLIANCE' # string to add to plot indicating compliance
     SHOW_RMS        = 'SHOW_RMS'        # show the RMS of spectrum plots?  like "1" or "0"; default "0"
@@ -161,7 +162,7 @@ class SpecLines(object):
     BAND6_AMP_STABILITY2 = "300, 3e-6, 300, 3e-6"   # Units = AVAR
     BAND6_PHASE_STABILITY1 = "10, 0.5, 300, 0.5"    # Units = DEG
     BAND6_PHASE_STABILITY2 = "10, 0.5, 300, 5"      # Band6 test limit. Units = DEG
-    BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6" # TODO: Since this is AVAR, may need to use sqrt(0.2e-6)
+    BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6" # Units = ADEV[V]
     BIAS_LNA_VOLT_ASD_1HZ = "1, 0.8e-6, 1, 0.8e-6"  # 800 nV/√Hz, max @ 1 Hz
     BIAS_LNA_VOLT_RMS = "0.1, 800, 20e-6"           # 0.1 to 800 Hz: 20 uV RMS max
     XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.

@@ -65,6 +65,7 @@ class TimeSeriesAPI(object):
         self.temperatures1 = []
         self.temperatures2 = []
         self.timeStamps = []
+        self.nextWriteIndex = 0
         self.tau0Seconds = tau0Seconds
         self.__initializeStartTime(startTime)
         self.timeSeriesId = None
@@ -100,9 +101,20 @@ class TimeSeriesAPI(object):
         This may be called repeatedly in a measurement loop, like a 'flush' function, or once at the end.
         '''
         self.__validateTimeSeries()
+        updateHeader = self.startTime is None
         self.__validateTimeStampsStartTime()
         self.__initializeTau0Seconds()
-        self.db.insertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
+        if updateHeader:
+            # if we were not able to get startTime from the data then just use now():
+            if not self.startTime:
+                self.startTime = datetime.now()
+            self.db.updateTimeSeriesHeader(self.timeSeriesId, self.startTime, self.tau0Seconds)
+        self.db.insertTimeSeries(self.dataSeries[self.nextWriteIndex:], self.startTime, self.tau0Seconds, 
+                                 self.timeStamps[self.nextWriteIndex:] if self.timeStamps else [],
+                                 self.temperatures1[self.nextWriteIndex:] if self.temperatures1 else [],
+                                 self.temperatures2[self.nextWriteIndex:] if self.temperatures2 else [])
+        # Move the nextWriteIndex up so we don't write the same data again
+        self.nextWriteIndex = len(self.dataSeries)
         
     def insertTimeSeries(self, 
                          dataSeries, 
@@ -360,6 +372,7 @@ class TimeSeriesAPI(object):
         self.temperatures1 = []
         self.temperatures2 = []
         self.timeStamps = []
+        self.nextWriteIndex = 0
         self.tau0Seconds = None
         self.startTime = None
         self.timeStampFormat = None
@@ -425,10 +438,10 @@ class TimeSeriesAPI(object):
         :param startTime: dateTime string of first point in dataSeries
         '''
         if not self.startTime:
-            if isinstance(startTime, str):
+            if isinstance(startTime, datetime):
+                self.startTime = startTime
+            elif isinstance(startTime, str):
                 self.startTime = self.tsParser.parseTimeStamp(startTime)
-        if not self.startTime:
-            self.startTime = datetime.now()
         
     def __initializeTau0Seconds(self):
         '''

@@ -177,7 +177,7 @@ def step_impl(context, floatString):
     tau0Seconds = float(floatString)
     delta = context.API.timeStamps[0] - context.now
     deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
-    assert_that(deltaSeconds, close_to(0.0, 0.05))
+    assert_that(deltaSeconds, close_to(0.0, 0.10))
     firstTime = True
     for TS in context.API.timeStamps:
         if firstTime:

@@ -88,11 +88,23 @@ class TimeSeriesDatabase(object):
         :param tau0Seconds: float sampling interval of the measurement
         :return self.timeSeriesId: int keyId of the new header record.
         '''
-        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ('{0}', {1})".format(startTime, str(tau0Seconds)))
+        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ('{0}', {1});".format(startTime, str(tau0Seconds)))
         self.db.execute("SELECT last_insert_rowid()")
         self.timeSeriesId = self.db.fetchone()[0]
         self.db.commit()
         return self.timeSeriesId
+    
+    def updateTimeSeriesHeader(self, timeSeriesId, startTime, tau0Seconds):
+        '''
+        Update a time series header record and return its keyId
+        :param timeSeriesId: of the header to update
+        :param startTime:   datetime start time of the measurement 
+        :param tau0Seconds: float sampling interval of the measurement
+        :return self.timeSeriesId: int keyId of the updated header record.
+        '''
+        self.db.execute("UPDATE TimeSeriesHeader SET startTime = '{0}', tau0Seconds = {1} WHERE keyId = {2};".format(startTime, str(tau0Seconds), timeSeriesId))
+        self.db.commit()
+        return timeSeriesId
     
     def insertTimeSeries(self, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
         '''

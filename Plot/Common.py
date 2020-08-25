@@ -34,15 +34,20 @@ def makeTitle(timeSeriesIds, plotElements):
             serialNum = tsAPI.getDataSource(timeSeriesIds[0], DataSource.SERIALNUM)
             title = serialNum if serialNum else ""
     else:
-        serialNums = ""
+        serialNums = []
         for timeSeriesId in timeSeriesIds:            
             serialNum = tsAPI.getDataSource(timeSeriesId, DataSource.SERIALNUM)
             if serialNum:
-                if serialNums:
-                    serialNums += ", "
-                serialNums += serialNum
+                serialNums.append(serialNum)                
         if serialNums:
-            title += " SN: " + serialNums
+            # remove duplicates:
+            serialNums = list(set(serialNums))
+            serialString = ""
+            for s in serialNums:
+                if serialString:
+                    serialString += ", "
+                serialString += s                           
+            title += " SN: " + serialString
 
     plotElements[PlotEl.TITLE] = title
     return title

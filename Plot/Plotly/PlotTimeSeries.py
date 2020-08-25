@@ -98,6 +98,9 @@ class PlotTimeSeries(object):
                 y2min = min(y2min, min(ts.temperatures2))
                 y2max = max(y2max, max(ts.temperatures2))
         
+        # force show legend even if only one trace:
+        fig.update_layout(showlegend = True)
+        
         # X axis label:
         xAxisLabel = plotElements.get(PlotEl.X_AXIS_LABEL, None)
         if not xAxisLabel:

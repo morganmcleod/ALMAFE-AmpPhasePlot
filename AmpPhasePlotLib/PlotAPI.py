@@ -59,7 +59,7 @@ class PlotAPI(object):
     
     def plotSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
         '''
-        Create an AMPLITUDE_SPECTRUM or POWER_SPECTRUM plot
+        Create an AMP_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
@@ -138,10 +138,10 @@ class PlotAPI(object):
         # check whether there is a spec line to compare to the FFT:
         fftSpec = plotElements.get(PlotEl.SPEC_LINE1, None)
         if fftSpec:
-            fftSpec = rmsSpec.split(', ')
-            bwLower = float(rmsSpec[0])
-            bwUpper = float(rmsSpec[1])
-            specLimit = float(rmsSpec[2])  # for now assuming that y2==y1
+            fftSpec = fftSpec.split(', ')
+            bwLower = float(fftSpec[0])
+            bwUpper = float(fftSpec[1])
+            specLimit = float(fftSpec[2])  # for now assuming that y2==y1
             # compare to spec line:
             if self.calc.checkFFTSpec(bwLower, bwUpper, specLimit):
                 self.__updateDataStatusFinal(True)
@@ -159,7 +159,7 @@ class PlotAPI(object):
     
     def plotAmplitudeStability(self, timeSeriesIds, plotElements = {}, outputName = None, show = False):
         '''
-        Create an AMP_STABILITY plot
+        Create an POWER_STABILITY, VOLT_STABILITY, or PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
@@ -175,13 +175,13 @@ class PlotAPI(object):
         self.calc = AmplitudeStability.AmplitudeStability()
         self.plotter = PlotStability.PlotStability()
         
-        # parse any spec lines:
+        # parse spec line 1:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
         if specLine:
             specLine = specLine.split(', ')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
-        # parse any spec lines:
+        # parse spec line 2:
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
         if specLine:
             specLine = specLine.split(', ')
@@ -232,10 +232,17 @@ class PlotAPI(object):
         srcKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
         srcUnits = self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value)
         
+        # Depending on srcKind, get the dataSeries in the proper units:
         if srcKind == (DataKind.VOLTAGE).value:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.VOLTS)
+            normalize = False   # for pure voltage time series: don't normalize, calculate ADEV
+            calcAdev = True     # this would be typical for a bias or power supply where absolute
+                                # deviations from nominal are more of interest than relative level drifts.
         else: # for POWER and AMPLITUDE, use the source units, if any:
             dataSeries = self.tsAPI.getDataSeries(requiredUnits = Units.fromStr(srcUnits))
+            normalize = True    # for power or unknown amplitude time series, normalize and calculate AVAR.
+            calcAdev = False    # units might still be VOLTS in the case of a crystal detector having 
+                                # square-law output characteristic.
 
         if not dataSeries:
             return False
@@ -249,7 +256,7 @@ class PlotAPI(object):
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         
-        if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax):
+        if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax, normalize, calcAdev):
             return False
 
         # check spec lines:
@@ -383,7 +390,7 @@ class PlotAPI(object):
             if not self.plotter.rePlot(plotId, plotElements, outputName, show):
                 return False
             
-        elif kind == PlotKind.AMP_STABILITY or kind == PlotKind.PHASE_STABILITY: 
+        elif kind == PlotKind.POWER_STABILITY or PlotKind.VOLT_STABILITY or kind == PlotKind.PHASE_STABILITY: 
             self.plotter = PlotStability.PlotStability()
             if not self.plotter.rePlot(plotId, plotElements, outputName, show):
                 return False

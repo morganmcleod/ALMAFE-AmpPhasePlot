@@ -84,8 +84,10 @@ class PlotStability(object):
         if not self.plotKind:
             if dataKind == (DataKind.PHASE).value:
                 self.plotKind = PlotKind.PHASE_STABILITY
+            elif dataKind == (DataKind.VOLTAGE).value:
+                self.plotKind = PlotKind.VOLT_STABILITY
             else:
-                self.plotKind = PlotKind.AMP_STABILITY
+                self.plotKind = PlotKind.POWER_STABILITY
         
         # Legend for trace:        
         name = ""
@@ -106,7 +108,7 @@ class PlotStability(object):
             name += "RF" + RF
         
         if not name:
-            if dataKind == (DataKind.PHASE).value:
+            if self.plotKind == PlotKind.PHASE_STABILITY or self.plotKind == PlotKind.VOLT_STABILITY:
                 name = "ADEV({0})".format(yUnits)
             else:
                 name = "AVAR({0})".format(yUnits)
@@ -220,7 +222,7 @@ class PlotStability(object):
         
         # check retrived PlotKind:
         plotKind = plotHeader[1]
-        if not (plotKind == PlotKind.AMP_STABILITY or plotKind == PlotKind.PHASE_STABILITY):
+        if not (plotKind == PlotKind.POWER_STABILITY or PlotKind.VOLT_STABILITY or plotKind == PlotKind.PHASE_STABILITY):
             return False
         
         self.plotKind = plotKind
@@ -278,7 +280,7 @@ class PlotStability(object):
         # add spec lines:
         addSpecLines(fig, plotElements)
 
-        # X axis label:
+        # X axis units and label:
         xUnits = plotElements[PlotEl.XUNITS]
         xAxisLabel = plotElements.get(PlotEl.X_AXIS_LABEL, None)
         if not xAxisLabel:
@@ -290,17 +292,20 @@ class PlotStability(object):
         fig.update_xaxes(title_text = xAxisLabel)
         plotElements[PlotEl.X_AXIS_LABEL] = xAxisLabel
         
-        # Y axis label:
+        # Y axis units:
         if self.plotKind == PlotKind.PHASE_STABILITY:
             yUnits = plotElements.get(PlotEl.YUNITS, (Units.ADEV).value)
         else:
             yUnits = plotElements.get(PlotEl.YUNITS, (Units.AVAR).value)
         plotElements[PlotEl.YUNITS] = yUnits   # save it in case default was used
 
+        # Y axis label:
         yAxisLabel = plotElements.get(PlotEl.Y_AXIS_LABEL, None)
         if not yAxisLabel:
             if self.plotKind == PlotKind.PHASE_STABILITY:
                 yAxisLabel = "2-Pt ADEV: " + (Units.ADEV).value + " [" + yUnits + "]"                
+            elif self.plotKind == PlotKind.VOLT_STABILITY:
+                yAxisLabel = "ADEV: [" + yUnits + "]"
             else:
                 yAxisLabel = "AVAR: " + (Units.AVAR).value
         fig.update_yaxes(title_text = yAxisLabel)

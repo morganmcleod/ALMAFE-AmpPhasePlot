@@ -120,7 +120,7 @@ class PlotSpectrum(object):
         
         # check retrived PlotKind:
         plotKind = plotHeader[1] 
-        if not (plotKind == PlotKind.AMPLITUDE_SPECTRUM or plotKind == PlotKind.POWER_SPECTRUM): 
+        if not (plotKind == PlotKind.AMP_SPECTRUM or plotKind == PlotKind.POWER_SPECTRUM): 
             return False
 
         # get the stored plotElements and merge in any overrides:

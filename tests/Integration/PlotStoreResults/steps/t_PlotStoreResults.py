@@ -18,7 +18,7 @@ def step_impl(context):
     context.dataFile = "SampleData/FETMS-Amp/B2Ae0LO74pol0USB_20180410-081528__.txt"
     context.tau0Seconds = 0.05
     context.tsColumn = 0
-    context.dataColumm = 2
+    context.dataColumn = 2
     context.temp1Column = 4
     context.temp2Column = 5
     context.delimiter = '\t'
@@ -33,7 +33,7 @@ def step_impl(context):
     context.dataFile = "SampleData/FETMS-Phase/B6Pe0RF215pol0_20200205-153444__.txt"
     context.tau0Seconds = 1.0
     context.tsColumn = 0
-    context.dataColumm = 2
+    context.dataColumn = 2
     context.temp1Column = 5
     context.temp2Column = 6
     context.delimiter = '\t'
@@ -65,7 +65,7 @@ def step_impl(context):
                 # skip header and comment lines:
                 if line[0][0].isnumeric():
                     timeStamps.append(line[context.tsColumn])
-                    dataSeries.append(float(line[context.dataColumm]))
+                    dataSeries.append(float(line[context.dataColumn]))
                     temperatures1.append(float(line[context.temp1Column]))
                     temperatures2.append(float(line[context.temp2Column]))
     except:
@@ -98,7 +98,7 @@ def step_impl(context):
     plotElements = {PlotEl.SPEC_LINE1 : SpecLines.FE_AMP_STABILITY1, 
                     PlotEl.SPEC_LINE2 : SpecLines.FE_AMP_STABILITY2}
     assert_that(context.pAPI.plotAmplitudeStability(context.timeSeriesId, plotElements, show = context.show))
-    context.plotKind = PlotKind.AMP_STABILITY
+    context.plotKind = PlotKind.POWER_STABILITY
     context.imageData = context.pAPI.imageData
 
 @when('the phase stability plot is generated')

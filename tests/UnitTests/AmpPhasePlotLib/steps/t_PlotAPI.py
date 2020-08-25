@@ -18,7 +18,7 @@ def step_impl(context):
     """
     context.dataFile = "SampleData/FETMS-Amp/B2Ae0LO74pol0LSB_20180410-084659__.txt"
     context.tsColumn = 0
-    context.dataColumm = 2
+    context.dataColumn = 2
     context.delimiter = '\t'
     context.kind = "amplitude"
     
@@ -29,7 +29,7 @@ def step_impl(context):
     """
     context.dataFile = "SampleData/FETMS-Phase/B6Pe0RF215pol0_20200205-153444__.txt"
     context.tsColumn = 0
-    context.dataColumm = 2
+    context.dataColumn = 2
     context.delimiter = '\t'    
     context.kind = "phase"
 
@@ -74,7 +74,7 @@ def step_impl(context):
                 # skip header and comment lines:
                 if line[0][0].isnumeric():
                     timeStamps.append(line[context.tsColumn])
-                    dataSeries.append(float(line[context.dataColumm]))
+                    dataSeries.append(float(line[context.dataColumn]))
 
     except:
         print("Error reading file '{0}'".format(context.dataFile))
