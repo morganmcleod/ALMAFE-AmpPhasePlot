@@ -1,5 +1,6 @@
 from datetime import datetime
 import dateutil.parser
+import copy
 import sys
 
 class ParseTimeStamp(object):
@@ -76,3 +77,21 @@ class ParseTimeStamp(object):
         else:
             self.lastTimeStampFormat = timeStampFormat
             return timeStamp
+
+def makeTimeStamp(timeStamp = None):
+    '''
+    initialized a timestamp from provided, or now() if nont provided
+    :param timeStamp:
+    '''
+    if not timeStamp:
+        return datetime.now()
+    if isinstance(timeStamp, datetime):
+        return copy.copy(timeStamp)
+    try:
+        makeTimeStamp.parseTimeStamp
+    except:
+        makeTimeStamp.parseTimeStamp = ParseTimeStamp.ParseTimeStamp()
+    try:
+        return makeTimeStamp.parseTimeStamp.parseTimeStamp(timeStamp)
+    except:
+        return datetime.now()

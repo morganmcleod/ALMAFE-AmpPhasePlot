@@ -68,10 +68,8 @@ class TimeSeriesAPI(object):
         self.nextWriteIndex = 0
         self.tau0Seconds = tau0Seconds
         self.__initializeStartTime(startTime)
-        self.timeSeriesId = None
         # create a time series header record and return the timeSeriesId:
-        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
-        return self.timeSeriesId
+        return self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
     
     def insertTimeSeriesChunk(self, dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None):
         '''
@@ -95,10 +93,11 @@ class TimeSeriesAPI(object):
             appendOrConcat(self.temperatures2, temperatures2)
         self.__loadTimeStamps(timeStamps)
 
-    def finishTimeSeries(self):
+    def finishTimeSeries(self, timeSeriesId):
         '''
         Write out the time series data to the database.
         This may be called repeatedly in a measurement loop, like a 'flush' function, or once at the end.
+        :param timeSeriesId: of the time series being written.  Pass the value that was returned by startTimeSeries().
         '''
         self.__validateTimeSeries()
         updateHeader = self.startTime is None
@@ -108,8 +107,9 @@ class TimeSeriesAPI(object):
             # if we were not able to get startTime from the data then just use now():
             if not self.startTime:
                 self.startTime = datetime.now()
-            self.db.updateTimeSeriesHeader(self.timeSeriesId, self.startTime, self.tau0Seconds)
-        self.db.insertTimeSeries(self.dataSeries[self.nextWriteIndex:], self.startTime, self.tau0Seconds, 
+            self.db.updateTimeSeriesHeader(timeSeriesId, self.startTime, self.tau0Seconds)
+        self.db.insertTimeSeries(timeSeriesId, 
+                                 self.dataSeries[self.nextWriteIndex:], self.startTime, self.tau0Seconds, 
                                  self.timeStamps[self.nextWriteIndex:] if self.timeStamps else [],
                                  self.temperatures1[self.nextWriteIndex:] if self.temperatures1 else [],
                                  self.temperatures2[self.nextWriteIndex:] if self.temperatures2 else [])
@@ -143,16 +143,15 @@ class TimeSeriesAPI(object):
         self.tau0Seconds = tau0Seconds
         self.timeStamps = []
         self.startTime = None
-        self.timeSeriesId = None
         
         self.__validateTimeSeries()
         self.__loadTimeStamps(timeStamps)
         self.__validateTimeStampsStartTime()
         self.__initializeStartTime(startTime)
         self.__initializeTau0Seconds()
-        self.timeSeriesId = self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
-        self.db.insertTimeSeries(self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
-        return self.timeSeriesId
+        timeSeriesId = self.db.insertTimeSeriesHeader(self.startTime, self.tau0Seconds)
+        self.db.insertTimeSeries(timeSeriesId, self.dataSeries, self.startTime, self.tau0Seconds, self.timeStamps, self.temperatures1, self.temperatures2)
+        return timeSeriesId
     
     def retrieveTimeSeries(self, timeSeriesId):
         '''
@@ -163,26 +162,26 @@ class TimeSeriesAPI(object):
         header = self.db.retrieveTimeSeriesHeader(timeSeriesId)
         if not header:
             return None
-        self.timeSeriesId = header.timeSeriesId
+        timeSeriesId = header.timeSeriesId
         self.startTime = header.startTime
         self.tau0Seconds = header.tau0Seconds
         
-        result = self.db.retrieveTimeSeries(self.timeSeriesId)
+        result = self.db.retrieveTimeSeries(timeSeriesId)
         if not result:
             return None
         self.timeStamps = result.timeStamps
         self.dataSeries = result.dataSeries
         self.temperatures1 = result.temperatures1
         self.temperatures2 = result.temperatures2
-        return self.timeSeriesId
+        return timeSeriesId
 
-    def getDataSeries(self, requiredUnits = None):
+    def getDataSeries(self, timeSeriesId, requiredUnits = None):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
         :param requiredUnits: enum Units from Constants.py
         :return list derived from self.dataSeries converted, if possible
         '''
-        units = Units.fromStr(self.getDataSource(self.timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
+        units = Units.fromStr(self.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
 
         if requiredUnits and not isinstance(requiredUnits, Units):
             raise ValueError('Use Units enum from Constants.py')
@@ -376,7 +375,6 @@ class TimeSeriesAPI(object):
         self.tau0Seconds = None
         self.startTime = None
         self.timeStampFormat = None
-        self.timeSeriesId = None
     
     def __loadConfiguration(self):
         '''

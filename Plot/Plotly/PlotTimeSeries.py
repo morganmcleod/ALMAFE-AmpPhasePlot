@@ -78,7 +78,7 @@ class PlotTimeSeries(object):
         timeStamps = ts.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
         if not timeStamps:
             return False
-        dataSeries = ts.getDataSeries(requiredUnits = Units.fromStr(yUnits))
+        dataSeries = ts.getDataSeries(timeSeriesId, requiredUnits = Units.fromStr(yUnits))
         if not dataSeries:
             return False
             

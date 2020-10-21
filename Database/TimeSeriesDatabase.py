@@ -29,7 +29,6 @@ class TimeSeriesDatabase(object):
         Constructor
         :param localDatabaseFile: Filename of local database.
         '''
-        self.timeSeriesId = None
         self.CHUNK_SIZE = 1000 # max records to load at a time
         connectionInfo = { 'localDatabaseFile' : localDatabaseFile }
         self.db = driver.DriverSQLite(connectionInfo)
@@ -86,13 +85,13 @@ class TimeSeriesDatabase(object):
         Insert a time series header record and return its keyId
         :param startTime:   datetime start time of the measurement 
         :param tau0Seconds: float sampling interval of the measurement
-        :return self.timeSeriesId: int keyId of the new header record.
+        :return timeSeriesId: int keyId of the new header record.
         '''
         self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ('{0}', {1});".format(startTime, str(tau0Seconds)))
         self.db.execute("SELECT last_insert_rowid()")
-        self.timeSeriesId = self.db.fetchone()[0]
+        timeSeriesId = self.db.fetchone()[0]
         self.db.commit()
-        return self.timeSeriesId
+        return timeSeriesId
     
     def updateTimeSeriesHeader(self, timeSeriesId, startTime, tau0Seconds):
         '''
@@ -100,13 +99,15 @@ class TimeSeriesDatabase(object):
         :param timeSeriesId: of the header to update
         :param startTime:   datetime start time of the measurement 
         :param tau0Seconds: float sampling interval of the measurement
-        :return self.timeSeriesId: int keyId of the updated header record.
+        :return timeSeriesId: int keyId of the updated header record.
         '''
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
         self.db.execute("UPDATE TimeSeriesHeader SET startTime = '{0}', tau0Seconds = {1} WHERE keyId = {2};".format(startTime, str(tau0Seconds), timeSeriesId))
         self.db.commit()
         return timeSeriesId
     
-    def insertTimeSeries(self, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
+    def insertTimeSeries(self, timeSeriesId, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
         '''
         Insert a time series associated with the last timeSeriesId returned by insertTimeSeriesHeader
         :param dataSeries:    list of floats.  The main data series
@@ -116,8 +117,8 @@ class TimeSeriesDatabase(object):
         :param temperatures1: list of temperature sensor readings taken concurrent with the dataSeries
         :param temperatures2: 2nd list of temperature sensor readings 
         '''
-        if not self.timeSeriesId:
-            raise ValueError('No currently selected timeSeriesId.')
+        if not timeSeriesId:
+            raise ValueError('Invalid timeSeriesId.')
         
         q0 = "INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) VALUES "
         
@@ -144,7 +145,7 @@ class TimeSeriesDatabase(object):
                 q += ","
             
             # append fkHeader:    
-            q += "({0}".format(self.timeSeriesId) 
+            q += "({0}".format(timeSeriesId) 
                 
             # append timeStamp:
             if TS:
@@ -195,14 +196,12 @@ class TimeSeriesDatabase(object):
     def retrieveTimeSeriesHeader(self, timeSeriesId):
         '''
         Retrieve the specified header row.
-        If successful, populates self.timeSeriesId
         :param timeSeriesId: keyId of header to fetch
         :return TimeSeriesHeader object if successful, None otherwise.
         '''
         if not timeSeriesId:
             raise ValueError('Invalid timeSeriesId.')
         tsParser = ParseTimeStamp.ParseTimeStamp()
-        self.timeSeriesId = None
         self.db.execute("SELECT startTime, tau0Seconds FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId))
 
         result = None

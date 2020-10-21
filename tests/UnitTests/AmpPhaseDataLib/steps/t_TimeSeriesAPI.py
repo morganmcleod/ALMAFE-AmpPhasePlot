@@ -68,7 +68,7 @@ def step_impl(context):
     context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds)
     for item in context.dataSeries:
         context.API.insertTimeSeriesChunk(float(item))
-    context.API.finishTimeSeries()
+    context.API.finishTimeSeries(context.timeSeriesId)
     if context.timeSeriesId and hasattr(context, 'units'):
         context.API.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
 
@@ -282,7 +282,7 @@ def step_impl(context, dataList, units):
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(', ')]
     units = Units.fromStr(units)
-    result = context.API.getDataSeries(units)
+    result = context.API.getDataSeries(context.timeSeriesId, units)
     for a, b in zip(result, dataList):
         assert_that(a, close_to(b, 0.00005))
 
