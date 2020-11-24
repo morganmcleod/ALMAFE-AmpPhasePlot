@@ -9,6 +9,7 @@ class DriverMySQL():
     Driver wrapper for mysql-connector-python
     Provides a uniform interface to SQL user code
     '''
+    TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, connectionInfo):
         '''

@@ -8,6 +8,7 @@ class DriverSQLite():
     Driver wrapper for sqlite3
     Provides a uniform interface to SQL user code
     '''
+    TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
     def __init__(self, connectionInfo):
         '''

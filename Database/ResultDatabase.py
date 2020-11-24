@@ -9,7 +9,6 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
     '''
     MySQL implementation of Database.Interface.Result.ResultInterface
     '''
-    TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
     RESULTS_TABLE = 'AmpPhase_Results'
     PLOTS_TABLE = 'AmpPhase_Plots'
     TRACES_TABLE = 'AmpPhase_Traces'
@@ -47,7 +46,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         q += ") VALUES ("
         q += "'{0}'".format(description) if description else "NULL"
         if (timeStamp):
-            q += ", '{0}'".format(timeStamp.strftime(self.TIMESTAMP_FORMAT))
+            q += ", '{0}'".format(timeStamp.strftime(self.DB.TIMESTAMP_FORMAT))
         q += ");"
         
         self.DB.execute(q, commit = True)
@@ -78,7 +77,7 @@ class ResultDatabase(RI.ResultInterface, TI.TagsInterface):
         '''
         q = "UPDATE `{0}` SET `Description` = '{1}'".format(self.RESULTS_TABLE, result.description)
         if result.timeStamp:
-            q += ", `timeStamp` = '{0}'".format(result.timeStamp.strftime(self.TIMESTAMP_FORMAT))
+            q += ", `timeStamp` = '{0}'".format(result.timeStamp.strftime(self.DB.TIMESTAMP_FORMAT))
         q += " WHERE `keyId` = '{0}';".format(result.resultId)
         if self.DB.execute(q, commit = True):
             return result
