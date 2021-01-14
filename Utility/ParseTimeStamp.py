@@ -81,7 +81,7 @@ class ParseTimeStamp(object):
 def makeTimeStamp(timeStamp = None):
     '''
     initialized a timestamp from provided, or now() if nont provided
-    :param timeStamp:
+    :param timeStamp: string or datetime or None
     '''
     if not timeStamp:
         return datetime.now()
@@ -90,7 +90,7 @@ def makeTimeStamp(timeStamp = None):
     try:
         makeTimeStamp.parseTimeStamp
     except:
-        makeTimeStamp.parseTimeStamp = ParseTimeStamp.ParseTimeStamp()
+        makeTimeStamp.parseTimeStamp = ParseTimeStamp()
     try:
         return makeTimeStamp.parseTimeStamp.parseTimeStamp(timeStamp)
     except:
