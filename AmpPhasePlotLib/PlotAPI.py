@@ -31,7 +31,7 @@ class PlotAPI(object):
         self.plotElementsFinal = None
         self.dataStatusFinal = DataStatus.UNKNOWN
         
-    def plotTimeSeries(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
+    def plotTimeSeries(self, timeSeriesId, plotElements = None, outputName = None, show = False):
         '''
         Create a TIME_SERIES plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -44,6 +44,10 @@ class PlotAPI(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+        
         # clear anything kept from last plot:
         self.__reset()
         
@@ -57,7 +61,7 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotSpectrum(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
+    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False):
         '''
         Create an AMP_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -70,6 +74,10 @@ class PlotAPI(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+        
         # clear anything kept from last plot:
         self.__reset()
         
@@ -157,7 +165,7 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotAmplitudeStability(self, timeSeriesIds, plotElements = {}, outputName = None, show = False):
+    def plotAmplitudeStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
         '''
         Create an POWER_STABILITY, VOLT_STABILITY, or PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
@@ -169,7 +177,11 @@ class PlotAPI(object):
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
-        '''        
+        '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+
         # clear anything kept from last plot:
         self.__reset()
         self.calc = AmplitudeStability.AmplitudeStability()
@@ -212,7 +224,9 @@ class PlotAPI(object):
                 else:
                     return False
             # set a generic title:
-            plotElements[PlotEl.TITLE] = "Amplitude Stability"
+            title = plotElements.get(PlotEl.TITLE, None)
+            if not title:
+                plotElements[PlotEl.TITLE] = "Amplitude Stability"
 
         # get the results:
         if self.plotter.finishPlot(startTime, plotElements, outputName, show):
@@ -267,7 +281,7 @@ class PlotAPI(object):
         # add the trace:
         return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
 
-    def plotPhaseStability(self, timeSeriesIds, plotElements = {}, outputName = None, show = False):
+    def plotPhaseStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
         '''
         Create an PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
@@ -280,6 +294,10 @@ class PlotAPI(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+
         # clear anything kept from last plot:
         self.__reset()
         self.calc = PhaseStability.PhaseStability()
@@ -366,7 +384,7 @@ class PlotAPI(object):
         # add the trace:
         return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
     
-    def rePlot(self, plotId, plotElements = {}, outputName = None, show = False):
+    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
         '''
         Make a plot from whatever data is in the Result database for plotId.
         Not supported for TIME_SERIES plots.       
@@ -376,6 +394,10 @@ class PlotAPI(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+
         self.__reset()
         ra = ResultAPI.ResultAPI()
         

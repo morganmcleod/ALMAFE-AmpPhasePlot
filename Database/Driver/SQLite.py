@@ -54,6 +54,18 @@ class DriverSQLite():
             print(query)
             return False
     
+    def executemany(self, query, params, commit = False):
+        self.cursor = self.connection.cursor()
+        try:
+            self.cursor.executemany(query, params)
+            if commit:
+                self.connection.commit()
+            return True
+        except Exception as e:
+            print(f"SQLite error: {e}")
+            print(query)
+            return False
+        
     def commit(self):
         try:
             self.connection.commit()

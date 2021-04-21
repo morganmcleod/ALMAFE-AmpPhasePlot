@@ -1,8 +1,9 @@
 import Database.Driver.SQLite as driver
 import Database.TagsDatabase as TagsDB
 from Utility import ParseTimeStamp
-from datetime import timedelta
+from datetime import datetime, timedelta
 from itertools import zip_longest
+from typing import List, Optional, Union
 
 class TimeSeriesHeader(object):
     def __init__(self, timeSeriesId, startTime, tau0Seconds):
@@ -78,14 +79,17 @@ class TimeSeriesDatabase(object):
         
         self.db.commit()
     
-    def insertTimeSeriesHeader(self, startTime, tau0Seconds):
+    def insertTimeSeriesHeader(self, startTime:Optional[datetime], tau0Seconds:Optional[float]):
         '''
         Insert a time series header record and return its keyId
         :param startTime:   datetime start time of the measurement 
         :param tau0Seconds: float sampling interval of the measurement
-        :return timeSeriesId: int keyId of the new header record.
+        :return timeSeriesId: int keyId of the new header record or None if error.
         '''
-        self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ('{0}', {1});".format(startTime, str(tau0Seconds)))
+        stStr = "'" + startTime.strftime(self.db.TIMESTAMP_FORMAT) + "'" if startTime else "NULL"
+        t0Str = str(tau0Seconds) if tau0Seconds else "NULL"
+        if not self.db.execute("INSERT INTO TimeSeriesHeader (startTime, tau0Seconds) VALUES ({0}, {1});".format(stStr, t0Str)):
+            return None;
         self.db.execute("SELECT last_insert_rowid()")
         timeSeriesId = self.db.fetchone()[0]
         self.db.commit()
@@ -107,7 +111,8 @@ class TimeSeriesDatabase(object):
     
     def insertTimeSeries(self, timeSeriesId, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
         '''
-        Insert a time series associated with the last timeSeriesId returned by insertTimeSeriesHeader
+        Insert a time series associated with timeSeriesId
+        :param timeSeriesId:  int id to associate this data with.
         :param dataSeries:    list of floats.  The main data series
         :param startTime:     datetime of the first measurement.
         :param tau0Seconds:   measurement integration time/sampling interval
@@ -118,7 +123,10 @@ class TimeSeriesDatabase(object):
         if not timeSeriesId:
             raise ValueError('Invalid timeSeriesId.')
         
-        q0 = "INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) VALUES "
+        self.db.execute('pragma journal_mode=memory')
+       
+        q0 = """INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) 
+                VALUES (?,?,?,?,?)"""
         
         if not timeStamps:
             timeStamps = []
@@ -130,59 +138,30 @@ class TimeSeriesDatabase(object):
         # timeDelta and timeCount are for generating timeStamps if not provided
         timeDelta = timedelta(seconds = tau0Seconds)
         timeCount = startTime
-        firstTime = True
         error = False
-        maxRec = 500
-        recNum = 0        
-        # loop on data arrays:
+        maxRec = 100000
+        # loop on data arrays:        
+        records = []
         for TS, data, temp1, temp2 in zip_longest(timeStamps, dataSeries, temperatures1, temperatures2):
-            if firstTime:
-                q = ""
-                firstTime = False
-            else:
-                q += ","
-            
-            # append fkHeader:    
-            q += "({0}".format(timeSeriesId) 
                 
-            # append timeStamp:
-            if TS:
-                q += ",'{0}'".format(TS.strftime(self.db.TIMESTAMP_FORMAT))
-            else:
-                q += ",'{0}'".format(timeCount.strftime(self.db.TIMESTAMP_FORMAT))
-                timeCount += timeDelta
-            
-            # append seriesData:
-            q += ",{0}".format(data)
-            
-            # append temperatures1:
-            if temp1:
-                q += ",{0}".format(temp1)
-            else:
-                q += ",NULL"
-            
-            # append temperatures2:
-            if temp2:
-                q += ",{0}".format(temp2)
-            else:
-                q += ",NULL"
-                
-            q += ")"
-            recNum += 1
+            # timeStamp:
+            tss = TS.strftime(self.db.TIMESTAMP_FORMAT) if TS else timeCount.strftime(self.db.TIMESTAMP_FORMAT)
+            timeCount += timeDelta
 
+            # append tuple to records:
+            records.append((timeSeriesId, tss, data, temp1 if temp1 else None, temp2 if temp2 else None))
+            
             # if maxRec reached, perform the insert:
-            if recNum == maxRec:
+            if len(records) == maxRec:
                 # insert statement invariant part is q0 and record chunk is q:
-                if not self.db.execute(q0 + q + ";", commit = False):
+                if not self.db.executemany(q0, records, commit = False):
                     error = True
-                # reset record counter:
-                recNum = 0
-                # reset flag to suppress comma:
-                firstTime = True
+                # reset records:
+                records = []
         
         # it's likely theres a partial chunk at the end.  Insert it:
-        if recNum:
-            if not self.db.execute(q0 + q + ";", commit = False):
+        if len(records):
+            if not self.db.executemany(q0, records, commit = False):
                 error = True
         
         # no error seen, commit the transaction:
@@ -190,6 +169,8 @@ class TimeSeriesDatabase(object):
             self.db.commit()
         else:
             self.db.rollback()
+        
+        self.db.execute('pragma journal_mode=delete')
 
     def retrieveTimeSeriesHeader(self, timeSeriesId):
         '''

@@ -24,7 +24,7 @@ class PlotSpectrum(object):
         self.imageData = None
         self.traces = []
         
-    def plot(self, timeSeriesId, xArray, yArray, plotElements = {}, outputName = None, show = False):
+    def plot(self, timeSeriesId, xArray, yArray, plotElements = None, outputName = None, show = False):
         '''
         Create a POWER_SPECTRUM plot from timeSeries.
         The resulting image data is stored in self.imageData.
@@ -35,6 +35,10 @@ class PlotSpectrum(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+
         # clear anything kept from last plot:
         self.__reset()
     
@@ -93,7 +97,7 @@ class PlotSpectrum(object):
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)
 
-    def rePlot(self, plotId, plotElements = {}, outputName = None, show = False):
+    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
         '''
         Recreate a POWER_SPECTRUM plot from traces and plotElements stored in the Result database.
         The resulting image data is stored in self.imageData.
@@ -103,6 +107,10 @@ class PlotSpectrum(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+                    
         # clear anything kept from last plot:
         self.__reset()
 

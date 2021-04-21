@@ -67,7 +67,7 @@ def step_impl(context):
     
     context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds)
     for item in context.dataSeries:
-        context.API.insertTimeSeriesChunk(float(item))
+        context.API.insertTimeSeriesChunk(context.timeSeriesId, float(item))
     context.API.finishTimeSeries(context.timeSeriesId)
     if context.timeSeriesId and hasattr(context, 'units'):
         context.API.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
@@ -127,7 +127,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.API.dataSeries), equal_to(dataLen))
+    assert_that(len(context.API.getDataSeries(context.timeSeriesId)), equal_to(dataLen))
     
 @then('timeStamps is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -136,7 +136,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.API.timeStamps), equal_to(dataLen))
+    assert_that(len(context.API.getTimeStamps()), equal_to(dataLen))
 
 @then('the units are "{units}"')
 def step_impl(context, units):
@@ -151,7 +151,8 @@ def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    delta = max(context.API.startTime, context.now) - min(context.API.startTime, context.now)
+    delta = max(context.API.startTime, context.now) - \
+            min(context.API.startTime, context.now)
     assert_that(delta.seconds, close_to(0, 0.05))
 
 @then('the time series can be deleted from the database')
@@ -175,11 +176,11 @@ def step_impl(context, floatString):
     :param floatString: a float as string
     """
     tau0Seconds = float(floatString)
-    delta = context.API.timeStamps[0] - context.now
+    delta = context.API.startTime - context.now
     deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
-    assert_that(deltaSeconds, close_to(0.0, 0.10))
+    assert_that(deltaSeconds, close_to(0.0, 0.2))
     firstTime = True
-    for TS in context.API.timeStamps:
+    for TS in context.API.getTimeStamps():
         if firstTime:
             TS0 = TS
             firstTime = False

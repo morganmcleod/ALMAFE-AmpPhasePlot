@@ -37,8 +37,8 @@ class PlotImageDatabase(PI.PlotImageInterface):
         '''
         q = "INSERT INTO `{0}` (`fkPlots`, `name`, `path`, `imageData`) VALUES (%s, %s, %s, %s);".format(self.PLOT_IMAGES_TABLE)
         
-        name = "'{0}'".format(name) if name else "NULL"
-        path = "'{0}'".format(path) if path else "NULL"  
+        name = name if name else "NULL"
+        path = path if path else "NULL"  
         
         params = (plotId, name, path, imageData)
         if not self.DB.execute(q, params):

@@ -23,7 +23,7 @@ class PlotTimeSeries(object):
         '''
         self.imageData = None
         
-    def plot(self, timeSeriesId, plotElements = {}, outputName = None, show = False):
+    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False):
         '''
         Create a TIME_SERIES plot
         The resulting image data is stored in self.imageData
@@ -33,6 +33,10 @@ class PlotTimeSeries(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+                    
         # clear anything kept from last plot:
         self.__reset()
 

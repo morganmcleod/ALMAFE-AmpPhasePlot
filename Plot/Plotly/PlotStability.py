@@ -31,13 +31,17 @@ class PlotStability(object):
         self.minXY = [float_info.max, float_info.max]
         self.maxXY = [float_info.min, float_info.min]
 
-    def startPlot(self, plotElements = {}):
+    def startPlot(self, plotElements = None):
         '''
         Start a new STABILITY plot.
         :param startTime: when the measurement data was originally taken
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :return None; updates plotElements
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+
         # clear anything kept from last plot:
         self.__reset()
         
@@ -48,7 +52,7 @@ class PlotStability(object):
         xUnits = plotElements.get(PlotEl.XUNITS, (Units.SECONDS).value)
         plotElements[PlotEl.XUNITS] = xUnits
         
-    def addTrace(self, timeSeriesId, xArray, yArray, yError, plotElements = {}):
+    def addTrace(self, timeSeriesId, xArray, yArray, yError, plotElements = None):
         '''
         Add a trace to a STABILITY plot in-progress.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
@@ -58,6 +62,10 @@ class PlotStability(object):
         :param yError: float +- error bar on yArray
         :return True/False;  Updates plotElements
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+            
         # Get the DataSource tags from the TimeSeries:
         dataSources = self.tsAPI.getAllDataSource(timeSeriesId)
         
@@ -127,7 +135,7 @@ class PlotStability(object):
         self.timeSeriesIds.append(timeSeriesId)
         return True
     
-    def finishPlot(self, startTime, plotElements = {}, outputName = None, show = False):
+    def finishPlot(self, startTime, plotElements = None, outputName = None, show = False):
         '''
         Make plot title, axes labels, and footers;  Render the plot.
         Updates self.imageData with the finished plot
@@ -136,6 +144,10 @@ class PlotStability(object):
         :param show: If true, display in the default renderer.
         :return True/False; updates self.imageData and plotElements
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+            
         # update XY min/max from specline1:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
         if specLine:
@@ -195,7 +207,7 @@ class PlotStability(object):
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)    
 
-    def rePlot(self, plotId, plotElements = {}, outputName = None, show = False):
+    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
         '''
         Recreate a STABILITY plot from traces and plotElements stored in the Result database.
         The resulting image data is stored in self.imageData.
@@ -205,6 +217,10 @@ class PlotStability(object):
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
+        if plotElements == None:
+            plotElements = {}
+                    
         # clear anything kept from last plot:
         self.__reset()
 

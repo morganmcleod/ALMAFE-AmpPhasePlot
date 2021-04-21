@@ -1,4 +1,6 @@
 *.pyc
 *.sqlite
+*.sqlite-journal
 *.png
 SampleData-local/
+Docs-local/

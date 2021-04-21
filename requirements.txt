@@ -3,9 +3,8 @@ six==1.14.0
 behave==1.2.6
 PyHamcrest==1.9.0
 mysql-connector-python==8.0.18
-sqlite==3.31.1
 plotly==4.8.1
 psutil==5.7.0
 requests==2.24.0
 allantools==2019.9
-conda==4.8.3
+pydantic>=1.8.1

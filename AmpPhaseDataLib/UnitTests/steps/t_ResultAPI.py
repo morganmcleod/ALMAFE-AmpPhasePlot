@@ -57,7 +57,7 @@ def step_impl(context):
     assert_that(context.traceId)
     context.traceId2 = context.API.createTrace(context.plotId, context.xyData2, context.traceName2)
     assert_that(context.traceId2)
-    context.imagePath = "tests/UnitTests/AmpPhaseDataLib/steps/Cone of dining (Paris) June 2020.jpg"
+    context.imagePath = "AmpPhaseDataLib/UnitTests/steps/Cone of dining (Paris) June 2020.jpg"
     context.imageName = "time image"
     context.plotImageId = context.API.insertPlotImageFromFile(context.plotId, context.imagePath, context.imageName)
     assert_that(context.plotImageId)
