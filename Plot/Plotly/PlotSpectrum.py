@@ -206,12 +206,14 @@ class PlotSpectrum(object):
         window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
         if window:
             window = window.split(', ')
-            fig.update_xaxes(range = [float(window[0]), window[1]])
+            window = [float(window[0]), float(window[1])]
+            fig.update_xaxes(range = window)
 
         window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
         if window:
             window = window.split(', ')
-            fig.update_yaxes(range = [float(window[0]), window[1]])
+            window = [float(window[0]), float(window[1])]
+            fig.update_yaxes(range = window)
             
         # Compliance string:
         compliance = plotElements.get(PlotEl.SPEC_COMPLIANCE, None)

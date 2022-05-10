@@ -16,8 +16,8 @@ class PlotAPI(object):
         '''
         Constructor
         '''
-        self.__reset()
         self.tsAPI = TimeSeriesAPI.TimeSeriesAPI()
+        self.__reset()
 
     def __reset(self):
         '''
@@ -61,7 +61,7 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False):
+    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False, noiseFloorId = None):
         '''
         Create an AMP_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -80,6 +80,11 @@ class PlotAPI(object):
         
         # clear anything kept from last plot:
         self.__reset()
+
+        if noiseFloorId:
+            if not self.tsAPI.retrieveTimeSeries(noiseFloorId):
+                return False
+        
         
         # get the TimeSeries data:
         if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
@@ -104,7 +109,8 @@ class PlotAPI(object):
             dataSeries = self.tsAPI.getDataSeries(timeSeriesId)
         
         # set the plot title:
-        if not plotElements.get(PlotEl.TITLE, False) and dfltTitle:
+        if dfltTitle and not self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_SOURCE, False) \
+                     and not plotElements.get(PlotEl.TITLE, False) and dfltTitle:
             plotElements[PlotEl.TITLE] = dfltTitle
         
         # make the plot:
