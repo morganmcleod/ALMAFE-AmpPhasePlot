@@ -179,7 +179,7 @@ class TimeSeriesDatabase(object):
         :return TimeSeriesHeader object if successful, None otherwise.
         '''
         if not timeSeriesId:
-            raise ValueError('Invalid timeSeriesId.')
+            return None
         tsParser = ParseTimeStamp.ParseTimeStamp()
         self.db.execute("SELECT startTime, tau0Seconds FROM TimeSeriesHeader WHERE keyId = {0}".format(timeSeriesId))
 

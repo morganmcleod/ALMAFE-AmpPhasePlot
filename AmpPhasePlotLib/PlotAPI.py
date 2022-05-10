@@ -1,8 +1,9 @@
 '''
 PlotAPI for calling applications to generate plots.
 '''
-from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import *
+from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.ResultAPI import ResultAPI
+from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, PlotKind, SpecLines, Units
 from Calculate import AmplitudeStability, PhaseStability, FFT
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotSpectrum
 from datetime import datetime
@@ -16,7 +17,7 @@ class PlotAPI(object):
         '''
         Constructor
         '''
-        self.tsAPI = TimeSeriesAPI.TimeSeriesAPI()
+        self.tsAPI = TimeSeriesAPI()
         self.__reset()
 
     def __reset(self):
@@ -72,6 +73,7 @@ class PlotAPI(object):
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
+        :param noiseFloorId: if provided, timeSeriesId to analyze subtract before plotting.
         :return True if succesful, False otherwise
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
@@ -81,33 +83,36 @@ class PlotAPI(object):
         # clear anything kept from last plot:
         self.__reset()
 
-        if noiseFloorId:
-            if not self.tsAPI.retrieveTimeSeries(noiseFloorId):
-                return False
-        
-        
         # get the TimeSeries data:
-        if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
+        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
+        if not timeSeries:
             return False
+        if not timeSeries.isValid():
+            return False
+        noiseFloor = self.tsAPI.retrieveTimeSeries(noiseFloorId)
 
         # Get the DataSource tags:
         srcKind = DataKind.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
-        srcUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
+        currentUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
         
         # Get the time series and set the default title:
         if srcKind == DataKind.POWER:
             dfltTitle = "Power Spectral Density"
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = srcUnits)  # could be W or V
+            requiredUnits = currentUnits    # could be W or V
         elif srcKind == DataKind.PHASE:
             dfltTitle = "Phase Spectral Density"
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = Units.DEG)
+            requiredUnits = Units.DEG
         elif srcKind == DataKind.VOLTAGE:
             dfltTitle = "Voltage Spectral Density"
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = Units.VOLTS)
+            requiredUnits = Units.VOLTS
         else:
             dfltTitle = "Amplitude Spectral Density"
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId)
+            requiredUnits = currentUnits
         
+        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits)  
+        if noiseFloor:
+            noiseFloor = noiseFloor.getDataSeries(currentUnits, requiredUnits)
+    
         # set the plot title:
         if dfltTitle and not self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_SOURCE, False) \
                      and not plotElements.get(PlotEl.TITLE, False) and dfltTitle:
@@ -116,9 +121,19 @@ class PlotAPI(object):
         # make the plot:
         self.calc = FFT.FFT()
         self.plotter = PlotSpectrum.PlotSpectrum()
-        
-        if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds):
+
+        if noiseFloor:
+            if self.calc.calculate(noiseFloor, timeSeries.tau0Seconds):
+                noiseFloor = self.calc.yResult
+            else:
+                noiseFloor = None
+            
+        if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds):
             return False
+
+        if noiseFloor:
+            self.calc.yResult = [self.calc.yResult[x] - noiseFloor[x] for x in range(len(self.calc.yResult))]
+            plotElements[PlotEl.PROCESS_NOTES] = "Subtracted noise floor {}".format(noiseFloorId)
 
         # check for a special RMS spec:
         rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
@@ -137,7 +152,7 @@ class PlotAPI(object):
                 self.__updateDataStatusFinal(False)
             
             compliance = "{0:.2e} {1} RMS in {2} to {3} Hz.  Max {4:.2e} : {5}".format(
-                RMS, srcUnits.value, bwLower, bwUpper, rmsSpec, complies)
+                RMS, requiredUnits.value, bwLower, bwUpper, rmsSpec, complies)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
         
         # check whether to just display the RMS on the plot:
@@ -405,7 +420,7 @@ class PlotAPI(object):
             plotElements = {}
 
         self.__reset()
-        ra = ResultAPI.ResultAPI()
+        ra = ResultAPI()
         
         plot = ra.retrievePlot(plotId)
         if not plot:

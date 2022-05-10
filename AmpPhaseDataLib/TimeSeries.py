@@ -132,14 +132,14 @@ class TimeSeries():
         self.nextWriteIndex = len(self.dataSeries)
         return ds, ts, t1, t2
     
-    def getDataSeries(self, currentUnits:Units = None, requiredUnits:Units = None):
+    def getDataSeries(self, currentUnits:Units, requiredUnits:Units = None):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
         :param timeSeriesId
         :param requiredUnits: enum Units from Constants.py
         :return list derived from self.dataSeries converted, if possible
         '''
-        if not currentUnits or not requiredUnits or currentUnits == requiredUnits:
+        if not requiredUnits or currentUnits == requiredUnits:
             # no coversion needed:
             return self.dataSeries
         

@@ -1,5 +1,5 @@
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import *
+from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units 
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
@@ -42,15 +42,16 @@ class PlotSpectrum(object):
         # clear anything kept from last plot:
         self.__reset()
     
-        # get the TimeSeries data:
+        # get the TimeSeries data:        
         if not self.timeSeriesAPI:
             self.timeSeriesAPI = TimeSeriesAPI.TimeSeriesAPI()
-        ts = self.timeSeriesAPI
-        if not ts.retrieveTimeSeries(timeSeriesId):
-            return False
 
+        timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
+        if not timeSeries:
+            return False
+        
         # Get the DataSource tags:
-        dataSources = ts.getAllDataSource(timeSeriesId)
+        dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
         
@@ -89,7 +90,8 @@ class PlotSpectrum(object):
         plotElements[PlotEl.TITLE] = title
         
         # Make plot footer strings:
-        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, ts.getAllDataStatus(timeSeriesId), ts.startTime)
+        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, 
+                    self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
         plotElements[PlotEl.FOOTER1] = footer1
         plotElements[PlotEl.FOOTER2] = footer2
         plotElements[PlotEl.FOOTER3] = footer3
@@ -116,10 +118,9 @@ class PlotSpectrum(object):
 
         if not self.resultAPI:
             self.resultAPI = ResultAPI.ResultAPI()
-        ra = self.resultAPI
 
         # get the Plot header:
-        plotHeader = ra.retrievePlot(plotId)
+        plotHeader = self.resultAPI.retrievePlot(plotId)
         if not plotHeader:
             return False
         
@@ -132,7 +133,7 @@ class PlotSpectrum(object):
             return False
 
         # get the stored plotElements and merge in any overrides:
-        plotElementsStored = ra.getAllPlotEl(plotId)
+        plotElementsStored = self.resultAPI.getAllPlotEl(plotId)
         plotElements = {**plotElementsStored, **plotElements}
         
         # get the axis units:
@@ -142,7 +143,7 @@ class PlotSpectrum(object):
         plotElements[PlotEl.YUNITS] = yUnits
         
         # Get the trace data
-        traces = ra.retrieveTraces(plotId)
+        traces = self.resultAPI.retrieveTraces(plotId)
         if not traces:
             return False
         trace = traces[0]
