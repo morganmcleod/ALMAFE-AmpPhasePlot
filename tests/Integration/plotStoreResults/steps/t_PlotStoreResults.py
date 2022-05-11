@@ -203,7 +203,7 @@ def step_impl(context):
     :param context: behave.runner.Context
     """
     plotIds = context.rAPI.retrievePlotIds(context.resultId, context.plotKind)
-    assert_that(len(plotIds), greater_than(0), "retrived Id")
+    assert_that(len(plotIds), greater_than(0), "retrieved Id")
     plotId = context.pAPI.rePlot(plotIds[0], plotElements = {}, show = context.show)
     assert_that(plotId, "got replot Id")
     assert_that(context.pAPI.imageData, "got imageData")

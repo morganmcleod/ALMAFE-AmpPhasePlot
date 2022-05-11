@@ -48,7 +48,7 @@ class PlotTimeSeries(object):
         # Get the DataSource tags:
         dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
-        dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
+        currentUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
 
         # Set up trace legends:
         legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind.value)]
@@ -70,7 +70,7 @@ class PlotTimeSeries(object):
             elif dataKind == DataKind.PHASE:
                 yUnits = (Units.DEG).value
             else: # for POWER and AMPLITUDE use the source units:
-                yUnits = dataUnits.value
+                yUnits = currentUnits.value
             plotElements[PlotEl.YUNITS] = yUnits
             
         y2Units = plotElements.get(PlotEl.Y2UNITS, None)
@@ -82,7 +82,7 @@ class PlotTimeSeries(object):
         timeStamps = timeSeries.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
         if not timeStamps:
             return False
-        dataSeries = timeSeries.getDataSeries(timeSeriesId, currentUnits = dataUnits, requiredUnits = Units.fromStr(yUnits))
+        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.fromStr(yUnits))
         if not dataSeries:
             return False
             

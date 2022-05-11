@@ -228,9 +228,10 @@ class PlotAPI(object):
             timeSeriesId = timeSeriesIds
             plotElements[PlotEl.ERROR_BARS] = "1"
             self.plotter.startPlot(plotElements)
-            if not self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements):
+            timeSeries = self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements)
+            if not timeSeries:
                 return False
-            startTime = self.tsAPI.startTime
+            startTime = timeSeries.startTime
 
         # is it a list:
         elif isinstance(timeSeriesIds, list):
@@ -239,9 +240,10 @@ class PlotAPI(object):
             startTime = datetime.now()
             self.plotter.startPlot(plotElements)
             for timeSeriesId in timeSeriesIds:
-                if self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements):
-                    if self.tsAPI.startTime < startTime:
-                        startTime = self.tsAPI.startTime
+                timeSeries = self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements)
+                if timeSeries:
+                    if timeSeries.startTime < startTime:
+                        startTime = timeSeries.startTime
                 else:
                     return False
             # set a generic title:
@@ -258,29 +260,35 @@ class PlotAPI(object):
         else:
             return False
         
-    def __plotAmplitudeStabilitySingle(self, timeSeriesId, plotElements):
+    def __plotAmplitudeStabilitySingle(self, timeSeriesId, plotElements):        
+        '''
+        :param timeSeriesId:
+        :param plotElements:
+        :return the retrieved TimeSeries object if successful, else None
+        '''
         # get the TimeSeries data:
-        if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
-            return False
+        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
+        if not timeSeries:
+            return None
         
         # Get the DataSource tags:
         srcKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
-        srcUnits = self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value)
+        currentUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
         
         # Depending on srcKind, get the dataSeries in the proper units:
         if srcKind == (DataKind.VOLTAGE).value:
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = Units.VOLTS)
+            dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.VOLTS)
             normalize = False   # for pure voltage time series: don't normalize, calculate ADEV
             calcAdev = True     # this would be typical for a bias or power supply where absolute
                                 # deviations from nominal are more of interest than relative level drifts.
         else: # for POWER and AMPLITUDE, use the source units, if any:
-            dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = Units.fromStr(srcUnits))
+            dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = currentUnits)
             normalize = True    # for power or unknown amplitude time series, normalize and calculate AVAR.
             calcAdev = False    # units might still be VOLTS in the case of a crystal detector having 
                                 # square-law output characteristic.
 
         if not dataSeries:
-            return False
+            return None
 
         freqLOGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.LO_GHZ)
         if freqLOGHz:
@@ -291,8 +299,8 @@ class PlotAPI(object):
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         
-        if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax, normalize, calcAdev):
-            return False
+        if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, normalize, calcAdev):
+            return None
 
         # check spec lines:
         for specLine in self.specLines:
@@ -300,7 +308,11 @@ class PlotAPI(object):
             self.__updateDataStatusFinal(complies)
 
         # add the trace:
-        return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
+        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+            return timeSeries
+        else:
+            return None
+        
 
     def plotPhaseStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
         '''
@@ -344,9 +356,10 @@ class PlotAPI(object):
             timeSeriesId = timeSeriesIds
             plotElements[PlotEl.ERROR_BARS] = "1"
             self.plotter.startPlot(plotElements)
-            if not self.__plotPhaseStabilitySingle(timeSeriesId, plotElements):
+            timeSeries = self.__plotPhaseStabilitySingle(timeSeriesId, plotElements)
+            if not timeSeries:
                 return False
-            startTime = self.tsAPI.startTime
+            startTime = timeSeries.startTime
 
         # is it a list:
         elif isinstance(timeSeriesIds, list):
@@ -355,11 +368,12 @@ class PlotAPI(object):
             startTime = datetime.now()
             self.plotter.startPlot(plotElements)
             for timeSeriesId in timeSeriesIds:
-                if self.__plotPhaseStabilitySingle(timeSeriesId, plotElements):
-                    if self.tsAPI.startTime < startTime:
-                        startTime = self.tsAPI.startTime
+                timeSeries = self.__plotPhaseStabilitySingle(timeSeriesId, plotElements)
+                if timeSeries:
+                    if timeSeries.startTime < startTime:
+                        startTime = timeSeries.startTime
                 else:
-                    return False
+                    return None
             # set a generic title:
             plotElements[PlotEl.TITLE] = "Phase Stability"
         
@@ -373,14 +387,22 @@ class PlotAPI(object):
             return False
     
     def __plotPhaseStabilitySingle(self, timeSeriesId, plotElements):
+        '''
+        :param timeSeriesId:
+        :param plotElements:
+        :return the retrieved TimeSeries object if successful, else None
+        '''
         # get the TimeSeries data:
-        if not self.tsAPI.retrieveTimeSeries(timeSeriesId):
-            return False
+        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
+        if not timeSeries:
+            return None
         
-        dataSeries = self.tsAPI.getDataSeries(timeSeriesId, requiredUnits = Units.DEG)
+        currentUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
         freqRFGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.RF_GHZ)
         if freqRFGHz:
             freqRFGHz = float(freqRFGHz)
+
+        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.DEG)
 
         # set YUNITS on the first trace:
         if not plotElements.get(PlotEl.YUNITS, None):
@@ -394,8 +416,8 @@ class PlotAPI(object):
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         
-        if not self.calc.calculate(dataSeries, self.tsAPI.tau0Seconds, TMin, TMax, freqRFGHz):
-            return False
+        if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, freqRFGHz):
+            return None
 
         # check spec lines:
         for specLine in self.specLines:
@@ -403,7 +425,10 @@ class PlotAPI(object):
             self.__updateDataStatusFinal(complies)
 
         # add the trace:
-        return self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements)
+        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+            return timeSeries
+        else:
+            return None
     
     def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
         '''

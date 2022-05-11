@@ -139,8 +139,8 @@ class TimeSeries():
         :param requiredUnits: enum Units from Constants.py
         :return list derived from self.dataSeries converted, if possible
         '''
-        if not requiredUnits or currentUnits == requiredUnits:
-            # no coversion needed:
+        if not currentUnits or not requiredUnits or currentUnits == requiredUnits:
+            # no conversion needed:
             return self.dataSeries
         
         result = None

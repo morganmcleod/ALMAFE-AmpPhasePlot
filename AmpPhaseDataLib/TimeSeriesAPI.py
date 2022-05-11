@@ -112,7 +112,7 @@ class TimeSeriesAPI(object):
         If timeStamps is provided, startTime will be set to the first value, else now() if not provided. 
         '''
         timeSeries = self.startTimeSeries(tau0Seconds, startTime)
-        self.insertTimeSeriesChunk(timeSeries, dataSeries, temperatures1, temperatures2, timeStamps)
+        timeSeries.appendData(dataSeries, temperatures1, temperatures2, timeStamps)
         self.finishTimeSeries(timeSeries)
         return timeSeries.tsId
     
