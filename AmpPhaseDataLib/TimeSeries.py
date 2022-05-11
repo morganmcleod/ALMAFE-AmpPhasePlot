@@ -6,8 +6,11 @@ from math import log10
 
 class TimeSeries():
     
-    def __init__(self):
+    def __init__(self, tsId:int = 0, tau0Seconds:float = None, startTime:Optional[Union[str, datetime]] = None):
         self.reset()
+        self.tsId = tsId
+        self.tau0Seconds = tau0Seconds
+        self.initializeStartTime(startTime)
         
     def reset(self):
         # time series state data:
@@ -23,7 +26,7 @@ class TimeSeries():
         self.tsFormat:str = None
         self.tsParser:ParseTimeStamp = None
     
-    def initializeStartTime(self, startTime:Optional[Union[str, datetime]]):
+    def initializeStartTime(self, startTime:Optional[Union[str, datetime]] = None):
         '''
         Preserves self.startTime if already set.
         :param startTime: datetime or string of first point in dataSeries
@@ -102,7 +105,7 @@ class TimeSeries():
                            several formats supported, YYYY/MM/DD HH:MM:SS.mmm preferred
         '''
         def appendOrConcat(target, itemOrList):
-            if itemOrList:
+            if itemOrList is not None:
                 try:
                     target += itemOrList
                 except:
@@ -129,14 +132,20 @@ class TimeSeries():
         self.nextWriteIndex = len(self.dataSeries)
         return ds, ts, t1, t2
     
-    def getDataSeries(self, units:Units, requiredUnits:Units = None):
-        if not requiredUnits or units == requiredUnits:
+    def getDataSeries(self, currentUnits:Units, requiredUnits:Units = None):
+        '''
+        Get the dataSeries array, optionally converted to requiredUnits
+        :param timeSeriesId
+        :param requiredUnits: enum Units from Constants.py
+        :return list derived from self.dataSeries converted, if possible
+        '''
+        if not requiredUnits or currentUnits == requiredUnits:
             # no coversion needed:
             return self.dataSeries
         
         result = None
         
-        if units == Units.WATTS:
+        if currentUnits == Units.WATTS:
             if requiredUnits == Units.MW:
                 # convert from watt to mW:
                 result = [y * 1000 for y in self.dataSeries]
@@ -145,7 +154,7 @@ class TimeSeries():
                 # convert from watt to dBm:
                 result = [10 * log10(y * 1000) for y in self.dataSeries]
         
-        elif units == Units.MW:
+        elif currentUnits == Units.MW:
             if requiredUnits == Units.WATTS:
                 # convert from mW to watt:
                 result = [y / 1000 for y in self.dataSeries]
@@ -154,7 +163,7 @@ class TimeSeries():
                 # convert from mW to dBm:
                 result = [10 * log10(y) for y in self.dataSeries]
         
-        elif units == Units.DBM:
+        elif currentUnits == Units.DBM:
             if requiredUnits == Units.WATTS:
                 # convert from dBm to watt:
                 result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
@@ -163,12 +172,12 @@ class TimeSeries():
                 # convert from dBm to mW:
                 result = [pow(10, y / 10) for y in self.dataSeries]
         
-        elif units == Units.VOLTS:
+        elif currentUnits == Units.VOLTS:
             if requiredUnits == Units.MV:
                 # convert from Volt to mV
                 result = [y * 1000 for y in self.dataSeries]
         
-        elif units == Units.MV:
+        elif currentUnits == Units.MV:
             if requiredUnits == Units.VOLTS:
                 # convert from mV to Volt
                 result = [y / 1000 for y in self.dataSeries]
@@ -178,9 +187,14 @@ class TimeSeries():
         
         return result
 
-    def getTimeStamps(self, timeUnits:Units = Units.LOCALTIME, requiredUnits:Units = None):
+    def getTimeStamps(self, currentUnits:Units = Units.LOCALTIME, requiredUnits:Units = None):
+        '''
+        Get the timeStamps array, optionally converted to requiredUnits
+        :param requiredUnits: enum Units from Constants.py
+        :return list derived from self.dataSeries converted, if possible
+        '''
         # only storing as LOCALTIME is supported for now:
-        if timeUnits != Units.LOCALTIME:
+        if currentUnits != Units.LOCALTIME:
             # not supported:
             raise TypeError('Unsupported units conversion')
         

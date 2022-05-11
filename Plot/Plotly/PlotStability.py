@@ -1,5 +1,5 @@
 from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhaseDataLib.Constants import *
+from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
@@ -199,7 +199,7 @@ class PlotStability(object):
         
         # Plot footers:
         footer1, footer2, footer3 = makeFooters(self.timeSeriesIds, plotElements, 
-                                                self.tsAPI.getAllDataStatus(self.timeSeriesIds[0]), startTime)
+                self.tsAPI.getAllDataStatus(self.timeSeriesIds[0]), startTime)
         plotElements[PlotEl.FOOTER1] = footer1
         plotElements[PlotEl.FOOTER2] = footer2
         plotElements[PlotEl.FOOTER3] = footer3

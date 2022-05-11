@@ -107,6 +107,12 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
         footer3 = "Source: " + dataSource
     else:
         footer3 = ""
+    
+    processNotes = plotElements.get(PlotEl.PROCESS_NOTES, None)
+    if processNotes:
+        if footer3:
+            footer3 += " | "
+        footer3 += processNotes
     plotElements[PlotEl.FOOTER3] = footer3
     
     return (footer1, footer2, footer3)

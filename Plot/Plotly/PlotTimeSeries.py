@@ -1,5 +1,5 @@
 from AmpPhaseDataLib import TimeSeriesAPI
-from AmpPhaseDataLib.Constants import *
+from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, Units
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, makePlotOutput
 import plotly.graph_objects as go
@@ -41,21 +41,21 @@ class PlotTimeSeries(object):
         self.__reset()
 
         # get the TimeSeries data:        
-        ts = self.timeSeriesAPI
-        if not ts.retrieveTimeSeries(timeSeriesId):
+        timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
+        if not timeSeries:
             return False
 
         # Get the DataSource tags:
-        dataSources = ts.getAllDataSource(timeSeriesId)
+        dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
 
         # Set up trace legends:
         legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind.value)]
-        if ts.temperatures1:
+        if timeSeries.temperatures1:
             legend = plotElements.get(PlotEl.Y2_LEGEND1, 'Temperature sensor 1')
             legends.append(legend)
-        if ts.temperatures2:
+        if timeSeries.temperatures2:
             legend = plotElements.get(PlotEl.Y2_LEGEND2, 'Temperature sensor 2')
             legends.append(legend)
                     
@@ -79,10 +79,10 @@ class PlotTimeSeries(object):
             plotElements[PlotEl.Y2UNITS] = y2Units
         
         # get timestamps and data, possibly with unit conversions:        
-        timeStamps = ts.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
+        timeStamps = timeSeries.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
         if not timeStamps:
             return False
-        dataSeries = ts.getDataSeries(timeSeriesId, requiredUnits = Units.fromStr(yUnits))
+        dataSeries = timeSeries.getDataSeries(timeSeriesId, currentUnits = dataUnits, requiredUnits = Units.fromStr(yUnits))
         if not dataSeries:
             return False
             
@@ -92,15 +92,15 @@ class PlotTimeSeries(object):
         fig = make_subplots(specs=[[{"secondary_y": True}]])
         fig.add_trace(go.Scatter(x = timeStamps, y = dataSeries, mode = 'lines', name = legends[0]), secondary_y=False)
         
-        if ts.temperatures1:
-            fig.add_trace(go.Scatter(x = timeStamps, y = ts.temperatures1, mode = 'lines', name = legends[1]), secondary_y=True)
-            y2min = min(ts.temperatures1)
-            y2max = max(ts.temperatures1)
-        if ts.temperatures2:
-            fig.add_trace(go.Scatter(x = timeStamps, y = ts.temperatures2, mode = 'lines', name = legends[2]), secondary_y=True)
+        if timeSeries.temperatures1:
+            fig.add_trace(go.Scatter(x = timeStamps, y = timeSeries.temperatures1, mode = 'lines', name = legends[1]), secondary_y=True)
+            y2min = min(timeSeries.temperatures1)
+            y2max = max(timeSeries.temperatures1)
+        if timeSeries.temperatures2:
+            fig.add_trace(go.Scatter(x = timeStamps, y = timeSeries.temperatures2, mode = 'lines', name = legends[2]), secondary_y=True)
             if y2min:
-                y2min = min(y2min, min(ts.temperatures2))
-                y2max = max(y2max, max(ts.temperatures2))
+                y2min = min(y2min, min(timeSeries))
+                y2max = max(y2max, max(timeSeries.temperatures2))
         
         # force show legend even if only one trace:
         fig.update_layout(showlegend = True)
@@ -132,7 +132,7 @@ class PlotTimeSeries(object):
 
         # Y2 axis label:
         y2AxisLabel = plotElements.get(PlotEl.Y2_AXIS_LABEL, None)
-        if not y2AxisLabel and ts.temperatures1:
+        if not y2AxisLabel and timeSeries.temperatures1:
             y2AxisLabel = "temperature [" + y2Units + "]"
         if y2AxisLabel:
             fig.update_yaxes(title_text = y2AxisLabel, showgrid=False, ticks="outside", secondary_y=True)
@@ -162,7 +162,8 @@ class PlotTimeSeries(object):
             fig.update_layout(title_text = title)
         
         # Plot footers:        
-        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, ts.getAllDataStatus(timeSeriesId), ts.startTime)
+        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, 
+                    self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
         addFooters(fig, footer1, footer2, footer3)
         
         # make and show plot:
