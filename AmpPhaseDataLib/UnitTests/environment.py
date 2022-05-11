@@ -34,12 +34,12 @@ def timeSeriesAPI(context, **kwargs):
     context.tagsAdded = {}
     yield context.API
     # -- CLEANUP-FIXTURE PART:
-    for tag in context.tagsAdded:
-        if DataStatus.exists(tag):
-            context.API.clearDataStatus(context.timeSeriesId, DataStatus[tag])
-        if DataSource.exists(tag):
-            context.API.clearDataSource(context.timeSeriesId, DataSource[tag])
     if context.timeSeriesId:
+        for tag in context.tagsAdded:
+            if DataStatus.exists(tag):
+                context.API.clearDataStatus(context.timeSeriesId, DataStatus[tag])
+            if DataSource.exists(tag):
+                context.API.clearDataSource(context.timeSeriesId, DataSource[tag])
         context.API.deleteTimeSeries(context.timeSeriesId)
 
 @fixture

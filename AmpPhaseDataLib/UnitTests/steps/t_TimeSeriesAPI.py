@@ -65,11 +65,14 @@ def step_impl(context):
     """
     context.now = datetime.now()    
     
-    context.timeSeriesId = context.API.startTimeSeries(context.tau0Seconds)
+    context.timeSeries = context.API.startTimeSeries(context.tau0Seconds)
+    assert_that(context.timeSeries)
+    assert_that(context.timeSeries.tsId)
+    context.timeSeriesId = context.timeSeries.tsId
     for item in context.dataSeries:
-        context.API.insertTimeSeriesChunk(context.timeSeriesId, float(item))
-    context.API.finishTimeSeries(context.timeSeriesId)
-    if context.timeSeriesId and hasattr(context, 'units'):
+        context.timeSeries.appendData(float(item))
+    context.API.finishTimeSeries(context.timeSeries)
+    if hasattr(context, 'units'):
         context.API.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
 
 @when('the time series is retrieved from the database')
@@ -77,7 +80,8 @@ def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    assert_that(context.API.retrieveTimeSeries(context.timeSeriesId))
+    context.timeSeries = context.API.retrieveTimeSeries(context.timeSeriesId) 
+    assert_that(context.timeSeries)
 
 @when('TimeSeries DataSource tag "{tagName}" is set with value "{tagValue}"')
 def step_impl(context, tagName, tagValue):
@@ -109,7 +113,7 @@ def step_impl(context, timeStampString):
     '''
     tsParser = ParseTimeStamp.ParseTimeStamp()
     timeStamp = tsParser.parseTimeStamp(timeStampString)
-    assert_that(context.API.startTime, equal_to(timeStamp))
+    assert_that(context.timeSeries.startTime, equal_to(timeStamp))
     
 @then('tau0Seconds is "{floatString}"')
 def step_impl(context, floatString):
@@ -118,7 +122,7 @@ def step_impl(context, floatString):
     :param floatString: a float as string
     '''
     tau0Seconds = float(floatString)
-    assert_that(context.API.tau0Seconds, equal_to(tau0Seconds))
+    assert_that(context.timeSeries.tau0Seconds, equal_to(tau0Seconds))
 
 @then('dataSeries is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -127,7 +131,10 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.API.getDataSeries(context.timeSeriesId)), equal_to(dataLen))
+    currentUnits = context.API.getDataSource(context.timeSeriesId, DataSource.UNITS)
+    currentUnits = Units.fromStr(currentUnits) if currentUnits else None
+    requiredUnits = currentUnits
+    assert_that(len(context.timeSeries.getDataSeries(currentUnits, requiredUnits)), equal_to(dataLen))
     
 @then('timeStamps is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -136,7 +143,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    assert_that(len(context.API.getTimeStamps()), equal_to(dataLen))
+    assert_that(len(context.timeSeries.getTimeStamps()), equal_to(dataLen))
 
 @then('the units are "{units}"')
 def step_impl(context, units):
@@ -151,8 +158,8 @@ def step_impl(context):
     '''
     :param context: behave.runner.Context
     '''
-    delta = max(context.API.startTime, context.now) - \
-            min(context.API.startTime, context.now)
+    delta = max(context.timeSeries.startTime, context.now) - \
+            min(context.timeSeries.startTime, context.now)
     assert_that(delta.seconds, close_to(0, 0.05))
 
 @then('the time series can be deleted from the database')
@@ -176,11 +183,11 @@ def step_impl(context, floatString):
     :param floatString: a float as string
     """
     tau0Seconds = float(floatString)
-    delta = context.API.startTime - context.now
+    delta = context.timeSeries.startTime - context.now
     deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
     assert_that(deltaSeconds, close_to(0.0, 0.2))
     firstTime = True
-    for TS in context.API.getTimeStamps():
+    for TS in context.timeSeries.getTimeStamps():
         if firstTime:
             TS0 = TS
             firstTime = False
@@ -269,8 +276,8 @@ def step_impl(context, dataList, units):
     """
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(', ')]
-    units = Units.fromStr(units)
-    result = context.API.getTimeStamps(units)
+    requiredUnits = Units.fromStr(units)
+    result = context.timeSeries.getTimeStamps(requiredUnits = requiredUnits)
     assert_that(result, equal_to(dataList))
 
 @then('we can retrieve the readings as "{dataList}" in units "{units}"')
@@ -282,8 +289,9 @@ def step_impl(context, dataList, units):
     """
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(', ')]
-    units = Units.fromStr(units)
-    result = context.API.getDataSeries(context.timeSeriesId, units)
+    currentUnits = Units.fromStr(context.API.getDataSource(context.timeSeriesId, DataSource.UNITS))
+    requiredUnits = Units.fromStr(units)
+    result = context.timeSeries.getDataSeries(currentUnits, requiredUnits)
     for a, b in zip(result, dataList):
         assert_that(a, close_to(b, 0.00005))
 

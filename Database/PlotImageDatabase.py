@@ -35,7 +35,7 @@ class PlotImageDatabase(PI.PlotImageInterface):
         :param path: str may be used for filesystem storage
         :return PlotImage object if successful, None otherwise
         '''
-        q = "INSERT INTO `{0}` (`fkPlots`, `name`, `path`, `imageData`) VALUES (%s, %s, %s, %s);".format(self.PLOT_IMAGES_TABLE)
+        q = "INSERT INTO `{0}` (`fkPlots`, `name`, `path`, `imageData`) VALUES (%s, %s, %s, _binary %s);".format(self.PLOT_IMAGES_TABLE)
         
         name = name if name else "NULL"
         path = path if path else "NULL"  

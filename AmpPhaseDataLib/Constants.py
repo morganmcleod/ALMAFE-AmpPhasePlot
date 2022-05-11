@@ -119,6 +119,7 @@ class PlotEl(EnumHelper):
     FOOTER3         = 'FOOTER3'         # footer line 3 
     IMG_WIDTH       = 'IMG_WIDTH'       # pixels width of output image
     IMG_HEIGHT      = 'IMG_HEIGHT'      # pixels height of output image
+    PROCESS_NOTES   = 'PROCESS_NOTES'   # notes about data processing applied to the result (e.g. noise floor subtraction
 
 class Units(EnumHelper):
     '''

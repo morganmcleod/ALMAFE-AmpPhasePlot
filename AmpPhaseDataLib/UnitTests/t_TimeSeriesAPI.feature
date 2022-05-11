@@ -6,11 +6,6 @@ Feature: Validate TimeSeriesAPI
     And timestamp list "2020:05:21 12:00:00.000, 2020:05:21 12:00:00.050, 2020:05:21 12:00:00.100"
     And the units are "mW"
     When the data is inserted 
-    Then startTime is "2020:05:21 12:00:00.000"
-    And tau0Seconds is "0.05"
-    And dataSeries is a list of "3" elements
-    And timeStamps is a list of "3" elements
-    And the units are "mW"
     # check everything again after retrieval:
     When the time series is retrieved from the database
     Then startTime is "2020:05:21 12:00:00.000"

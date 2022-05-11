@@ -19,7 +19,7 @@ class DriverMySQL():
         self.host = connectionInfo['host']
         self.user = connectionInfo['user']
         self.passwd = connectionInfo['passwd']
-        self.database = connectionInfo['database']        
+        self.database = connectionInfo['database']      
         self.port = connectionInfo.get('port', 3306)
         self.cursor = None
         if self.connect():
@@ -28,7 +28,11 @@ class DriverMySQL():
     def connect(self):
         self.connection = None
         try:
-            self.connection = mysql.connector.connect(host=self.host, port=self.port, user=self.user, passwd=self.passwd, database=self.database)
+            self.connection = mysql.connector.connect(host=self.host, 
+                                                      port=self.port, 
+                                                      user=self.user, 
+                                                      passwd=self.passwd, 
+                                                      database=self.database)
             return True
         except Error as e:
             print(f"MySQL error: {e}")
@@ -52,7 +56,7 @@ class DriverMySQL():
             return True
         except Error as e:
             print(f"MySQL error: {e}")
-            print(query)
+            #print(query)
             return False
     
     def commit(self):

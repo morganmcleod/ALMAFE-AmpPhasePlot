@@ -100,7 +100,10 @@ class AmplitudeStability(object):
             
         # exit early for single-point spec:
         if iUpper == iLower + 1:
-            return self.yResult[iLower] <= specMin
+            try:
+                return self.yResult[iLower] <= specMin
+            except:
+                return self.yResult[iLower - 1] <= specMin
 
         # get the slope between the endpoints:        
         slope = (specMax - specMin) / (iUpper - iLower - 1)
