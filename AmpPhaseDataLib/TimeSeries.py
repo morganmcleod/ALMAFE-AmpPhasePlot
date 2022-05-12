@@ -6,11 +6,15 @@ from math import log10
 
 class TimeSeries():
     
-    def __init__(self, tsId:int = 0, tau0Seconds:float = None, startTime:Optional[Union[str, datetime]] = None):
+    def __init__(self, tsId:int = 0, 
+                 tau0Seconds:float = None, 
+                 startTime:Optional[Union[str, datetime]] = None,
+                 dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
         self.reset()
         self.tsId = tsId
         self.tau0Seconds = tau0Seconds
         self.initializeStartTime(startTime)
+        self.initializeDataUnits(dataUnits)
         
     def reset(self):
         # time series state data:
@@ -21,6 +25,7 @@ class TimeSeries():
         self.timeStamps:List[datetime] = []
         self.tau0Seconds:float = None
         self.startTime:datetime = None
+        self.dataUnits = None
         # helper objects:
         self.nextWriteIndex:int = 0
         self.tsFormat:str = None
@@ -68,6 +73,14 @@ class TimeSeries():
                 self.tau0Seconds = duration / (len(self.timeStamps) - 1)
                 return True
         return False
+
+    def initializeDataUnits(self, dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
+        if isinstance(dataUnits, str):
+            self.dataUnits = Units.fromStr(dataUnits)
+        elif isinstance(dataUnits, Units):
+            self.dataUnits = dataUnits
+        else:
+            raise TypeError('dataUnits must be str or Units enum from Constants.py')
 
     def isValid(self):
         valid = True
@@ -132,20 +145,23 @@ class TimeSeries():
         self.nextWriteIndex = len(self.dataSeries)
         return ds, ts, t1, t2
     
-    def getDataSeries(self, currentUnits:Units, requiredUnits:Units = None):
+    def getDataSeries(self, requiredUnits:Optional[Union[str, Units]] = None):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
-        :param timeSeriesId
-        :param requiredUnits: enum Units from Constants.py
+        :param requiredUnits: enum Units from Constants.py or None
         :return list derived from self.dataSeries converted, if possible
+        :raise TypeError if unsupported conversion requested
         '''
-        if not currentUnits or not requiredUnits or currentUnits == requiredUnits:
+        if requiredUnits and isinstance(requiredUnits, str):
+            requiredUnits = Units.fromStr(requiredUnits)
+        
+        if not requiredUnits or self.dataUnits == requiredUnits:
             # no conversion needed:
             return self.dataSeries
         
         result = None
         
-        if currentUnits == Units.WATTS:
+        if self.dataUnits == Units.WATTS:
             if requiredUnits == Units.MW:
                 # convert from watt to mW:
                 result = [y * 1000 for y in self.dataSeries]
@@ -154,7 +170,7 @@ class TimeSeries():
                 # convert from watt to dBm:
                 result = [10 * log10(y * 1000) for y in self.dataSeries]
         
-        elif currentUnits == Units.MW:
+        elif self.dataUnits == Units.MW:
             if requiredUnits == Units.WATTS:
                 # convert from mW to watt:
                 result = [y / 1000 for y in self.dataSeries]
@@ -163,7 +179,7 @@ class TimeSeries():
                 # convert from mW to dBm:
                 result = [10 * log10(y) for y in self.dataSeries]
         
-        elif currentUnits == Units.DBM:
+        elif self.dataUnits == Units.DBM:
             if requiredUnits == Units.WATTS:
                 # convert from dBm to watt:
                 result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
@@ -172,32 +188,30 @@ class TimeSeries():
                 # convert from dBm to mW:
                 result = [pow(10, y / 10) for y in self.dataSeries]
         
-        elif currentUnits == Units.VOLTS:
+        elif self.dataUnits == Units.VOLTS:
             if requiredUnits == Units.MV:
                 # convert from Volt to mV
                 result = [y * 1000 for y in self.dataSeries]
         
-        elif currentUnits == Units.MV:
+        elif self.dataUnits == Units.MV:
             if requiredUnits == Units.VOLTS:
                 # convert from mV to Volt
                 result = [y / 1000 for y in self.dataSeries]
         else:
             # not supported:
-            raise TypeError('Unsupported units conversion')
+            raise TypeError('Unsupported units conversion from {} to {}'.format(self.dataUnits.value, requiredUnits.value))
         
         return result
 
-    def getTimeStamps(self, currentUnits:Units = Units.LOCALTIME, requiredUnits:Units = None):
+    def getTimeStamps(self, requiredUnits:Optional[Union[str, Units]] = None):
         '''
         Get the timeStamps array, optionally converted to requiredUnits
         :param requiredUnits: enum Units from Constants.py
         :return list derived from self.dataSeries converted, if possible
         '''
-        # only storing as LOCALTIME is supported for now:
-        if currentUnits != Units.LOCALTIME:
-            # not supported:
-            raise TypeError('Unsupported units conversion')
-        
+        if requiredUnits and isinstance(requiredUnits, str):
+            requiredUnits = Units.fromStr(requiredUnits)
+            
         # timestamps are always stored as LOCALTIME:
         if not requiredUnits or requiredUnits == Units.LOCALTIME: 
             # no conversion:
@@ -214,7 +228,7 @@ class TimeSeries():
             result = [(x - x0).microseconds / 1000 for x in self.timeStamps]
         else:
             # not supported:
-            raise TypeError('Unsupported units conversion')
+            raise TypeError('Unsupported units conversion from {} to {}'.format(Units.LOCALTIME.value, requiredUnits.value))
         
         return result  
 

@@ -131,10 +131,7 @@ def step_impl(context, intString):
     :param intString: an int as string
     '''
     dataLen = int(intString)
-    currentUnits = context.API.getDataSource(context.timeSeriesId, DataSource.UNITS)
-    currentUnits = Units.fromStr(currentUnits) if currentUnits else None
-    requiredUnits = currentUnits
-    assert_that(len(context.timeSeries.getDataSeries(currentUnits, requiredUnits)), equal_to(dataLen))
+    assert_that(len(context.timeSeries.getDataSeries()), equal_to(dataLen))
     
 @then('timeStamps is a list of "{intString}" elements')
 def step_impl(context, intString):
@@ -185,7 +182,7 @@ def step_impl(context, floatString):
     tau0Seconds = float(floatString)
     delta = context.timeSeries.startTime - context.now
     deltaSeconds = delta.seconds + (delta.microseconds / 1.0e6)
-    assert_that(deltaSeconds, close_to(0.0, 0.2))
+    assert_that(deltaSeconds, close_to(0.0, 0.3))
     firstTime = True
     for TS in context.timeSeries.getTimeStamps():
         if firstTime:
@@ -276,8 +273,7 @@ def step_impl(context, dataList, units):
     """
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(', ')]
-    requiredUnits = Units.fromStr(units)
-    result = context.timeSeries.getTimeStamps(requiredUnits = requiredUnits)
+    result = context.timeSeries.getTimeStamps(requiredUnits = units)
     assert_that(result, equal_to(dataList))
 
 @then('we can retrieve the readings as "{dataList}" in units "{units}"')
@@ -289,9 +285,8 @@ def step_impl(context, dataList, units):
     """
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(', ')]
-    currentUnits = Units.fromStr(context.API.getDataSource(context.timeSeriesId, DataSource.UNITS))
     requiredUnits = Units.fromStr(units)
-    result = context.timeSeries.getDataSeries(currentUnits, requiredUnits)
+    result = context.timeSeries.getDataSeries(requiredUnits)
     for a, b in zip(result, dataList):
         assert_that(a, close_to(b, 0.00005))
 

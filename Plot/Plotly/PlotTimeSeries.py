@@ -48,7 +48,7 @@ class PlotTimeSeries(object):
         # Get the DataSource tags:
         dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
-        currentUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
+        currentUnits = timeSeries.dataUnits
 
         # Set up trace legends:
         legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind.value)]
@@ -79,10 +79,10 @@ class PlotTimeSeries(object):
             plotElements[PlotEl.Y2UNITS] = y2Units
         
         # get timestamps and data, possibly with unit conversions:        
-        timeStamps = timeSeries.getTimeStamps(requiredUnits = Units.fromStr(xUnits))
+        timeStamps = timeSeries.getTimeStamps(requiredUnits = xUnits)
         if not timeStamps:
             return False
-        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.fromStr(yUnits))
+        dataSeries = timeSeries.getDataSeries(yUnits)
         if not dataSeries:
             return False
             

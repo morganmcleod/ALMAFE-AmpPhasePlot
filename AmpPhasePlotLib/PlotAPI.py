@@ -93,7 +93,7 @@ class PlotAPI(object):
 
         # Get the DataSource tags:
         srcKind = DataKind.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
-        currentUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
+        currentUnits = timeSeries.dataUnits
         
         # Get the time series and set the default title:
         if srcKind == DataKind.POWER:
@@ -109,9 +109,9 @@ class PlotAPI(object):
             dfltTitle = "Amplitude Spectral Density"
             requiredUnits = currentUnits
         
-        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits)  
+        dataSeries = timeSeries.getDataSeries(requiredUnits)  
         if noiseFloor:
-            noiseFloor = noiseFloor.getDataSeries(currentUnits, requiredUnits)
+            noiseFloor = noiseFloor.getDataSeries(requiredUnits)
     
         # set the plot title:
         if dfltTitle and not self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_SOURCE, False) \
@@ -277,12 +277,12 @@ class PlotAPI(object):
         
         # Depending on srcKind, get the dataSeries in the proper units:
         if srcKind == (DataKind.VOLTAGE).value:
-            dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.VOLTS)
+            dataSeries = timeSeries.getDataSeries(Units.VOLTS)
             normalize = False   # for pure voltage time series: don't normalize, calculate ADEV
             calcAdev = True     # this would be typical for a bias or power supply where absolute
                                 # deviations from nominal are more of interest than relative level drifts.
         else: # for POWER and AMPLITUDE, use the source units, if any:
-            dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = currentUnits)
+            dataSeries = timeSeries.getDataSeries(currentUnits)
             normalize = True    # for power or unknown amplitude time series, normalize and calculate AVAR.
             calcAdev = False    # units might still be VOLTS in the case of a crystal detector having 
                                 # square-law output characteristic.
@@ -397,12 +397,11 @@ class PlotAPI(object):
         if not timeSeries:
             return None
         
-        currentUnits = Units.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.UNITS, (Units.AMPLITUDE).value))
         freqRFGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.RF_GHZ)
         if freqRFGHz:
             freqRFGHz = float(freqRFGHz)
 
-        dataSeries = timeSeries.getDataSeries(currentUnits, requiredUnits = Units.DEG)
+        dataSeries = timeSeries.getDataSeries(Units.DEG)
 
         # set YUNITS on the first trace:
         if not plotElements.get(PlotEl.YUNITS, None):

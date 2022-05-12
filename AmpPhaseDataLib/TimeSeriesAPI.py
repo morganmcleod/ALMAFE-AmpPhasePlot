@@ -55,17 +55,20 @@ class TimeSeriesAPI(object):
         self.db = TimeSeriesDatabase(self.localDatabaseFile)
         self.tsParser = ParseTimeStamp.ParseTimeStamp()
     
-    def startTimeSeries(self, tau0Seconds:Optional[float] = None, startTime:Optional[Union[str, datetime]] = None):
+    def startTimeSeries(self, tau0Seconds:Optional[float] = None, 
+                        startTime:Optional[Union[str, datetime]] = None,
+                        dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
         '''
         Create the TimeSeriesHeader and prepare to start inserting data points
         :param tau0Seconds:   float: integration time of each reading
         :param startTime:     datetime or str: when the measurement started
         :return: timeSeries if successful, otherwise None
         '''
-        timeSeries = TimeSeries(0, tau0Seconds, startTime)
+        timeSeries = TimeSeries(0, tau0Seconds, startTime, dataUnits)
         # create a time series header record and return the timeSeriesId:
         timeSeries.tsId = self.db.insertTimeSeriesHeader(timeSeries.startTime, timeSeries.tau0Seconds)
         if timeSeries.tsId:
+            self.setDataSource(timeSeries.tsId, DataSource.UNITS, dataUnits.value)
             return timeSeries
         else:
             return None
@@ -96,7 +99,8 @@ class TimeSeriesAPI(object):
                          temperatures2:Optional[Union[float, List[float]]] = None,
                          timeStamps:Optional[Union[str, List[str]]] = None,
                          tau0Seconds:Optional[float] = None, 
-                         startTime:Optional[str] = None):
+                         startTime:Optional[str] = None,
+                         dataUnits:Optional[Units] = Units.AMPLITUDE):
         '''
         Insert a complete time series.
         :param dataSeries:    list of floats: the main data series to store   
@@ -111,7 +115,7 @@ class TimeSeriesAPI(object):
         Either timeStamps or tau0seconds must be provided.
         If timeStamps is provided, startTime will be set to the first value, else now() if not provided. 
         '''
-        timeSeries = self.startTimeSeries(tau0Seconds, startTime)
+        timeSeries = self.startTimeSeries(tau0Seconds, startTime, dataUnits)
         timeSeries.appendData(dataSeries, temperatures1, temperatures2, timeStamps)
         self.finishTimeSeries(timeSeries)
         return timeSeries.tsId
@@ -124,7 +128,8 @@ class TimeSeriesAPI(object):
         header = self.db.retrieveTimeSeriesHeader(timeSeriesId)
         if not header:
             return None
-        timeSeries = TimeSeries(header.timeSeriesId, header.tau0Seconds, header.startTime)
+        dataUnits = self.getDataSource(timeSeriesId, DataSource.UNITS, Units.AMPLITUDE)
+        timeSeries = TimeSeries(header.timeSeriesId, header.tau0Seconds, header.startTime, dataUnits)
         
         result = self.db.retrieveTimeSeries(timeSeries.tsId)
         if not result:
@@ -144,39 +149,44 @@ class TimeSeriesAPI(object):
         '''
         self.db.deleteTimeSeries(timeSeriesId)
     
-    def setDataStatus(self, timeSeriesId, dataStatus):
+    def setDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
         '''
         Set a DataStatus tag for a TimeSeries.
         :param timeSeriesId: int
-        :param dataStatus: DataStatus enum from Constants.py
+        :param dataStatus: str or DataStatus enum from Constants.py
         '''
+        if isinstance(dataStatus, str):
+            dataStatus = DataStatus.fromStr(dataStatus)
         if not isinstance(dataStatus, DataStatus):
             raise TypeError('Use DataStatus enum from Constants.py')
-        
         self.db.setTags(timeSeriesId, applyDataStatusRules(dataStatus))
     
-    def getDataStatus(self, timeSeriesId, dataStatus):
+    def getDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
         '''
         Retrieve Data Status key having either true/false value.
         :param timeSeriesId: int
-        :param dataStatus: DataStatus enum from Constants.py
+        :param dataStatus: str or DataStatus enum from Constants.py
         '''
+        if isinstance(dataStatus, str):
+            dataStatus = DataStatus.fromStr(dataStatus)
         if not isinstance(dataStatus, DataStatus):
             raise TypeError('Use DataStatus enum from Constants.py')
         result = self.db.getTags(timeSeriesId, [dataStatus.value])
         return dataStatus.value in result.keys()
         
-    def clearDataStatus(self, timeSeriesId, dataStatus):
+    def clearDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
         '''
         Clear a DataStatus tag for a TimeSeries.
         :param timeSeriesId:   int
-        :param dataStatus: DataStatus enum from Constants.py
+        :param dataStatus: str or DataStatus enum from Constants.py
         '''
+        if isinstance(dataStatus, str):
+            dataStatus = DataStatus.fromStr(dataStatus)
         if not isinstance(dataStatus, DataStatus):
             raise TypeError('Use DataStatus enum from Constants.py')
         self.db.setTags(timeSeriesId, { dataStatus.value : None })
     
-    def getAllDataStatus(self, timeSeriesId):
+    def getAllDataStatus(self, timeSeriesId:int):
         '''
         Get all DataStatus tags for a timeSeries:
         :param timeSeriesId: int
@@ -189,34 +199,38 @@ class TimeSeriesAPI(object):
             result[DataStatus(tag)] = value
         return result
     
-    def setDataSource(self, timeSeriesId, dataSource, value):
+    def setDataSource(self, timeSeriesId:int, dataSource:Union[str, DataSource], value):
         '''
         Set a DataSource tag for a TimeSeries.
         :param timeSeriesId: int
-        :param dataSource: DataSource enum from Constants.py        
+        :param dataSource: str or DataSource enum from Constants.py        
         :param value:      str or None to delete
         '''
+        if isinstance(dataSource, str):
+            dataSource = DataSource.fromStr(dataSource)
         if not isinstance(dataSource, DataSource):
             raise TypeError('Use DataSource enum from Constants.py')
         self.db.setTags(timeSeriesId, { dataSource.value : value })
         
-    def getDataSource(self, timeSeriesId, dataSource, default = None):
+    def getDataSource(self, timeSeriesId, dataSource:Union[str, DataSource], default = None):
         '''
         Retrieve a DataSource tag for a TimeSeries
         :param timeSeriesId: int
-        :param dataSource:   DataSource enum from Constants.py
+        :param dataSource:   str or DataSource enum from Constants.py
         :param default:      value to return if not found
         '''
+        if isinstance(dataSource, str):
+            dataSource = DataSource.fromStr(dataSource)
         if not isinstance(dataSource, DataSource):
             raise TypeError('Use DataSource enum from Constants.py')
         result = self.db.getTags(timeSeriesId, [dataSource.value])
         return result.get(dataSource.value, default)
     
-    def clearDataSource(self, timeSeriesId, dataSource):
+    def clearDataSource(self, timeSeriesId, dataSource:Union[str, DataSource]):
         '''
         Remove a DataSource tag for a TimeSeries
         :param timeSeriesId: int
-        :param dataSource:   DataSource enum from Constants.py
+        :param dataSource:   str or DataSource enum from Constants.py
         '''
         self.setDataSource(timeSeriesId, dataSource, None)
     

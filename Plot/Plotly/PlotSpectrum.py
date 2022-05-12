@@ -53,7 +53,6 @@ class PlotSpectrum(object):
         # Get the DataSource tags:
         dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
-        dataUnits = Units.fromStr(dataSources.get(DataSource.UNITS, (Units.AMPLITUDE).value))
         
         # set the X axis units:
         xUnits = (Units.HZ).value
@@ -61,16 +60,16 @@ class PlotSpectrum(object):
 
         # set the Y axis units:
         if dataKind == DataKind.POWER:
-            if dataUnits == Units.VOLTS:
+            if timeSeries.dataUnits == Units.VOLTS:
                 yUnits = (Units.VOLTS_SQ).value
             else:
-                yUnits = dataUnits.value
+                yUnits = timeSeries.dataUnits.value
         elif dataKind == DataKind.VOLTAGE:
             yUnits = (Units.VOLTS).value
         elif dataKind == DataKind.PHASE:
             yUnits = (Units.DEG).value
         else:
-            yUnits = dataUnits.value
+            yUnits = timeSeries.dataUnits.value
         plotElements[PlotEl.YUNITS] = yUnits
         
         # set the trace legend:
