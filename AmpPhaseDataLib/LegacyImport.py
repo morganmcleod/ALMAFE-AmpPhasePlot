@@ -237,7 +237,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
         startTime = timeStamps[0]
           
     api = TimeSeriesAPI.TimeSeriesAPI()
-    timeSeriesId = api.insertTimeSeries(dataSeries, temperatures1, temperatures2, timeStamps, tau0Seconds, startTime)
+    timeSeriesId = api.insertTimeSeries(dataSeries, temperatures1, temperatures2, timeStamps, tau0Seconds, startTime, yUnits)
     if not timeSeriesId:
         print("insertTimeSeries failed")
         return False
