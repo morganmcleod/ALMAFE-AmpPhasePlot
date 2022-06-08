@@ -1,8 +1,8 @@
 '''
 Database for storage and retrieval of plot image files
 '''
+import ALMAFE.database.DriverMySQL as driver
 import Database.Interface.PlotImage as PI
-import Database.Driver.MySQL as driver
 from Utility.StripQuotes import stripQuotes
 
 class PlotImageDatabase(PI.PlotImageInterface):
@@ -12,7 +12,7 @@ class PlotImageDatabase(PI.PlotImageInterface):
     PLOTS_TABLE = 'AmpPhase_Plots'
     PLOT_IMAGES_TABLE = 'AmpPhase_PlotImages'
 
-    def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData'): 
+    def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData', use_pure = False): 
         '''
         Constructor
         '''
@@ -20,7 +20,8 @@ class PlotImageDatabase(PI.PlotImageInterface):
             'user' : user,
             'passwd' : passwd,
             'host' : host,
-            'database' : database
+            'database' : database,
+            'use_pure' : use_pure            
         }
         self.database = database
         self.DB = driver.DriverMySQL(connectionInfo)

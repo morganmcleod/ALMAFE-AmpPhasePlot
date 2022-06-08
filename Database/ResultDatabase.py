@@ -1,6 +1,6 @@
+import ALMAFE.database.DriverMySQL as driver
 import Database.Interface.Result as RI
 import Database.Interface.Tags as TI
-import Database.Driver.MySQL as driver
 import Database.TagsDatabase as TagsDB
 from AmpPhaseDataLib.Constants import PlotKind
 from itertools import zip_longest

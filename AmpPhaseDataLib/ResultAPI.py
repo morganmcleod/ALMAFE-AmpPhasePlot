@@ -53,7 +53,7 @@ class ResultAPI(object):
         self.__reset()
         self.__loadConfiguration()
         self.db = ResultDatabase.ResultDatabase(self.user, self.passwd, self.host, self.database)
-        self.imageDb = PlotImageDatabase.PlotImageDatabase(self.user, self.passwd, self.host, self.database)
+        self.imageDb = PlotImageDatabase.PlotImageDatabase(self.user, self.passwd, self.host, self.database, self.use_pure)
         
 #// Result functions:
         
@@ -432,6 +432,7 @@ class ResultAPI(object):
         self.database = None 
         self.user = None
         self.passwd = None 
+        self.use_pure = None
       
         config = configparser.ConfigParser()
         config.read("AmpPhaseDataLib.ini")
@@ -441,6 +442,7 @@ class ResultAPI(object):
             self.database = config['MySQL']['database']
             self.user = config['MySQL']['user']
             self.passwd = config['MySQL']['passwd']
+            self.use_pure = True if config['MySQL'].get('use_pure', False) else False
         else:
             raise NotImplementedError('Databases other than MySQL not implemented in ResultAPI.')
 
@@ -450,5 +452,6 @@ class ResultAPI(object):
             self.database = config['MySQL']['database']
             self.user = config['MySQL']['user']
             self.passwd = config['MySQL']['passwd']
+            self.use_pure = True if config['MySQL'].get('use_pure', False) else False
         else:
             raise NotImplementedError('Databases other than MySQL not implemented in ResultAPI.')

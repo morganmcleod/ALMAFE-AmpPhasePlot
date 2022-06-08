@@ -1,3 +1,4 @@
+.pydevproject
 *.pyc
 *.sqlite
 *.sqlite-journal
