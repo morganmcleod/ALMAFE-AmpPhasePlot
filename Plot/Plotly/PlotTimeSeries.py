@@ -99,7 +99,7 @@ class PlotTimeSeries(object):
         if timeSeries.temperatures2:
             fig.add_trace(go.Scatter(x = timeStamps, y = timeSeries.temperatures2, mode = 'lines', name = legends[2]), secondary_y=True)
             if y2min:
-                y2min = min(y2min, min(timeSeries))
+                y2min = min(y2min, min(timeSeries.temperatures2))
                 y2max = max(y2max, max(timeSeries.temperatures2))
         
         # force show legend even if only one trace:
