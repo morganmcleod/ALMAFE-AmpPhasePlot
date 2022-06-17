@@ -170,7 +170,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
     sb = None
     measNotes = None
     SWVersion = None
-    yUnits = (Units.WATTS).value
+    yUnits = Units.WATTS
     
     if os.path.exists(measFile):
         config = configparser.ConfigParser()
