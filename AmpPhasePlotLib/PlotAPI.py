@@ -7,6 +7,7 @@ from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, 
 from Calculate import AmplitudeStability, PhaseStability, FFT
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotSpectrum
 from datetime import datetime
+import configparser
 
 class PlotAPI(object):
     '''
@@ -62,7 +63,7 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False, noiseFloorId = None):
+    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False):
         '''
         Create an AMP_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -73,12 +74,24 @@ class PlotAPI(object):
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
-        :param noiseFloorId: if provided, timeSeriesId to analyze subtract before plotting.
         :return True if succesful, False otherwise
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
+            
+        # read FFT_RMS configuration:
+        config = configparser.ConfigParser()
+        config.read("AmpPhaseDataLib.ini")
+        try:
+            ignoreHarmonicsOf = int(config['FFT_RMS']['ignoreHarmonicsOf'])
+        except:
+            ignoreHarmonicsOf = 0
+            
+        try:
+            ignoreHarmonicsWindow = float(config['FFT_RMS']['ignoreHarmonicsWindow'])
+        except:
+            ignoreHarmonicsWindow = 3.0
         
         # clear anything kept from last plot:
         self.__reset()
@@ -89,7 +102,6 @@ class PlotAPI(object):
             return False
         if not timeSeries.isValid():
             return False
-        noiseFloor = self.tsAPI.retrieveTimeSeries(noiseFloorId)
 
         # Get the DataSource tags:
         srcKind = DataKind.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
@@ -110,8 +122,6 @@ class PlotAPI(object):
             requiredUnits = currentUnits
 
         dataSeries = timeSeries.getDataSeries(requiredUnits)  
-        if noiseFloor:
-            noiseFloor = noiseFloor.getDataSeries(requiredUnits)
     
         # set the plot title:
         if dfltTitle and not self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_SOURCE, False) \
@@ -121,19 +131,21 @@ class PlotAPI(object):
         # make the plot:
         self.calc = FFT.FFT()
         self.plotter = PlotSpectrum.PlotSpectrum()
-
-        if noiseFloor:
-            if self.calc.calculate(noiseFloor, timeSeries.tau0Seconds):
-                noiseFloor = self.calc.yResult
-            else:
-                noiseFloor = None
             
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds):
+            print("Invalid dataSeries (id={}) or sampling interval ({} s) for FFT.".format(timeSeriesId, timeSeries.tau0Seconds))
             return False
 
-        if noiseFloor:
-            self.calc.yResult = [self.calc.yResult[x] - noiseFloor[x] for x in range(len(self.calc.yResult))]
-            plotElements[PlotEl.PROCESS_NOTES] = "Subtracted noise floor {}".format(noiseFloorId)
+        # calculate highlight points:
+        x2Array = None
+        y2Array = None
+        if ignoreHarmonicsOf:
+            x2Array = []
+            y2Array = []
+            for x, y in zip(self.calc.xResult, self.calc.yResult):
+                if self.calc.isHarmonic(x, ignoreHarmonicsOf, ignoreHarmonicsWindow):
+                    x2Array.append(x)
+                    y2Array.append(y)
 
         # check for a special RMS spec:
         rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
@@ -143,7 +155,9 @@ class PlotAPI(object):
             bwLower = float(rmsSpec[0])
             bwUpper = float(rmsSpec[1])
             rmsSpec = float(rmsSpec[2])
-            RMS = self.calc.RMSfromFFT(bwLower, bwUpper)
+            RMS = self.calc.RMSfromFFT(bwLower, bwUpper, 
+                                       ignoreHarmonicsOf = ignoreHarmonicsOf, 
+                                       ignoreHarmonicsWindow = ignoreHarmonicsWindow)
             if RMS <= rmsSpec:
                 complies = "PASS"
                 self.__updateDataStatusFinal(True)
@@ -151,17 +165,22 @@ class PlotAPI(object):
                 complies = "FAIL"
                 self.__updateDataStatusFinal(False)
             
-            compliance = "{0:.2e} {1} RMS in {2} to {3} Hz.  Max {4:.2e} : {5}".format(
-                RMS, requiredUnits.value, bwLower, bwUpper, rmsSpec, complies)
+            compliance = "{0:.2e} {1} RMS in {2} to {3} Hz".format(RMS, requiredUnits.value, bwLower, bwUpper)
+            if ignoreHarmonicsOf:
+                compliance += " (ignoring harmonics of {} Hz)".format(ignoreHarmonicsOf)
+            compliance += "  Max {0:.2e} : {1}".format(rmsSpec, complies)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
         
         # check whether to just display the RMS on the plot:
         elif plotElements.get(PlotEl.SHOW_RMS, False):
-            RMS = self.calc.RMSfromFFT()
+            RMS = self.calc.RMSfromFFT(ignoreHarmonicsOf = ignoreHarmonicsOf, 
+                                       ignoreHarmonicsWindow = ignoreHarmonicsWindow)
             if RMS < 1e-3:
                 compliance = "RMS = {0:.2e}".format(RMS)
             else:
                 compliance = "RMS = {0:.3}".format(RMS)
+            if ignoreHarmonicsOf:
+                compliance += " (ignoring harmonics of {} Hz)".format(ignoreHarmonicsOf)
             plotElements[PlotEl.SPEC_COMPLIANCE] = compliance
             
         # check whether there is a spec line to compare to the FFT:
@@ -177,7 +196,8 @@ class PlotAPI(object):
             else:
                 self.__updateDataStatusFinal(True)
 
-        if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, plotElements, outputName, show):
+        if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, x2Array, y2Array, 
+                                 plotElements = plotElements, outputName = outputName, show = show):
             return False
 
         # get the results:

@@ -24,12 +24,17 @@ class PlotSpectrum(object):
         self.imageData = None
         self.traces = []
         
-    def plot(self, timeSeriesId, xArray, yArray, plotElements = None, outputName = None, show = False):
+    def plot(self, timeSeriesId, xArray, yArray, x2Array = None, y2Array = None, 
+             plotElements = None, outputName = None, show = False):
         '''
         Create a POWER_SPECTRUM plot from timeSeries.
         The resulting image data is stored in self.imageData.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         :param timeSeriesId: to retrieve and plot
+        :param xArray: list of x coordinates to plot
+        :param yArray: list of y coordinates to plot, corresponding 1:1 with xArray
+        :param x2Array: list of x coordinates to plot for 2nd trace
+        :param y2Array: list of y coordinates to plot for 2nd trace, corresponding 1:1 with x2Array
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: Filename where to write the plot .PNG file, optional.
         :param show: if True, displays the plot using the default renderer.
@@ -83,6 +88,11 @@ class PlotSpectrum(object):
         
         # save the trace:
         self.traces = [(xArray, yArray, [], legend)] 
+        
+        # check for highlight points:
+        if x2Array and y2Array:
+            legend2 = plotElements.get(PlotEl.FFT_LEGEND2, '')
+            self.traces.append((x2Array, y2Array, [], legend2))
         
         # Plot title:
         title = makeTitle([timeSeriesId], plotElements)
@@ -176,6 +186,13 @@ class PlotSpectrum(object):
         fig = go.Figure()
         lines = dict(color='blue', width=1)
         fig.add_trace(go.Scatter(x = trace[0], y = trace[1], mode = 'lines', line = lines, name = legend))
+
+        # add the highlight trace, if any:
+        if len(self.traces) > 1:
+            trace = self.traces[1]
+            legend = trace[3]
+            marker = dict(color = plotElements.get(PlotEl.FFT_COLOR2, 'red'), size = 3)
+            fig.add_trace(go.Scatter(x = trace[0], y = trace[1], mode = 'markers', marker = marker, name = legend))
 
         # add spec lines:
         addSpecLines(fig, plotElements)

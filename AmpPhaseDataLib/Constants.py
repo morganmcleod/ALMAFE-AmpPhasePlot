@@ -100,6 +100,8 @@ class PlotEl(EnumHelper):
     Y2_AXIS_LABEL   = 'Y2_AXIS_LABEL'   # overrides automatically generated
     Y2_LEGEND1      = 'Y2_LEGEND1'      # override legend for first temperature sensor trace
     Y2_LEGEND2      = 'Y2_LEGEND2'      # override legend for second temperature sensor trace
+    FFT_LEGEND2     = 'FFT_LEGEND2'     # legend for highlighted points in FFT plot
+    FFT_COLOR2      = 'FFT_COLOR2'      # color for highlighted points in FFT plot
     XRANGE_PLOT     = 'XRANGE_PLOT'     # range of x values to plot, overriding auto defaults:
                                         #  value is 'float, float'. Use for TMin, TMax for stability plots
     XRANGE_WINDOW   = 'XRANGE_WINDOW'   # boundaries X-Y space to display.
