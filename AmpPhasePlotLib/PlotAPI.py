@@ -449,47 +449,6 @@ class PlotAPI(object):
         else:
             return None
     
-    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
-        '''
-        Make a plot from whatever data is in the Result database for plotId.
-        Not supported for TIME_SERIES plots.       
-        :param plotId: int to fetch and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
-        :param outputName: Filename where to write the plot .PNG file, optional.
-        :param show: if True, displays the plot using the default renderer.
-        :return True if succesful, False otherwise
-        '''
-        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
-        if plotElements == None:
-            plotElements = {}
-
-        self.__reset()
-        ra = ResultAPI()
-        
-        plot = ra.retrievePlot(plotId)
-        if not plot:
-            return False
-        assert plot[0] == plotId
-        kind = plot[1]
-
-        if kind == PlotKind.POWER_SPECTRUM:
-            self.plotter = PlotSpectrum.PlotSpectrum()
-            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
-                return False
-            
-        elif kind == PlotKind.POWER_STABILITY or PlotKind.VOLT_STABILITY or kind == PlotKind.PHASE_STABILITY: 
-            self.plotter = PlotStability.PlotStability()
-            if not self.plotter.rePlot(plotId, plotElements, outputName, show):
-                return False
-
-        else:
-            return False
-        
-        # get the results:
-        self.imageData = self.plotter.imageData
-        self.plotElementsFinal = plotElements
-        return True
-
     def __updateDataStatusFinal(self, passFail):
         '''
         Private helper to update self.dataStatusFinal.  Allowed transitions:

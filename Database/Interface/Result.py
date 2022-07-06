@@ -40,28 +40,12 @@ class Plot:
         self.resultId = ResultId
         self.kind = kind
         
-class Trace:
-    '''
-    a Trace has
-    values: 
-        traceId:int, name, legend,
-        xyData: tuple of float lists ([x], [y], [yError]) with yError optional 
-    references:
-        one Plot via plotId
-    '''
-    def __init__(self, traceId, plotId, xyData, name = None, legend = None):
-        self.traceId = traceId
-        self.plotId = plotId
-        self.xyData = xyData
-        self.name = str(name) if name else ""
-        self.legend = str(legend) if legend else self.name
-        
 class ResultInterface(ABC):
     '''
     Defines the interface for storing and retrieving Result, Plot, Trace objects defined above.     
     '''
     
-#// Result methods
+# Result methods
     
     @abstractmethod
     def createResult(self, description = None, timeStamp = None):
@@ -99,7 +83,7 @@ class ResultInterface(ABC):
         '''
         pass
 
-#// Plot methods
+# Plot methods
     
     @abstractmethod
     def createPlot(self, resultId, kind):
@@ -127,37 +111,3 @@ class ResultInterface(ABC):
         Delete the specified Plot
         :param plotId: int of the plot to delete
         '''
-
-#// Trace methods
-    
-    @abstractmethod        
-    def createTrace(self, plotId, xyData, name = None, legend = None):
-        '''
-        Create a trace on the specified Plot
-        :param plotId: Plot to which the trace belongs
-        :param xyData: tuple of float lists ([x], [y], [yError]) with yError optional 
-        :param name: trace name
-        :param legend: trace legend for display
-        :return Trace object if successful, None otherwise
-        '''
-        pass
-        
-    @abstractmethod        
-    def retrieveTrace(self, traceId):
-        '''
-        Retrieve the specified trace
-        :param traceId int to retrieve
-        :return Trace object if successful, None otherwise
-        '''
-        pass
-    
-    # no updateTrace needed yet...
-    
-    @abstractmethod        
-    def deleteTrace(self, traceId):
-        '''
-        Delete the specified trace
-        :param traceId int to delete
-        '''
-        pass
-        

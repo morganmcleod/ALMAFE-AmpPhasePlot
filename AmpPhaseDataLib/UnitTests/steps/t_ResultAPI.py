@@ -41,7 +41,7 @@ def step_impl(context):
     result = context.API.retrieveResult(context.resultId)
     assert_that(not result)
 
-@when('the Plot, Traces, and Image are created') 
+@when('the Plot and Image are created') 
 def step_impl(context):
     '''
     :param context: behave.runner.Context
@@ -53,10 +53,6 @@ def step_impl(context):
     context.xyData2 = ([0, 1, 2, 3], [5.1, 5.2, 5.9, 5.0], [0, 0, 0, 0]) 
     context.traceName = "time series"
     context.traceName2 = "temperature"
-    context.traceId = context.API.createTrace(context.plotId, context.xyData, context.traceName)
-    assert_that(context.traceId)
-    context.traceId2 = context.API.createTrace(context.plotId, context.xyData2, context.traceName2)
-    assert_that(context.traceId2)
     context.imagePath = "AmpPhaseDataLib/UnitTests/steps/Cone of dining (Paris) June 2020.jpg"
     context.imageName = "time image"
     context.plotImageId = context.API.insertPlotImageFromFile(context.plotId, context.imagePath, context.imageName)
@@ -70,22 +66,6 @@ def step_impl(context):
     plot = context.API.retrievePlot(context.plotId)
     assert_that(plot[0], equal_to(context.plotId))
     assert_that(plot[1], equal_to(context.plotKind))
-
-@then('the Traces can be retrieved and verified')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    trace = context.API.retrieveTrace(context.traceId)
-    assert_that(trace[0], equal_to(context.traceId))
-    assert_that(trace[1], equal_to(context.xyData))
-    assert_that(trace[2], equal_to(context.traceName))
-    assert_that(trace[3], equal_to(context.traceName))
-    trace = context.API.retrieveTrace(context.traceId2)
-    assert_that(trace[0], equal_to(context.traceId2))
-    assert_that(trace[1], equal_to(context.xyData2))
-    assert_that(trace[2], equal_to(context.traceName2))
-    assert_that(trace[3], equal_to(context.traceName2))
      
 @then('the Image can be retrieved and verified')
 def step_impl(context):
@@ -101,19 +81,7 @@ def step_impl(context):
     with open(context.imagePath, 'rb') as file:
         imageData = file.read()
     assert_that(image[4], equal_to(imageData))
-    
-@then('the Traces can be deleted')
-def step_impl(context):
-    '''
-    :param context: behave.runner.Context
-    '''
-    context.API.deleteTrace(context.traceId)
-    result = context.API.retrieveTrace(context.traceId)
-    assert_that(result, equal_to(None))
-    context.API.deleteTrace(context.traceId2)
-    result = context.API.retrieveTrace(context.traceId2)
-    assert_that(result, equal_to(None))
-        
+          
 @then('the Image can be deleted')
 def step_impl(context):
     '''

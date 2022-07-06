@@ -17,21 +17,12 @@ Exposes the following data model:
 | Plot   |       0..* | PlotImage  |
 | +kind  |------------| +name      |
 | +tags  |            | +path      |
----------+            | +imageData |
-    |                 +------------+
-    |
-    | 0..*
-+---------+
-| Trace   |
-| +name   |
-| +legend | 
-| +xyData |
-+---------+
++--------+            | +imageData |
+                      +------------+
 
 Where tags is a collection of name-value pairs, names given in Constants.py
 kind is enum defined in Constants.py
 imageData is binary and/or a image file on disk;
-xyData is a tuple of float lists ([x], [y], [yError]) with yError optional 
 '''
 from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotEl
 from Database import ResultDatabase
@@ -55,7 +46,7 @@ class ResultAPI(object):
         self.db = ResultDatabase.ResultDatabase(self.user, self.passwd, self.host, self.database)
         self.imageDb = PlotImageDatabase.PlotImageDatabase(self.user, self.passwd, self.host, self.database, self.use_pure)
         
-#// Result functions:
+# Result functions:
         
     def createResult(self, description, timeStamp = None):
         '''
@@ -98,7 +89,7 @@ class ResultAPI(object):
         
     def deleteResult(self, resultId):
         '''
-        Delete a result and all of its Plots, Traces, and PlotImages
+        Delete a result and all of its Plots and PlotImages
         :param resultId: int
         '''
         self.db.deleteResult(resultId)
@@ -182,7 +173,7 @@ class ResultAPI(object):
             result[DataSource(tag)] = value
         return result
         
-#// PlotId functions:
+# PlotId functions:
     
     def retrievePlotIds(self, resultId, plotKind = PlotKind.ALL):
         '''
@@ -195,7 +186,7 @@ class ResultAPI(object):
             raise ValueError('Use PlotKind enum from Constants.py')
         return self.db.retrievePlotIds(resultId, plotKind)
         
-#// Plot (header) functions
+# Plot (header) functions
     
     def createPlot(self, resultId, kind):
         '''
@@ -226,7 +217,7 @@ class ResultAPI(object):
     
     def deletePlot(self, plotId):
         '''
-        Delete a plot header and all of its contained Traces and PlotImages
+        Delete a plot header and all of its contained PlotImages
         :param plotId:
         '''
         self.db.deletePlot(plotId)   
@@ -289,56 +280,8 @@ class ResultAPI(object):
         for tag, value in retrieved.items():
             result[PlotEl(tag)] = value
         return result
-
-#// Plot Trace functions:
-
-    def createTrace(self, plotId, xyData, name, legend = None):
-        '''
-        Create a trace associated with a Plot
-        :param plotId: int Plot to which to add the trace.
-        :param xyData: xyData is a tuple of float lists ([x], [y], [yError]) with yError optional
-        :param name: str
-        :param legend: str, defaults to same as name
-        :return traceId int
-        '''
-        trace = self.db.createTrace(plotId, xyData, name, legend)
-        if not trace:
-            return None
-        else:
-            return trace.traceId
         
-    def retrieveTrace(self, traceId):
-        '''
-        Retrieve a trace.
-        :param traceId: int
-        :return (traceId, xyData, name, legend) if successful, None otherwise.
-        '''
-        trace = self.db.retrieveTrace(traceId)
-        if not trace:
-            return None
-        else:
-            return (traceId, trace.xyData, trace.name, trace.legend)
-        
-    def retrieveTraces(self, plotId):
-        '''
-        Retrieve all traces associated with the plotId.
-        :param plotId: int
-        :return list of tuples (traceId, xyData, name, legend) if successful, None otherwise.
-        '''
-        traces = self.db.retrieveTraces(plotId)
-        if not traces:
-            return None
-        else:
-            return [(trace.traceId, trace.xyData, trace.name, trace.legend) for trace in traces]
-    
-    def deleteTrace(self, traceId):
-        '''
-        Delete a trace.
-        :param traceId: int
-        '''
-        self.db.deleteTrace(traceId)
-        
-#// Plot Image functions:
+# Plot Image functions:
         
     def insertPlotImage(self, plotId, imageData, name = None, srcPath = None):
         '''
@@ -415,7 +358,7 @@ class ResultAPI(object):
         '''
         self.imageDb.deletePlotImage(plotImageId)
        
-#// private implementation methods...
+# private implementation methods...
         
     def __reset(self):
         '''

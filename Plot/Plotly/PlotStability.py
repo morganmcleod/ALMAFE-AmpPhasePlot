@@ -206,60 +206,6 @@ class PlotStability(object):
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)    
-
-    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
-        '''
-        Recreate a STABILITY plot from traces and plotElements stored in the Result database.
-        The resulting image data is stored in self.imageData.
-        :param plotId: to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
-        :param outputName: Filename where to write the plot .PNG file, optional.
-        :param show: if True, displays the plot using the default renderer.
-        :return True if succesful, False otherwise
-        '''
-        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
-        if plotElements == None:
-            plotElements = {}
-                    
-        # clear anything kept from last plot:
-        self.__reset()
-
-        if not self.resultAPI:
-            self.resultAPI = ResultAPI.ResultAPI()
-        ra = self.resultAPI
-
-        # get the Plot header:
-        plotHeader = ra.retrievePlot(plotId)
-        if not plotHeader:
-            return False
-        
-        # check retrieved plotId:
-        assert(plotHeader[0] == plotId)
-        
-        # check retrived PlotKind:
-        plotKind = plotHeader[1]
-        if not (plotKind == PlotKind.POWER_STABILITY or PlotKind.VOLT_STABILITY or plotKind == PlotKind.PHASE_STABILITY):
-            return False
-        
-        self.plotKind = plotKind
-        
-        # get the stored plotElements and merge in any overrides:
-        plotElementsStored = ra.getAllPlotEl(plotId)
-        plotElements = {**plotElementsStored, **plotElements}
-        
-        # Get the trace data
-        traces = ra.retrieveTraces(plotId)
-        if not traces:
-            return False
-    
-        # Store in self.traces:
-        for trace in traces:
-            xyData = trace[1]
-            legend = trace[3]        
-            self.traces.append((xyData[0], xyData[1], xyData[2], legend))        
-        
-        # Generate the plot:
-        return self.__plot(plotElements, outputName, show)
     
     def __plot(self, plotElements, outputName = None, show = False):
         '''

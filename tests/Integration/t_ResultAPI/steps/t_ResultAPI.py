@@ -25,21 +25,6 @@ def step_impl(context):
     context.kind = "amplitude"
     context.units = "W"
 
-@given('a phase time series data file on disk')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    context.dataFile = "SampleData/FETMS-Phase/B6Pe0RF215pol0_20200205-153444__.txt"
-    context.tau0Seconds = 1.0
-    context.tsColumn = 0
-    context.dataColumn = 2
-    context.temp1Column = 5
-    context.temp2Column = 6
-    context.delimiter = '\t'
-    context.kind = "phase"
-    context.units = "deg"
-
 @given('we want to show the plot')
 def step_impl(context):
     """
@@ -80,15 +65,6 @@ def step_impl(context):
     context.tAPI.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)
     if hasattr(context, 'units'):
         context.tAPI.setDataSource(context.timeSeriesId, DataSource.UNITS, context.units)        
-    
-@when('the power spectrum plot is generated')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    assert_that(context.pAPI.plotSpectrum(context.timeSeriesId, plotElements = {}, show = context.show))
-    context.plotKind = PlotKind.POWER_SPECTRUM
-    context.imageData = context.pAPI.imageData
 
 @when('the amplitude stability plot is generated')
 def step_impl(context):
@@ -100,23 +76,6 @@ def step_impl(context):
     assert_that(context.pAPI.plotAmplitudeStability(context.timeSeriesId, plotElements, show = context.show))
     context.plotKind = PlotKind.POWER_STABILITY
     context.imageData = context.pAPI.imageData
-
-@when('the phase stability plot is generated')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    plotElements = {PlotEl.SPEC_LINE1 : SpecLines.FE_PHASE_STABILITY}
-    assert_that(context.pAPI.plotPhaseStability(context.timeSeriesId, plotElements, show = context.show))
-    context.plotKind = PlotKind.PHASE_STABILITY
-    context.imageData = context.pAPI.imageData
-
-@when('the result is retrieved from the database')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    assert_that(context.rAPI.retrieveResult(context.resultId))
     
 ##### THEN #####
 
@@ -139,15 +98,11 @@ def step_impl(context):
     context.plotImageId = context.rAPI.insertPlotImage(context.plotId, context.imageData, name = 't_PlotStoreResults:image', srcPath = context.dataFile)
     assert_that(context.plotImageId)
     
-@then('the plot traces and attributes can be stored in the result')
+@then('the plot attributes can be stored in the result')
 def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    assert_that(context.pAPI.traces)
-    context.traces = context.pAPI.traces
-    for trace in context.traces:
-        assert_that(context.rAPI.createTrace(context.plotId, trace, trace[3]))
     context.plotElements = context.pAPI.plotElementsFinal
     assert_that(context.plotElements)
     context.rAPI.setAllPlotEl(context.plotId, context.plotElements)
@@ -169,25 +124,6 @@ def compareLists(list1, list2):
     for x1, x2 in zip(list1, list2):
         assert_that(x1, close_to(x2, 0.00000001))
 
-@then('the plot traces can be retrieved')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    traces = context.rAPI.retrieveTraces(context.plotId)
-    assert_that(len(traces), equal_to(len(context.traces)))
-    for stored, retrieved in zip(context.traces, traces):
-        assert_that(retrieved[2], equal_to(stored[3])) #compare name
-        xyData = retrieved[1]
-        assert_that(len(xyData[0]), equal_to(len(stored[0])))  #compare x arrays
-        compareLists(xyData[0], stored[0])
-
-        assert_that(len(xyData[1]), equal_to(len(stored[1])))  #compare y arrays
-        compareLists(xyData[1], stored[1])
-        
-        assert_that(len(xyData[2]), equal_to(len(stored[2])))  #compare yErrors
-        compareLists(xyData[2], stored[2])
-        
 @then('the plot attributes can be retrieved')
 def step_impl(context):
     """
@@ -196,16 +132,4 @@ def step_impl(context):
     plotElements = context.rAPI.getAllPlotEl(context.plotId)
     assert_that(plotElements)
     assert_that(plotElements, equal_to(context.plotElements))
-    
-@then('the plot can be regenerated and the image matches')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    plotIds = context.rAPI.retrievePlotIds(context.resultId, context.plotKind)
-    assert_that(len(plotIds), greater_than(0), "retrieved Id")
-    plotId = context.pAPI.rePlot(plotIds[0], plotElements = {}, show = context.show)
-    assert_that(plotId, "got replot Id")
-    assert_that(context.pAPI.imageData, "got imageData")
-    assert_that(context.pAPI.imageData, equal_to, context.imageData)
     

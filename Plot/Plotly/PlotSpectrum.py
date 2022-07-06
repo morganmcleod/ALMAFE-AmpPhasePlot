@@ -107,61 +107,6 @@ class PlotSpectrum(object):
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)
-
-    def rePlot(self, plotId, plotElements = None, outputName = None, show = False):
-        '''
-        Recreate a POWER_SPECTRUM plot from traces and plotElements stored in the Result database.
-        The resulting image data is stored in self.imageData.
-        :param plotId: to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
-        :param outputName: Filename where to write the plot .PNG file, optional.
-        :param show: if True, displays the plot using the default renderer.
-        :return True if succesful, False otherwise
-        '''
-        # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
-        if plotElements == None:
-            plotElements = {}
-                    
-        # clear anything kept from last plot:
-        self.__reset()
-
-        if not self.resultAPI:
-            self.resultAPI = ResultAPI.ResultAPI()
-
-        # get the Plot header:
-        plotHeader = self.resultAPI.retrievePlot(plotId)
-        if not plotHeader:
-            return False
-        
-        # check retrieved plotId:
-        assert(plotHeader[0] == plotId)
-        
-        # check retrived PlotKind:
-        plotKind = plotHeader[1] 
-        if not (plotKind == PlotKind.AMP_SPECTRUM or plotKind == PlotKind.POWER_SPECTRUM): 
-            return False
-
-        # get the stored plotElements and merge in any overrides:
-        plotElementsStored = self.resultAPI.getAllPlotEl(plotId)
-        plotElements = {**plotElementsStored, **plotElements}
-        
-        # get the axis units:
-        xUnits = plotElements.get(PlotEl.XUNITS, (Units.HZ).value)
-        plotElements[PlotEl.XUNITS] = xUnits
-        yUnits = plotElements.get(PlotEl.YUNITS, (Units.AMPLITUDE).value)
-        plotElements[PlotEl.YUNITS] = yUnits
-        
-        # Get the trace data
-        traces = self.resultAPI.retrieveTraces(plotId)
-        if not traces:
-            return False
-        trace = traces[0]
-        xyData = trace[1]
-        legend = trace[3]        
-        self.traces = [(xyData[0], xyData[1], xyData[2], legend)]
-        
-        # Generate the plot:
-        return self.__plot(plotElements, outputName, show)
         
     def __plot(self, plotElements, outputName = None, show = False):
         '''

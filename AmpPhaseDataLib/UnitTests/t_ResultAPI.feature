@@ -8,14 +8,12 @@ Feature: Validate ResultAPI
     And the Result can be deleted
     
     @fixture.resultAPI
-    Scenario: Create, retrieve and delete Plots, Traces, and an Image
+    Scenario: Create, retrieve and delete a Plots and an Image
     Given the description "Big Result"
     When the Result is created
-    And the Plot, Traces, and Image are created
+    And the Plot and Image are created
     Then the Plot can be retrieved and verified
-    And the Traces can be retrieved and verified
     And the Image can be retrieved and verified
-    And the Traces can be deleted
     And the Image can be deleted
     And the Plot can be deleted
    
