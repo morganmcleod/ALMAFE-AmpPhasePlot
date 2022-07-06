@@ -3,15 +3,16 @@ Environment for behave.
 Provides fixtures to set up and tear down the objects under test.
 '''
 from behave import fixture, use_fixture
-from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
-from AmpPhasePlotLib import PlotAPI
+from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.PlotResultAPI import PlotResultAPI
+from AmpPhasePlotLib.PlotAPI import PlotAPI
 
 @fixture
 def plotStoreResults(context, **kwargs):
     # -- SETUP-FIXTURE PART:
-    context.tAPI = TimeSeriesAPI.TimeSeriesAPI()
-    context.rAPI = ResultAPI.ResultAPI()
-    context.pAPI = PlotAPI.PlotAPI()
+    context.tAPI = TimeSeriesAPI()
+    context.rAPI = PlotResultAPI()
+    context.pAPI = PlotAPI()
     context.show = False
     context.timeSeriesId = None
     context.resultId = None
@@ -19,8 +20,8 @@ def plotStoreResults(context, **kwargs):
     # -- CLEANUP-FIXTURE PART:
     if context.timeSeriesId:
         context.tAPI.deleteTimeSeries(context.timeSeriesId)
-    if context.resultId:
-        context.rAPI.deleteResult(context.resultId)
+    if context.plotResultId:
+        context.rAPI.delete(context.plotResultId)
         
 def before_tag(context, tag):
     '''

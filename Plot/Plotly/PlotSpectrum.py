@@ -1,4 +1,4 @@
-from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
+from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units 
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
@@ -49,7 +49,7 @@ class PlotSpectrum(object):
     
         # get the TimeSeries data:        
         if not self.timeSeriesAPI:
-            self.timeSeriesAPI = TimeSeriesAPI.TimeSeriesAPI()
+            self.timeSeriesAPI = TimeSeriesAPI()
 
         timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
         if not timeSeries:

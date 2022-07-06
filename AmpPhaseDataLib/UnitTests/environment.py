@@ -3,33 +3,30 @@ Environment for behave.
 Provides fixtures to set up and tear down the objects under test.
 '''
 from behave import fixture, use_fixture
-from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
+from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.PlotResultAPI import PlotResultAPI
 from Utility import ParseTimeStamp
 from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotEl
 
 @fixture
 def resultAPI(context, **kwargs):
     # -- SETUP-FIXTURE PART:
-    context.API = ResultAPI.ResultAPI()
+    context.API = PlotResultAPI()
     context.resultTags = {}
-    context.plotTags = {}
     yield context.API
     # -- CLEANUP-FIXTURE PART:
     for tag in context.resultTags:
         if DataStatus.exists(tag):
-            context.API.clearResultDataStatus(context.resultId, DataStatus[tag])
+            context.API.clearDataStatus(context.plotResultId, DataStatus[tag])
         if DataSource.exists(tag):
-            context.API.clearResultDataSource(context.resultId, DataSource[tag])
-    for tag in context.plotTags:
-        if PlotEl.exists(tag):
-            context.API.clearPlotEl(context.plotId, PlotEl[tag])
-    if context.resultId:
-        context.API.deleteResult(context.resultId)
+            context.API.clearDataSource(context.plotResultId, DataSource[tag])
+    if context.plotResultId:
+        context.API.delete(context.plotResultId)
 
 @fixture
 def timeSeriesAPI(context, **kwargs):
     # -- SETUP-FIXTURE PART:
-    context.API = TimeSeriesAPI.TimeSeriesAPI()
+    context.API = TimeSeriesAPI()
     assert(context.API.localDatabaseFile)
     context.tagsAdded = {}
     yield context.API

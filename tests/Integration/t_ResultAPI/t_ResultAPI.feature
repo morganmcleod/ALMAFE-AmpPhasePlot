@@ -9,9 +9,8 @@ Feature: Integrate Plots with Result storage
 #    And we want to show the plot
     When the time series data is inserted
     And the amplitude stability plot is generated
-    Then the plot header can be stored in a result 
-    And the plot image can be stored in a result
-    And the plot attributes can be stored in the result
-    And the plot image can be retrieved
-    And the plot attributes can be retrieved
+    Then the plot image can be stored in a result
+    And the plot image can be retrieved by its plotId
+    And the plot image can be retrieved by the resultId
+
     

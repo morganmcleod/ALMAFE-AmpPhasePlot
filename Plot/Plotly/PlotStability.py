@@ -1,4 +1,4 @@
-from AmpPhaseDataLib import TimeSeriesAPI, ResultAPI
+from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
@@ -46,7 +46,7 @@ class PlotStability(object):
         self.__reset()
         
         if not self.tsAPI:
-            self.tsAPI = TimeSeriesAPI.TimeSeriesAPI()
+            self.tsAPI = TimeSeriesAPI()
         
         # Default xUnits to seconds if not specified:
         xUnits = plotElements.get(PlotEl.XUNITS, (Units.SECONDS).value)

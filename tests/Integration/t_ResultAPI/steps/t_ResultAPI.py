@@ -79,57 +79,33 @@ def step_impl(context):
     
 ##### THEN #####
 
-@then('the plot header can be stored in a result')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    context.resultId = context.rAPI.createResult('t_PlotStoreResults')
-    assert_that(context.resultId)
-    context.plotId = context.rAPI.createPlot(context.resultId, context.plotKind)
-    assert_that(context.plotId)
-
 @then('the plot image can be stored in a result')
 def step_impl(context):
     """
     :param context: behave.runner.Context
     """
     assert_that(context.imageData)
-    context.plotImageId = context.rAPI.insertPlotImage(context.plotId, context.imageData, name = 't_PlotStoreResults:image', srcPath = context.dataFile)
+    context.plotResultId = context.rAPI.create('t_PlotStoreResults:result')
+    context.plotImageId = context.rAPI.insertPlotImage(
+        context.plotResultId, context.imageData, 
+        name = 't_PlotStoreResults:image', kind = context.plotKind, srcPath = context.dataFile)
+    assert_that(context.plotResultId)
     assert_that(context.plotImageId)
-    
-@then('the plot attributes can be stored in the result')
+
+@then('the plot image can be retrieved by its plotId')
 def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    context.plotElements = context.pAPI.plotElementsFinal
-    assert_that(context.plotElements)
-    context.rAPI.setAllPlotEl(context.plotId, context.plotElements)
+    image = context.rAPI.retrievePlotImage(context.plotImageId)
+    assert_that(image is not None)
 
-@then('the plot image can be retrieved')
+@then('the plot image can be retrieved by the resultId')
 def step_impl(context):
     """
     :param context: behave.runner.Context
     """
-    imageData = context.rAPI.retrievePlotImage(context.plotImageId)
-    assert_that(imageData is not None)
-
-def compareLists(list1, list2):
-    '''
-    Compare list elements with some allowance for float representation error
-    :param list1:
-    :param list2:
-    '''
-    for x1, x2 in zip(list1, list2):
-        assert_that(x1, close_to(x2, 0.00000001))
-
-@then('the plot attributes can be retrieved')
-def step_impl(context):
-    """
-    :param context: behave.runner.Context
-    """
-    plotElements = context.rAPI.getAllPlotEl(context.plotId)
-    assert_that(plotElements)
-    assert_that(plotElements, equal_to(context.plotElements))
-    
+    images = context.rAPI.retrievePlotImages(context.plotResultId)
+    assert_that(images is not None)
+    assert_that(len(images) == 1)
+    assert_that(images[0] is not None)

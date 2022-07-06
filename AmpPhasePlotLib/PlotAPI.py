@@ -2,8 +2,7 @@
 PlotAPI for calling applications to generate plots.
 '''
 from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
-from AmpPhaseDataLib.ResultAPI import ResultAPI
-from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, PlotKind, SpecLines, Units
+from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, SpecLines, Units
 from Calculate import AmplitudeStability, PhaseStability, FFT
 from Plot.Plotly import PlotTimeSeries, PlotStability, PlotSpectrum
 from datetime import datetime
