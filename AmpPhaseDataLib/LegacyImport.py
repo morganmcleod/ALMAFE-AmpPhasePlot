@@ -431,6 +431,77 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId
 
+
+def importTimeSeriesNSI2000Phase(file, notes = None):
+    '''
+    Import phase stability data taken with NSI2000 stability plot
+    
+    Formatted comma-delimited:
+    <amplitude dB>, <phase dB>, <time seconds>
+    
+    :param file:        str file to import
+    :param notes:       str if provided will be assigned to the time series NOTES tag
+    :return timeSeriesId if succesful, False otherwise. 
+    '''
+    if not os.path.exists(file):
+        print("File not found '{0}'".format(file))
+        return False
+    
+    dataSeries = []
+    try:
+        with open(file, 'r') as f:
+            reader = csv.reader(f, delimiter=",")
+            first = True
+            sumSeconds = 0.0
+            N = 0
+            for line in reader:
+                # skip header and comment lines:
+                try:
+                    amp = float(line[0])
+                    phase = float(line[1])
+                    seconds = float(line[2])
+                except:
+                    pass
+                
+                if first:
+                    prevSeconds = seconds
+                    first = False
+                else:
+                    sumSeconds += (seconds - prevSeconds)
+                    prevSeconds = seconds
+                    N += 1
+                    dataSeries.append(phase)
+
+    except OSError:
+        print("Could not open file '{0}'".format(file))
+        return False
+    
+    except TypeError:
+        print("Wrong file format '{0}'".format(file))
+        print("Expecting <amplitude dB>, <phase dB>, <time seconds>")
+        return False
+    
+    if len(dataSeries) < 2:
+        print("Data file is too short '{0}'".format(file))
+        return False
+    
+    # calculate tau0Seconds seconds col in file:
+    tau0Seconds = sumSeconds / N
+
+    api = TimeSeriesAPI.TimeSeriesAPI()
+    timeSeriesId = api.insertTimeSeries(dataSeries, tau0Seconds = tau0Seconds)
+    if not timeSeriesId:
+        print("insertTimeSeries failed")
+        return False
+            
+    api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.PHASE).value)
+    api.setDataSource(timeSeriesId, DataSource.UNITS, (Units.DEG).value)
+    api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
+        
+    return timeSeriesId
+
+
 def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = (DataKind.POWER).value):
     '''
     Import power meter or phase measurements extracted from a CTS spreadsheet.

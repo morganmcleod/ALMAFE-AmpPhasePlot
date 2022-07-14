@@ -416,18 +416,20 @@ class PlotAPI(object):
         if not timeSeries:
             return None
         
+        # get the raw data in degrees:
+        yUnits = Units.DEG
+        dataSeries = timeSeries.getDataSeries(yUnits)
+        
+        # If we have freqRFGHz then can plot in FS instead of DEG:        
         freqRFGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.RF_GHZ)
         if freqRFGHz:
             freqRFGHz = float(freqRFGHz)
-
-        dataSeries = timeSeries.getDataSeries(Units.DEG)
+            if freqRFGHz > 0:
+                yUnits = Units.FS
 
         # set YUNITS on the first trace:
         if not plotElements.get(PlotEl.YUNITS, None):
-            if freqRFGHz:
-                plotElements[PlotEl.YUNITS] = (Units.FS).value
-            else:
-                plotElements[PlotEl.YUNITS] = (Units.DEG).value
+            plotElements[PlotEl.YUNITS] = yUnits.value
         
         # calculate Amplitude stability plot traces:
         xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_PHASE_STABILITY).split(', ')
