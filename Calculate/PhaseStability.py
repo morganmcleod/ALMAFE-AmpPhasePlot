@@ -91,6 +91,10 @@ class PhaseStability(object):
         phi.tau = the average of the absolute or differential phase over time tau.
         < ... > means the average over the data sample
         If freqRFGHz>0 compute devs converted to fs at the given frequency.
+        
+        :param inputArray: list of float to calculate the statistic on
+        :param K: distance offset within the list for this iteration
+        :return (adev, aderr, adn):  The Allan deviation, the error bar size, and the number of differences used
         '''
         # conversion factor for fs per degree:
         fsDeg = None
