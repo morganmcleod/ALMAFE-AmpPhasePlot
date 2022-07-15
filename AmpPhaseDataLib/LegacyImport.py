@@ -92,7 +92,7 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, importUnits =
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId
 
-def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = None):
+def importTimeSeriesFETMSAmp(file, measFile = None):
     '''
     Import amplitude stability data taken with FETMS Automated Test application.
     
@@ -112,10 +112,6 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
     
     :param file:        str file to import
     :param measFile:    str 'meas' metadata file to read. This will normally be auto-detected from 'file' name.
-    :param notes:       str if provided will be assigned to the time series NOTES tag
-                            else the notes from 'meas' file will be used, 
-                            if no 'meas' file, the filename will be used. 
-    :param systemName:  str if provided will be used as part of the title.  Example 'FE-21'  
     :return timeSeriesId if succesful, False otherwise. 
     '''
     
@@ -216,8 +212,6 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
 
     # make system string:
     system = ""
-    if systemName:
-        system += systemName
     if band:
         if len(system):
             system += ", "
@@ -254,9 +248,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None, notes = None, systemName = N
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "FETMS Automated Test")
     if SWVersion:
         api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, SWVersion)
-    if notes:
-        api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
-    elif measNotes:
+    if measNotes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, measNotes)
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId

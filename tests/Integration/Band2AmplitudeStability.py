@@ -1,15 +1,16 @@
 import os
 os.chdir('L:\python\ALMAFE-AmpPhasePlot')
 
-from AmpPhaseDataLib.Constants import DataSource, Units, PlotEl, SpecLines
+from AmpPhaseDataLib.Constants import DataSource, PlotEl, SpecLines
 from AmpPhaseDataLib.LegacyImport import importTimeSeriesFETMSAmp
 from AmpPhaseDataLib import TimeSeriesAPI
 from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'\\cvfiler\ALMA-NA-FEIC\IF Processor\IFP v3 first unit tests\IF processor PAI 4-22\Amplitude stability\data6-22-22'
+myPath = r'\\cvfiler\ALMA-NA-FEIC\Band2_ESO_2022\amp_stability'
 
+show = False        # set to True to show plots interactively in the browser
 
 # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
 (_, _, filenames) = next(os.walk(myPath))
@@ -19,21 +20,17 @@ for name in filenames:
     if ext.lower() == '.txt' and '__meas' not in base:
         print(name)
         
-        notes = 'Band 2 amplitude stability'
-        dataSource = 'FE100 Band 2 prototype'
-        
-        timePlotEls = { 
-            PlotEl.TITLE : "Band 2 Amplitude stability time series"
+        timePlotEls = {
         }
-        spectrumPlotEls = { 
-            PlotEl.TITLE : "Band 2 Amplitude stability", 
+        allanPlotEls = { 
             PlotEl.SPEC_LINE1 : SpecLines.FE_AMP_STABILITY1, 
             PlotEl.SPEC_LINE2 : SpecLines.FE_AMP_STABILITY2
         }
         
         measFile = base + 'meas' + ext
-        tsId = importTimeSeriesFETMSAmp(myPath + '/' + name, myPath + '/' + measFile, notes = notes, systemName = 'NRAO FETMS')
+        tsId = importTimeSeriesFETMSAmp(myPath + '/' + name, myPath + '/' + measFile)
         if tsId:
-            tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, dataSource)
-            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + str(tsId) + ".png", show = True)
-            plt.plotAmplitudeStability([tsId], plotElements = spectrumPlotEls, outputName = myPath + "/" + str(tsId) + "-stability.png", show = True)    
+            tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, "NRAO FETMS")
+            tsa.setDataSource(tsId, DataSource.SYSTEM, "CCA2-03, WCA2-98")
+            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + base + ".png", show = show)
+            plt.plotAmplitudeStability([tsId], plotElements = allanPlotEls, outputName = myPath + "/" + base + "stability.png", show = show)    

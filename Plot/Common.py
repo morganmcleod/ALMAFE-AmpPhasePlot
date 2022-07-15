@@ -20,34 +20,41 @@ def makeTitle(timeSeriesIds, plotElements):
     tsAPI = TimeSeriesAPI.TimeSeriesAPI()
 
     title = plotElements.get(PlotEl.TITLE, "")
-    system = tsAPI.getDataSource(timeSeriesIds[0], DataSource.SYSTEM)
-    if system:
-        if title:
-            title += ": "
-        title += system
+    dataSources = tsAPI.getAllDataSource(timeSeriesIds[0])
+    
+    if DataSource.SYSTEM in dataSources:
+        title += ": " if title else ""
+        title += dataSources[DataSource.SYSTEM]
+    
+    if DataSource.SUBSYSTEM in dataSources:
+        title += ", " if title else ""
+        title += dataSources[DataSource.SUBSYSTEM]
     
     if len(timeSeriesIds) == 1:
-        if not title:
-            dataSource = tsAPI.getDataSource(timeSeriesIds[0], DataSource.DATA_SOURCE)
-            title = dataSource if dataSource else ""
-        if not title:
-            serialNum = tsAPI.getDataSource(timeSeriesIds[0], DataSource.SERIALNUM)
-            title = serialNum if serialNum else ""
-    else:
-        serialNums = []
-        for timeSeriesId in timeSeriesIds:            
-            serialNum = tsAPI.getDataSource(timeSeriesId, DataSource.SERIALNUM)
-            if serialNum:
-                serialNums.append(serialNum)                
-        if serialNums:
-            # remove duplicates:
-            serialNums = list(set(serialNums))
-            serialString = ""
-            for s in serialNums:
-                if serialString:
-                    serialString += ", "
-                serialString += s                           
-            title += " SN: " + serialString
+        if DataSource.LO_GHZ in dataSources:
+            title += ", " if title else ""
+            title += " LO={} GHz".format(dataSources[DataSource.LO_GHZ])
+        if DataSource.RF_GHZ in dataSources:
+            title += ", " if title else ""
+            title += " RF={} GHz".format(dataSources[DataSource.RF_GHZ])
+        
+    
+    serialNums = []
+    for timeSeriesId in timeSeriesIds:            
+        serialNum = tsAPI.getDataSource(timeSeriesId, DataSource.SERIALNUM)
+        if serialNum:
+            serialNums.append(serialNum)                
+    if serialNums:
+        # remove duplicates:
+        serialNums = list(set(serialNums))
+        serialString = ""
+        for s in serialNums:
+            serialString += ", " if serialString else ""
+            serialString += s
+        title += " SN: " + serialString
+
+    if not title and DataSource.DATA_SOURCE in dataSources:
+        title = dataSources[DataSource.DATA_SOURCE]
 
     plotElements[PlotEl.TITLE] = title
     return title

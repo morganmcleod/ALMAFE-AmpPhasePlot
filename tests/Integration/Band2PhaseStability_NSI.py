@@ -1,21 +1,20 @@
 import os
 os.chdir('L:\python\ALMAFE-AmpPhasePlot')
 
-from AmpPhaseDataLib.Constants import DataSource, Units, PlotEl, SpecLines
+from AmpPhaseDataLib.Constants import DataSource, PlotEl, SpecLines
 from AmpPhaseDataLib.LegacyImport import importTimeSeriesNSI2000Phase
 from AmpPhaseDataLib import TimeSeriesAPI
 from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'C:\Users\mmcleod\Desktop\Transport\Band2'
+myPath = r'C:\Users\mmcleod\Desktop\Transport\Band2\714'
 
-filenames = ['74GHz StabilityTest Jul 13, 2022 15.1.32.csv',
-             '90 GHz StabilityTest Jul 13, 2022 15.45.57.csv']
+filenames = ['90 GHz StabilityTest Jul 14, 2022 18.44.20.csv']
 
 for name in filenames:
     (base, ext) = os.path.splitext(name)
-    if ext.lower() == '.csv' and '__meas' not in base:
+    if ext.lower() == '.csv':
         print(name)
         
         notes = 'Band 2 phase stability'
