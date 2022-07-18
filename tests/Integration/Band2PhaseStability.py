@@ -1,7 +1,7 @@
 import os
 os.chdir('L:\python\ALMAFE-AmpPhasePlot')
 
-from AmpPhaseDataLib.Constants import DataSource, Units, PlotEl, SpecLines
+from AmpPhaseDataLib.Constants import DataSource, PlotEl, SpecLines
 from AmpPhaseDataLib.LegacyImport import importTimeSeriesFETMSPhase
 from AmpPhaseDataLib import TimeSeriesAPI
 from AmpPhasePlotLib import PlotAPI

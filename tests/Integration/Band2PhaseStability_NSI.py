@@ -8,9 +8,9 @@ from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'C:\Users\mmcleod\Desktop\Transport\Band2\714'
+myPath = r'\\cvfiler\cv-cdl-sis\Band2\ESO\NA_FEIC_Testing\PhaseDrift'
 
-filenames = ['90 GHz StabilityTest Jul 14, 2022 18.44.20.csv']
+filenames = ['RF100_StabilityTest Jul 18, 2022 13.33_MM.csv']
 
 for name in filenames:
     (base, ext) = os.path.splitext(name)
@@ -24,6 +24,8 @@ for name in filenames:
             rfGHz = 74.0
         elif '90' in name:
             rfGHz = 90.0
+        elif '100' in name:
+            rfGHz = 100.0
         else:
             rfGHz = None
         
@@ -42,5 +44,5 @@ for name in filenames:
             tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, dataSource)
             if rfGHz:
                 tsa.setDataSource(tsId, DataSource.RF_GHZ, rfGHz)
-            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + str(tsId) + ".png", show = True)
-            plt.plotPhaseStability(tsId, allanPlotEls, outputName = myPath + "/" + str(tsId) + "-stability.png", show = True)    
+            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + base + ".png", show = True)
+            plt.plotPhaseStability(tsId, allanPlotEls, outputName = myPath + "/" + base + "-stability.png", show = True)    

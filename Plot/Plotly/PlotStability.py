@@ -17,7 +17,6 @@ class PlotStability(object):
         Constructor
         '''
         self.tsAPI = None
-        self.resultAPI = None
         self.__reset()        
         
     def __reset(self):
@@ -107,13 +106,13 @@ class PlotStability(object):
         if LO:
             if name:
                 name += "_"
-            name += "LO" + LO
+            name += "LO " + LO + " GHz"
 
         RF = dataSources.get(DataSource.RF_GHZ, None)
         if RF:
             if name:
                 name += "_"
-            name += "RF" + RF
+            name += "RF " + RF + " GHz"
         
         if not name:
             if self.plotKind == PlotKind.PHASE_STABILITY or self.plotKind == PlotKind.VOLT_STABILITY:
@@ -175,23 +174,26 @@ class PlotStability(object):
             self.minXY[1] = min(self.minXY[1], min(y1, y2))
             self.maxXY[0] = max(self.maxXY[0], max(x1, y2))
             self.maxXY[1] = max(self.maxXY[1], max(y1, y2))
-        
-        # expand x and y ranges to nearest decade:
-        decadeMin = log10(self.minXY[0])
-        decadeMin = (decadeMin - 1) if decadeMin.is_integer() else decadeMin
-        decadeMax = log10(self.maxXY[0])
-        decadeMax = (decadeMax + 1) if decadeMax.is_integer() else decadeMax      
-        fMin = floor(decadeMin)
-        cMax = ceil(decadeMax)
-        plotElements[PlotEl.XRANGE_WINDOW] = "{0}, {1}".format(fMin, cMax)
 
-        decadeMin = log10(self.minXY[1])
-        decadeMin = (decadeMin - 1) if decadeMin.is_integer() else decadeMin
-        decadeMax = log10(self.maxXY[1])
-        decadeMax = (decadeMax + 1) if decadeMax.is_integer() else decadeMax        
-        fMin = floor(decadeMin)
-        cMax = ceil(decadeMax)
-        plotElements[PlotEl.YRANGE_WINDOW] = "{0}, {1}".format(fMin, cMax)
+        if not plotElements.get(PlotEl.X_LINEAR, False):
+            # expand X range to nearest decade:
+            decadeMin = log10(self.minXY[0])
+            decadeMin = (decadeMin - 1) if decadeMin.is_integer() else decadeMin
+            decadeMax = log10(self.maxXY[0])
+            decadeMax = (decadeMax + 1) if decadeMax.is_integer() else decadeMax      
+            fMin = floor(decadeMin)
+            cMax = ceil(decadeMax)
+            plotElements[PlotEl.XRANGE_WINDOW] = "{0}, {1}".format(fMin, cMax)
+
+        if not plotElements.get(PlotEl.Y_LINEAR, False):
+            # expand Y range to nearest decade:
+            decadeMin = log10(self.minXY[1])
+            decadeMin = (decadeMin - 1) if decadeMin.is_integer() else decadeMin
+            decadeMax = log10(self.maxXY[1])
+            decadeMax = (decadeMax + 1) if decadeMax.is_integer() else decadeMax        
+            fMin = floor(decadeMin)
+            cMax = ceil(decadeMax)
+            plotElements[PlotEl.YRANGE_WINDOW] = "{0}, {1}".format(fMin, cMax)
         
         # Plot title:
         title = makeTitle(self.timeSeriesIds, plotElements)
@@ -273,8 +275,11 @@ class PlotStability(object):
         fig.update_yaxes(title_text = yAxisLabel)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel
 
-        # log-log plot, scientific notation on Y:
-        fig.update_layout(xaxis_type="log", yaxis_type="log", showlegend=True, 
+        # plot log in Y, configurable in X, scientific notation on Y:
+        xaxis_type = "linear" if plotElements.get(PlotEl.X_LINEAR, False) else "log"
+        yaxis_type = "linear" if plotElements.get(PlotEl.Y_LINEAR, False) else "log"
+        
+        fig.update_layout(xaxis_type=xaxis_type, yaxis_type=yaxis_type, showlegend=True, 
                           yaxis = dict(showexponent = 'all', exponentformat = 'e'))
 
         # expand plot window:

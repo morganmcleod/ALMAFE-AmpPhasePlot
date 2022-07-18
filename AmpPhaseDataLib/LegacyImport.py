@@ -454,15 +454,15 @@ def importTimeSeriesNSI2000Phase(file, notes = None):
                     seconds = float(line[2])
                 except:
                     pass
-                
-                if first:
-                    prevSeconds = seconds
-                    first = False
                 else:
-                    sumSeconds += (seconds - prevSeconds)
-                    prevSeconds = seconds
-                    N += 1
-                    dataSeries.append(phase)
+                    if first:
+                        prevSeconds = seconds
+                        first = False
+                    else:
+                        sumSeconds += (seconds - prevSeconds)
+                        prevSeconds = seconds
+                        N += 1
+                        dataSeries.append(phase)
 
     except OSError:
         print("Could not open file '{0}'".format(file))

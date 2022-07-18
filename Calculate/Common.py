@@ -1,6 +1,7 @@
 '''
 Common calulation functions used by AmplitudeStability, PhaseStability
 '''
+import numpy as np
 
 def diffSquared(inputArray):
     '''
@@ -38,6 +39,4 @@ def unwrapPhase(inputArray):
     TODO: this won't deal with more than one zero crossing correctly
     :param inputArray:
     '''
-    for i in range(len(inputArray)):
-        if (inputArray[i] < 0):
-            inputArray[i] += 360
+    inputArray = np.unwrap(inputArray, period = 360).tolist()
