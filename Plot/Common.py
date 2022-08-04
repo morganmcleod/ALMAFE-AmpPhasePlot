@@ -26,18 +26,16 @@ def makeTitle(timeSeriesIds, plotElements):
         title += ": " if title else ""
         title += dataSources[DataSource.SYSTEM]
     
-    if DataSource.SUBSYSTEM in dataSources:
-        title += ", " if title else ""
-        title += dataSources[DataSource.SUBSYSTEM]
-    
     if len(timeSeriesIds) == 1:
+        if DataSource.SUBSYSTEM in dataSources:
+            title += ", " if title else ""
+            title += dataSources[DataSource.SUBSYSTEM]
         if DataSource.LO_GHZ in dataSources:
             title += ", " if title else ""
             title += " LO={} GHz".format(dataSources[DataSource.LO_GHZ])
         if DataSource.RF_GHZ in dataSources:
             title += ", " if title else ""
             title += " RF={} GHz".format(dataSources[DataSource.RF_GHZ])
-        
     
     serialNums = []
     for timeSeriesId in timeSeriesIds:            
