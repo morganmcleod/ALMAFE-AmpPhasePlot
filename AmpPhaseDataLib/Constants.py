@@ -119,6 +119,7 @@ class PlotEl(EnumHelper):
     FOOTER1         = 'FOOTER1'         # footer line 1
     FOOTER2         = 'FOOTER2'         # footer line 2 
     FOOTER3         = 'FOOTER3'         # footer line 3 
+    FOOTER4         = 'FOOTER4'         # footer line 4 for overflow of DATASOURCE from line 3 
     IMG_WIDTH       = 'IMG_WIDTH'       # pixels width of output image
     IMG_HEIGHT      = 'IMG_HEIGHT'      # pixels height of output image
     PROCESS_NOTES   = 'PROCESS_NOTES'   # notes about data processing applied to the result (e.g. noise floor subtraction

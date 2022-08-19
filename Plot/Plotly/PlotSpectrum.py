@@ -99,11 +99,7 @@ class PlotSpectrum(object):
         plotElements[PlotEl.TITLE] = title
         
         # Make plot footer strings:
-        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, 
-                    self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
-        plotElements[PlotEl.FOOTER1] = footer1
-        plotElements[PlotEl.FOOTER2] = footer2
-        plotElements[PlotEl.FOOTER3] = footer3
+        makeFooters([timeSeriesId], plotElements, self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)
@@ -187,10 +183,7 @@ class PlotSpectrum(object):
         fig.update_layout(title_text = title)
         
         # Plot footers:
-        footer1 = plotElements.get(PlotEl.FOOTER1, "")
-        footer2 = plotElements.get(PlotEl.FOOTER2, "")
-        footer3 = plotElements.get(PlotEl.FOOTER3, "")
-        addFooters(fig, footer1, footer2, footer3)
+        addFooters(fig, plotElements)
         
         # make and show plot:
         self.imageData = makePlotOutput(fig, plotElements, outputName, show)

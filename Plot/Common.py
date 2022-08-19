@@ -118,6 +118,12 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
         if footer3:
             footer3 += " | "
         footer3 += processNotes
-    plotElements[PlotEl.FOOTER3] = footer3
     
+    wrap = 120
+    if len(footer3) > wrap:
+        plotElements[PlotEl.FOOTER3] = footer3[:wrap]
+        plotElements[PlotEl.FOOTER4] = footer3[wrap:]
+    else:
+        plotElements[PlotEl.FOOTER3] = footer3
+        
     return (footer1, footer2, footer3)

@@ -162,9 +162,8 @@ class PlotTimeSeries(object):
             fig.update_layout(title_text = title)
         
         # Plot footers:        
-        footer1, footer2, footer3 = makeFooters([timeSeriesId], plotElements, 
-                    self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
-        addFooters(fig, footer1, footer2, footer3)
+        makeFooters([timeSeriesId], plotElements, self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
+        addFooters(fig, plotElements)
         
         # make and show plot:
         self.imageData = makePlotOutput(fig, plotElements, outputName, show)

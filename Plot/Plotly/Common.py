@@ -55,16 +55,14 @@ def addSpecLines(fig, plotElements):
         else:
             fig.add_trace(go.Scatter(x = [x1, x2], y = [y1, y2], mode = 'lines', line = specLines, name = specName))
 
-def addFooters(fig, footer1, footer2, footer3):
+def addFooters(fig, plotElements):
     '''
     Common Plotly implementation for adding footers
     :param fig: plotly.graph_objects.Figure
-    :param footer1: str
-    :param footer2: str
-    :param footer3: str
+    :param plotElements dict having keys 'FOOTER1' 'FOOTER2' 'FOOTER3' optional 'FOOTER4'
     '''
     # make room at the bottom for footers:
-    fig.update_layout(margin=dict(b=110))
+    fig.update_layout(margin=dict(b=126))
     
     # add the footers:
     fig.update_layout(
@@ -83,7 +81,7 @@ def addFooters(fig, footer1, footer2, footer3):
                 x=0,
                 y=0,
                 showarrow=False,
-                text=footer1,
+                text=plotElements.get(PlotEl.FOOTER1, ''),
                 xref="paper",
                 yref="paper",
                 xshift=-50,
@@ -93,7 +91,7 @@ def addFooters(fig, footer1, footer2, footer3):
                 x=0,
                 y=0,
                 showarrow=False,
-                text=footer2,
+                text=plotElements.get(PlotEl.FOOTER2, ''),
                 xref="paper",
                 yref="paper",
                 xshift=-50,
@@ -103,11 +101,21 @@ def addFooters(fig, footer1, footer2, footer3):
                 x=0,
                 y=0,
                 showarrow=False,
-                text=footer3,
+                text=plotElements.get(PlotEl.FOOTER3, ''),
                 xref="paper",
                 yref="paper",
                 xshift=-50,
                 yshift=-110
+            ),
+            dict(
+                x=0,
+                y=0,
+                showarrow=False,
+                text=plotElements.get(PlotEl.FOOTER4, ''),
+                xref="paper",
+                yref="paper",
+                xshift=-50,
+                yshift=-125
             )
         ])
     

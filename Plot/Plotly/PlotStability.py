@@ -200,11 +200,7 @@ class PlotStability(object):
         plotElements[PlotEl.TITLE] = title
         
         # Plot footers:
-        footer1, footer2, footer3 = makeFooters(self.timeSeriesIds, plotElements, 
-                self.tsAPI.getAllDataStatus(self.timeSeriesIds[0]), startTime)
-        plotElements[PlotEl.FOOTER1] = footer1
-        plotElements[PlotEl.FOOTER2] = footer2
-        plotElements[PlotEl.FOOTER3] = footer3
+        makeFooters(self.timeSeriesIds, plotElements, self.tsAPI.getAllDataStatus(self.timeSeriesIds[0]), startTime)
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)    
@@ -298,10 +294,7 @@ class PlotStability(object):
         fig.update_layout(title_text = title)
         
         # Plot footers:
-        footer1 = plotElements.get(PlotEl.FOOTER1, "")
-        footer2 = plotElements.get(PlotEl.FOOTER2, "")
-        footer3 = plotElements.get(PlotEl.FOOTER3, "")
-        addFooters(fig, footer1, footer2, footer3)
+        addFooters(fig, plotElements)
         
         # Render:
         self.imageData = makePlotOutput(fig, plotElements, outputName, show)
