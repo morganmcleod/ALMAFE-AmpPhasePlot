@@ -12,7 +12,7 @@ class PlotResultDatabase(RI.PlotResultInterface, TI.TagsInterface):
     PLOT_RESULTS_TABLE = 'AmpPhase_Results'
     PLOT_RESULT_TAGS_TABLE = 'AmpPhase_ResultTags'
 
-    def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData'): 
+    def __init__(self, user, passwd = None, host = '127.0.0.1', database = 'AmpPhaseData', use_pure=False): 
         '''
         Constructor
         '''
@@ -20,7 +20,8 @@ class PlotResultDatabase(RI.PlotResultInterface, TI.TagsInterface):
             'user' : user,
             'passwd' : passwd,
             'host' : host,
-            'database' : database
+            'database' : database,
+            'use_pure' : use_pure
         }
         self.database = database
         self.DB = driver.DriverMySQL(connectionInfo)

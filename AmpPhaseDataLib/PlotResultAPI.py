@@ -40,7 +40,7 @@ class PlotResultAPI(object):
         '''
         self.__reset()
         self.__loadConfiguration()
-        self.db = PlotResultDatabase(self.user, self.passwd, self.host, self.database)
+        self.db = PlotResultDatabase(self.user, self.passwd, self.host, self.database, self.use_pure)
         self.imageDb = PlotImageDatabase(self.db.PLOT_RESULTS_TABLE, self.user, self.passwd, self.host, self.database, self.use_pure)
         
 # PlotResult functions:
@@ -249,6 +249,32 @@ class PlotResultAPI(object):
                     plotImage.path, 
                     plotImage.imageData)
 
+    def retrievePlotImageByKind(self, plotResultId, kind):
+        '''
+        Retrive plot image as binary data from kind
+        :param plotImageId: int
+        :return (plotResultId, plotImageId, name, kind, path, imageData)
+        '''
+        if kind:
+            try:
+                # convert from PlotKind enum to int:
+                kind = kind.value
+            except:
+                try:
+                    kind = int(kind)
+                except:
+                    raise ValueError("Use PlotKind enum from Constants.py or int.")
+        plotImage = self.imageDb.retrieveByKind(None, kind, plotResultId)
+        if not plotImage:
+            return None
+        else:
+            return (plotImage.plotResultId,
+                    plotImage.plotImageId,
+                    plotImage.name,
+                    PlotKind(plotImage.kind),
+                    plotImage.path,
+                    plotImage.imageData)
+
     def retrievePlotImages(self, plotResultId):
         '''
         Retrieve all the plot images associated with plotResultId:
@@ -311,7 +337,7 @@ class PlotResultAPI(object):
       
         config = configparser.ConfigParser()
         config.read("AmpPhaseDataLib.ini")
-        databaseType = config['Configuration']['PlotResultsDatabase']
+        databaseType = config['Configuration']['plotResultsDatabase']
         if databaseType == 'MySQL':
             self.host = config['MySQL']['host']
             self.database = config['MySQL']['database']
