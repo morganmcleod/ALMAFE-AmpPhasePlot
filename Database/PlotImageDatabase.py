@@ -93,6 +93,33 @@ class PlotImageDatabase(PlotImageInterface):
                 imageData = row[4]                        
             )
 
+    def retrieveByKind(self, plotImageId, kind, plotResultId = None) -> PlotImage:
+        '''
+        Retrieve the specified PlotImage object from the database using kind
+        :param plotImageId: to retrieve
+        :param plotResultId: if provided, retrieve all PlotImages associated with the specified Id.
+        :return PlotImage object if successful, None otherwise
+        '''
+        q = "SELECT `fkPlotResults`, `name`, `kind`, `path`, `imageData` FROM {0} ".format(self.PLOT_IMAGES_TABLE)
+        if plotResultId:
+            q += "WHERE fkPlotResults = {0} ".format(plotResultId)
+        else:
+            q += "WHERE `keyId` = {0} ".format(plotImageId)
+        q += "AND `kind` = {0};".format(kind)
+
+        self.DB.execute(q)
+        row = self.DB.fetchone()
+        if not row:
+            return None
+        return PlotImage(
+                plotImageId = plotImageId,
+                plotResultId = row[0],
+                name = stripQuotes(row[1]),
+                kind = row[2],
+                path = stripQuotes(row[3]),
+                imageData = row[4]
+            )
+
     def delete(self, plotImageId):
         '''
         Delete the specified PlotImage object from the database
