@@ -365,7 +365,7 @@ class PlotAPI(object):
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
         if specLine:
             specLine = specLine.split(', ')
-            self.specLines.append((specLine[0], specLine[1], specLine[2], specLine[3]))
+            self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
         # use this to find the earliest start time if multiple traces:
         startTime = None
@@ -394,7 +394,8 @@ class PlotAPI(object):
                 else:
                     return None
             # set a generic title:
-            plotElements[PlotEl.TITLE] = "Phase Stability"
+            if not plotElements.get(PlotEl.TITLE, None):
+                plotElements[PlotEl.TITLE] = "Phase Stability"
         
         # get the results:
         if self.plotter.finishPlot(startTime, plotElements, outputName, show):

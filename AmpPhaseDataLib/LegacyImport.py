@@ -279,7 +279,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
     :param notes:       str if provided will be assigned to the time series NOTES tag
                             else the notes from 'meas' file will be used. 
     :param systemName:  str if provided will be used as part of the title.  Example 'FE-21'  
-    :return timeSeriesId if succesful, False otherwise. 
+    :return timeSeriesId if succesful, None otherwise. 
     '''
     if not os.path.exists(file):
         print("File not found '{0}'".format(file))
@@ -298,20 +298,20 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
                     timeStamps.append(line[0])
                     dataSeries.append(float(line[2]))
                     temperatures1.append(float(line[5]))
-                    temperatures2.append(float(line[6]))
+                    # temperatures2.append(float(line[6]))
     
     except OSError:
         print("Could not open file '{0}'".format(file))
-        return False
+        return None
     
     except TypeError:
         print("Wrong file format '{0}'".format(file))
         print("Expecting <TS with milliseconds> <tilt deg> <phase deg> <amplitude dB> <locked?> <temperatures1 K> <temperatures2 K>")
-        return False
+        return None
     
     if len(dataSeries) < 2:
         print("Data file is too short '{0}'".format(file))
-        return False
+        return None
     
     if not measFile:
         root, ext = os.path.splitext(file)
@@ -400,7 +400,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
     timeSeriesId = api.insertTimeSeries(dataSeries, temperatures1, temperatures2, timeStamps, tau0Seconds, startTime)
     if not timeSeriesId:
         print("insertTimeSeries failed")
-        return False
+        return None
             
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
     api.setDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.PHASE).value)
@@ -554,6 +554,87 @@ def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = (DataKi
         return False
     
     api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, dataKind)
+    api.setDataSource(timeSeriesId, DataSource.UNITS, units)
+    api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "Band 6 CTS")
+    api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "6.3")
+    if notes:
+        api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
+    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    return timeSeriesId
+
+def importTimeSeriesBand6CTS_experimental2(file, notes = None, dataKind = (DataKind.POWER).value):
+    '''
+    Import power meter or phase measurements extracted from the CTS database
+    This is experimental and will likely not be used in the future CTS implementation
+    Power measurements are imported as voltages, from the CTS square-law detector.
+    Phase measurements are imported as degrees.
+    
+    Having the following format, tab-delimited:
+    FreqCarrier <tab> Port <tab> TS <tab> time_sec <tab> Phase <tab> Amplitude <tab> Temp1 <tab> Temp2 <tab> Temp3 <tab> Temp4 <tab> Temp8 <tab> AmbientTemp
+
+    :param file: str file to import
+    :param notes:       str if provided will be assigned to the time series NOTES tag
+    :return timeSeriesId if succesful, None otherwise. 
+    '''
+    if not os.path.exists(file):
+        print("File not found '{0}'".format(file))
+        return None
+    
+    startTime = None
+    dataSeries = []
+    temperatures = []
+    tau0Seconds = None
+    t0 = None
+    rf = None
+    try:
+        with open(file, 'r') as f:
+            reader = csv.reader(f)
+            for line in reader:
+                # skip header and comment lines:
+                if line[0][0].isnumeric():
+                    if not startTime:
+                        parser = ParseTimeStamp.ParseTimeStamp()
+                        startTime = parser.parseTimeStamp(line[2])
+                        t0 = float(line[3])
+                    elif not tau0Seconds:
+                        tau0Seconds = float(line[3]) - t0
+                    if not rf:
+                        rf = float(line[0])
+                    dataSeries.append(float(line[4]))
+                    temperatures.append(float(line[11]))
+        
+    except OSError:
+        print("Could not open file '{0}'".format(file))
+        return None
+    
+    except TypeError:
+        print("Wrong file format '{0}'".format(file))
+        print("Expecting FreqCarrier <tab> Port <tab> TS <tab> time_sec <tab> Phase <tab> Amplitude <tab> Temp1 <tab> Temp2 <tab> Temp3 <tab> Temp4 <tab> Temp8 <tab> AmbientTemp")
+        return None
+    
+    if len(dataSeries) < 2:
+        print("Data file is too short '{0}'".format(file))
+        return None
+    
+    # no conversion:
+    if dataKind == (DataKind.PHASE).value:
+        units = (Units.DEG).value
+        print("Importing phase in degrees")
+    else:
+        # import as POWER measurements:
+        dataKind = (DataKind.POWER).value
+        units = (Units.VOLTS).value
+        print("Importing power as voltage")
+    
+    api = TimeSeriesAPI.TimeSeriesAPI()
+    timeSeriesId = api.insertTimeSeries(dataSeries, temperatures, startTime = startTime, tau0Seconds = tau0Seconds)
+    if not timeSeriesId:
+        print("insertTimeSeries failed")
+        return None
+    
+    api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
+    api.setDataSource(timeSeriesId, DataSource.RF_GHZ, rf)
     api.setDataSource(timeSeriesId, DataSource.DATA_KIND, dataKind)
     api.setDataSource(timeSeriesId, DataSource.UNITS, units)
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "Band 6 CTS")

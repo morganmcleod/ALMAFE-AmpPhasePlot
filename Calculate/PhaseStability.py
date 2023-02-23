@@ -103,6 +103,7 @@ class PhaseStability(object):
             fsDeg = (period * 1.0e15) / 360.0        
         
         M = len(inputArray)
+        N = 0
         total = 0
         for aIndex in range(M - K):
             # accumulate a sum of squares of differences...
@@ -111,12 +112,12 @@ class PhaseStability(object):
             if (fsDeg):
                 diff *= fsDeg
             total += diff ** 2.0
+            N += 1
         
         # and multiply by 0.5, divide by the number of differences, take the square root for standard deviation: 
-        numDiffs = M - K - 1
-        adev = sqrt(0.5 * total / numDiffs)        
-        aderr = adev / sqrt(numDiffs)
-        adn = numDiffs
+        adev = sqrt(0.5 * total / N)        
+        aderr = adev / sqrt(N)
+        adn = N
         return (adev, aderr, adn)
     
     def checkSpecLine(self, TMin, TMax, specMin, specMax):

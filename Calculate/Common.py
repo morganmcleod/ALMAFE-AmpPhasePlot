@@ -33,6 +33,48 @@ def getAveragesArray(inputArray, K):
         averagesArray.append(sum(inputArray[i0 : i0 + K]) / K)        
     return averagesArray
 
+def getMinMaxArray(inputArray, K):
+    '''
+    returns minArray and naxArray from inputArray, where each element of the output arrays
+    contain the min or max over non-overlapping groups of K samples of the inputArray.    
+    '''
+    minArray = []
+    maxArray = []
+    # N is the size of the input data array:
+    N = len(inputArray)
+    # K is the number of points to group and average:
+    if K < 1:
+        K = 1
+    if K > N:
+        K = N
+    # M is number of groups:
+    M = N // K
+    for i in range(M):
+        i0 = i * K            
+        minArray.append(min(inputArray[i0 : i0 + K]))
+        maxArray.append(max(inputArray[i0 : i0 + K]))        
+    return minArray, maxArray
+
+def getFirstItemArray(inputArray, K):
+    '''
+    returns firstItems from inputArray, where each element of firstItems
+    contains the first element from each non-overlapping group of K samples of the inputArray.
+    '''
+    firstItems = []
+     # N is the size of the input data array:
+    N = len(inputArray)
+    # K is the number of points to group and average:
+    if K < 1:
+        K = 1
+    if K > N:
+        K = N
+    # M is number of groups:
+    M = N // K
+    for i in range(M):
+        i0 = i * K            
+        firstItems.append(inputArray[i0])
+    return firstItems
+
 def unwrapPhase(inputArray):
     '''
     Unwrap phase in the provided inputArray

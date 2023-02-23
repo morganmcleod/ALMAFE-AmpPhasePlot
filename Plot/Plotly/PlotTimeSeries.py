@@ -1,9 +1,11 @@
 from AmpPhaseDataLib import TimeSeriesAPI
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, Units
+from Calculate.Common import getMinMaxArray, getFirstItemArray
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, makePlotOutput
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import numpy as np
 
 class PlotTimeSeries(object):
     '''
@@ -23,7 +25,7 @@ class PlotTimeSeries(object):
         '''
         self.imageData = None
         
-    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False):
+    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False, xResolution = 1000):
         '''
         Create a TIME_SERIES plot
         The resulting image data is stored in self.imageData
@@ -31,6 +33,7 @@ class PlotTimeSeries(object):
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :param outputName: Filename where to write the plot .PNG file, optional.
         :param show: if True, displays the plot using the default renderer.
+        :param xResolution: reduce the number of data points actually rendered to this many, by boxcar max, min.
         :return True if succesful, False otherwise
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
@@ -44,7 +47,7 @@ class PlotTimeSeries(object):
         timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
         if not timeSeries:
             return False
-
+        
         # Get the DataSource tags:
         dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
@@ -85,7 +88,24 @@ class PlotTimeSeries(object):
         dataSeries = timeSeries.getDataSeries(yUnits)
         if not dataSeries:
             return False
-            
+        
+        # reduce to approximately xResolution, to save plotting time:
+        if xResolution:
+            # get the number of groups to combine:
+            K = len(dataSeries) // xResolution
+            minArray, maxArray = getMinMaxArray(dataSeries, K)
+            # interleave minArray, maxArray:
+            dataSeries = [None]*(len(minArray)+len(maxArray))
+            dataSeries[::2] = minArray
+            dataSeries[1::2] = maxArray
+            # reduce timestamps and temperatures by the same group size K.
+            # because len(dataSeries) is now about 2 * xResoltion, repeat each element twice in the arrays: 
+            timeStamps = np.repeat(getFirstItemArray(timeStamps, K), 2).tolist()
+            if timeSeries.temperatures1:
+                timeSeries.temperatures1 = np.repeat(getFirstItemArray(timeSeries.temperatures1, K), 2).tolist()
+            if timeSeries.temperatures2:
+                timeSeries.temperatures2 = np.repeat(getFirstItemArray(timeSeries.temperatures2, K), 2).tolist()
+
         # add the trace(s), compute temperature trace spans:
         y2min = None
         y2max = None

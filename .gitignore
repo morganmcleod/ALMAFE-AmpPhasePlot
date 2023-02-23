@@ -5,3 +5,5 @@
 *.png
 SampleData-local/
 Docs-local/
+.vscode/
+*.code-workspace
