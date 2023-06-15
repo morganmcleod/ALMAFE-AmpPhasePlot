@@ -6,10 +6,11 @@ from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'L:\LV2021Requal\NA-FETMS\amp_stability\B2\B2_FE34_AmpStability_2023-03-02'
+myPath = r'L:\2023Band2\Amplitude Stability'
 band = 2
+serialNum = 'CCA2-14'
 systemName = 'NA FETMS'
-dataSource = "FE01 LV2021 validation"
+dataSource = "FE06"
 title = f"Band {band} amplitude stability"
 show = True        # set to True to show plots interactively in the browser
 
@@ -39,5 +40,6 @@ for name in filenames:
         if tsId:
             tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, systemName)
             tsa.setDataSource(tsId, DataSource.SYSTEM, dataSource)
+            tsa.setDataSource(tsId, DataSource.SERIALNUM, serialNum)
             plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + base + ".png", show = show)
             plt.plotAmplitudeStability([tsId], plotElements = allanPlotEls, outputName = myPath + "/" + base + "stability.png", show = show)    

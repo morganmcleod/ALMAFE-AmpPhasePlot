@@ -6,11 +6,13 @@ from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'L:\LV2021Requal\NA-FETMS\phase_stability\B2\morning'
+myPath = r'L:\2023Band2\Phase Stability'
 band = 2
+serialNum = 'CCA2-14'
 systemName = 'NA FETMS'
-dataSource = "FE34 LV2021 validation"
+dataSource = "FE06"
 title = f"Band {band} phase stability"
+show = True        # set to True to show plots interactively in the browser
 
 # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
 (_, _, filenames) = next(os.walk(myPath))
@@ -33,7 +35,8 @@ for name in filenames:
         if tsId:
             tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, systemName)
             tsa.setDataSource(tsId, DataSource.SYSTEM, dataSource)
-            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + str(tsId) + ".png", show = True)
+            tsa.setDataSource(tsId, DataSource.SERIALNUM, serialNum)
+            plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + str(tsId) + ".png", show = show)
             try:
                 plt.plotPhaseStability([tsId], plotElements = spectrumPlotEls, outputName = myPath + "/" + str(tsId) + "-stability.png", show = True)    
             except:
