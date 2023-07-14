@@ -21,10 +21,6 @@ Open the notebook and fix up the working directory in the first frame to match y
 
 ## Installation / Deployment
 
-**Requires locally installed SQLite**
-On Windows, install SQLite and make sure it is on the PATH:
-https://www.sqlite.org/download.html
-
 **Requires locally installed Orca**
 But only if you need to make .PNG files on disk.
 
@@ -32,7 +28,7 @@ You may be able to work around this requirement by retrieving
 each plot as binary data and writing the file yourself.
 https://github.com/plotly/orca/releases
 
-Requires MySQL or compatible server for Results storage.
+For some use cases, requires MySQL or compatible server for Results storage.
 User account will need CREATE TABLE, CREATE, UPDATE, INSERT, DELETE privs.
 Or alternately run once with CREATE TABLE privs and then restrict thereafter.
 

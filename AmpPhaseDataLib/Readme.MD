@@ -40,34 +40,47 @@ These are updated by inserting data or by retriving from the database.
 * tau0Seconds:   float, integration interval in seconds
 * timeSeriesId:  int
 
-### startTimeSeries(tau0Seconds = None, startTime = None)
-
+```
+    ts = startTimeSeries(tau0Seconds: Optional[float] = None, 
+                         startTime: Optional[Union[str, datetime]] = None,
+                         dataUnits: Optional[Union[str, Units]] = Units.AMPLITUDE):
+```
 Create a new TimeSeriesHeader and prepare to insert data.
 Parameters are optional because these can often be derived from the dataSeries[]
 
-### insertTimeSeriesChunk(dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None)
+Returns a TimeSeries object which you can subsequently add data to, either all at once or in variable size chunks
+from, say from a worker thread in the measurement app.
 
-Insert single point or list of the data, say from a worker thread in the measurement app.
+```
+    ts.appendData(dataSeries: Union[float, List[float]], 
+                  temperatures1: Optional[Union[float, List[float]]] = None,
+                  temperatures2: Optional[Union[float, List[float]]] = None,
+                  timeStamps: Optional[Union[str, List[str]]] = None):
+```
 dataSeries is required.
+temperatures1 and two are optional.
 timeStamps is required if tau0Seconds and startTime were not previously set.
-
-### finishTimeSeries()
-
+```
+    finishTimeSeries(ts)
+```
 Write out the time series data to the database.
 This may be called repeatedly in a measurement loop, like a 'flush' function, or once at the end.
 
-### insertTimeSeries(dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None, tau0Seconds = None, startTime = None)
-
+```
+    insertTimeSeries(dataSeries, temperatures1 = None, temperatures2 = None, timeStamps = None, tau0Seconds = None, startTime = None)
+```
 Insert a TimeSeries and its metadata all at once.
 Equivalent to calling each of the above three methods once in the order shown.
 
-### retrieveTimeSeries(timeSeriesId)
-
+```
+    retrieveTimeSeries(timeSeriesId)
+```
 Retrieve from the database by timeSeriesId.
 Updates all Public Attributes, listed above.
 
-### getDataSeries(requiredUnits = None)
-
+```
+    getDataSeries(requiredUnits = None)
+```
 Fetch the dataSeries[] with optional Units conversion:
 
 * Amplitude data is stored as WATTS or VOLTS or unspecified AMPLITUDE.
@@ -77,14 +90,16 @@ Fetch the dataSeries[] with optional Units conversion:
 * Phase data is stored as DEG.
   - It may only be fetched as DEG.
 
-### getTimeStamps(requiredUnits = None)
-
+```
+    getTimeStamps(requiredUnits = None)
+```
 Fetch the timeStamps[] with optional Units conversion:
 
 * Time data is stored as LOCALTIME (YYYY-MM-DD HH:MM:SS.mmm).
   - It may be fetched as LOCALTIME, SECONDS, or MINUTES
 
-### deleteTimeSeries(timeSeriesId)
+
+    deleteTimeSeries(timeSeriesId)
 
 Delete a TimeSeries and all associated data
 
