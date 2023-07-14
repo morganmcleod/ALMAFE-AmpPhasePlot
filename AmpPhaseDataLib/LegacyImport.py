@@ -298,7 +298,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
                     timeStamps.append(line[0])
                     dataSeries.append(float(line[2]))
                     temperatures1.append(float(line[5]))
-                    # temperatures2.append(float(line[6]))
+                    temperatures2.append(float(line[6]))
     
     except OSError:
         print("Could not open file '{0}'".format(file))
