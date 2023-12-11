@@ -300,7 +300,8 @@ class PlotAPI(object):
             normalize = False   # for pure voltage time series: don't normalize, calculate ADEV
             calcAdev = True     # this would be typical for a bias or power supply where absolute
                                 # deviations from nominal are more of interest than relative level drifts.
-        else: # for POWER and AMPLITUDE, use the source units, if any:
+        else:
+            # for POWER and AMPLITUDE, use the source units, if any:
             dataSeries = timeSeries.getDataSeries(currentUnits)
             normalize = True    # for power or unknown amplitude time series, normalize and calculate AVAR.
             calcAdev = False    # units might still be VOLTS in the case of a crystal detector having 

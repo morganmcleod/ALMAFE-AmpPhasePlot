@@ -6,11 +6,11 @@ from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'L:\2023Band2\Phase Stability'
+myPath = r'\\apropos\Workspace-L\data\FE100\Band2-NRAO\phase_stability'
 band = 2
-serialNum = 'CCA2-14'
-systemName = 'NA FETMS'
-dataSource = "FE06"
+serialNum = 'NRAO CCA2'
+systemName = 'CV'
+dataSource = "new PNA"
 title = f"Band {band} phase stability"
 show = True        # set to True to show plots interactively in the browser
 

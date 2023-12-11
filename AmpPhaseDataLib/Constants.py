@@ -160,7 +160,7 @@ class SpecLines(object):
     FE_PHASE_STABILITY = "20, 10, 300, 10"          # Units = FS
     IFPROC_AMP_STABILITY1 = "0.05, 1e-7, 100, 1e-7" # Units = AVAR
     IFPROC_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"  # Units = AVAR
-    WCA_AMP_STABILITY1 = "0.05, 9e-8, 100, 9e-9"    # Units = AVAR
+    WCA_AMP_STABILITY1 = "0.05, 9e-8, 100, 9e-8"    # Units = AVAR
     WCA_AMP_STABILITY2 = "300, 1e-6, 300, 1e-6"     # Units = AVAR
     BAND6_AMP_STABILITY1 = "0.05, 4e-7, 100, 4e-7"  # Units = AVAR
     BAND6_AMP_STABILITY2 = "300, 3e-6, 300, 3e-6"   # Units = AVAR

@@ -643,3 +643,61 @@ def importTimeSeriesBand6CTS_experimental2(file, notes = None, dataKind = (DataK
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
     api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
     return timeSeriesId
+
+def importTimeSeriesWCABench(file, notes = None, dataKind = (DataKind.POWER).value):
+    '''
+    Import power meter measurements from a CSV file from the OSF WCA test bench
+    
+    Having the following format:
+    YYYY-MM-DD HH:MM:SS.mmm,power
+    :param file: str file to import
+    :param notes:       str if provided will be assigned to the time series NOTES tag
+    :return timeSeriesId if succesful, False otherwise. 
+    '''
+    if not os.path.exists(file):
+        print("File not found '{0}'".format(file))
+        return False
+    
+    timeStamps = []
+    dataSeries = []
+    try:
+        with open(file, 'r') as f:
+            reader = csv.reader(f, delimiter=",")
+            for line in reader:
+                # skip header and comment lines:
+                if line[0][0].isnumeric():
+                    timeStamps.append(line[0])
+                    dataSeries.append(float(line[1]))
+        
+    except OSError:
+        print("Could not open file '{0}'".format(file))
+        return False
+    
+    except TypeError:
+        print("Wrong file format '{0}'".format(file))
+        print("Expecting YYYY-MM-DD HH:MM:SS.mmm,power")
+        return False
+    
+    if len(dataSeries) < 2:
+        print("Data file is too short '{0}'".format(file))
+        return False
+    
+    # import as POWER measurements:
+    dataKind = DataKind.POWER
+    units = Units.WATTS
+    print("Importing power as W")
+    
+    api = TimeSeriesAPI.TimeSeriesAPI()
+    timeSeriesId = api.insertTimeSeries(dataSeries, timeStamps = timeStamps, dataUnits = units)
+    if not timeSeriesId:
+        print("insertTimeSeries failed")
+        return False
+    
+    api.setDataSource(timeSeriesId, DataSource.DATA_SOURCE, file)
+    api.setDataSource(timeSeriesId, DataSource.DATA_KIND, dataKind.value)
+    api.setDataSource(timeSeriesId, DataSource.UNITS, units.value)
+    api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "WCA test bench")
+    if notes:
+        api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
+    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    return timeSeriesId
