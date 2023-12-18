@@ -55,18 +55,26 @@ class TimeSeriesAPI(object):
         self.db = TimeSeriesDatabase(self.localDatabaseFile)
         self.tsParser = ParseTimeStamp.ParseTimeStamp()
     
-    def startTimeSeries(self, tau0Seconds:Optional[float] = None, 
-                        startTime:Optional[Union[str, datetime]] = None,
-                        dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
+    def startTimeSeries(self, 
+            tau0Seconds:Optional[float] = None, 
+            startTime:Optional[Union[str, datetime]] = None,
+            dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE) -> TimeSeries:
         '''
         Create the TimeSeriesHeader and prepare to start inserting data points
         :param tau0Seconds:   float: integration time of each reading
         :param startTime:     datetime or str: when the measurement started
+        :param dataUnits:     from Constans.Units enum.
         :return: timeSeries if successful, otherwise None
         '''
-        timeSeries = TimeSeries(0, tau0Seconds, startTime, dataUnits)
+        timeSeries = TimeSeries(
+            tsId = 0, 
+            tau0Seconds = tau0Seconds, 
+            startTime = startTime, dataUnits = 
+            dataUnits
+        )
+
         # create a time series header record and return the timeSeriesId:
-        timeSeries.tsId = self.db.insertTimeSeriesHeader(timeSeries.startTime, timeSeries.tau0Seconds)
+        timeSeries.tsId = self.db.insertTimeSeriesHeader(startTime, tau0Seconds)
         if timeSeries.tsId:
             self.setDataSource(timeSeries.tsId, DataSource.UNITS, dataUnits.value)
             return timeSeries
@@ -90,8 +98,7 @@ class TimeSeriesAPI(object):
         # update the header in case startTime or tau0Seconds changed:
         self.db.updateTimeSeriesHeader(timeSeries.tsId, timeSeries.startTime, timeSeries.tau0Seconds)
         # get the data arrays and insert into database:
-        ds, ts, t1, t2 = timeSeries.getDataForWrite()
-        self.db.insertTimeSeries(timeSeries.tsId, ds, timeSeries.startTime, timeSeries.tau0Seconds, ts, t1, t2)
+        self.db.insertTimeSeries(timeSeries.getDataForWrite())
     
     def insertTimeSeries(self, 
                          dataSeries:Union[float, List[float]], 
@@ -130,11 +137,16 @@ class TimeSeriesAPI(object):
             return None
 
         dataUnits = self.getDataSource(timeSeriesId, DataSource.UNITS, Units.AMPLITUDE)
-        timeSeries = TimeSeries(header.timeSeriesId, header.tau0Seconds, header.startTime, dataUnits)
+        timeSeries = TimeSeries(
+            tsId = header.timeSeriesId, 
+            tau0Seconds = header.tau0Seconds, 
+            startTime = header.startTime,
+            dataUnits = dataUnits
+        )
         
         result = self.db.retrieveTimeSeries(timeSeries.tsId)
         if not result:
-            # header was found but no data.  Ok.
+            # header was found but no   Ok.
             return timeSeries
             
         timeSeries.timeStamps = result.timeStamps

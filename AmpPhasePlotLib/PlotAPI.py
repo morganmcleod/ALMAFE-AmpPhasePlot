@@ -3,8 +3,12 @@ PlotAPI for calling applications to generate plots.
 '''
 from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
 from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, SpecLines, Units
-from Calculate import AmplitudeStability, PhaseStability, FFT
-from Plot.Plotly import PlotTimeSeries, PlotStability, PlotSpectrum
+from Calculate.AmplitudeStability import AmplitudeStability
+from Calculate.PhaseStability import PhaseStability
+from Calculate.FFT import FFT
+from Plot.Plotly.PlotTimeSeries import PlotTimeSeries
+from Plot.Plotly.PlotStability import PlotStability
+from Plot.Plotly.PlotSpectrum import PlotSpectrum
 from datetime import datetime
 import configparser
 
@@ -53,7 +57,7 @@ class PlotAPI(object):
         self.__reset()
         
         # make the plot:
-        self.plotter = PlotTimeSeries.PlotTimeSeries()
+        self.plotter = PlotTimeSeries()
         if not self.plotter.plot(timeSeriesId, plotElements, outputName, show):
             return False
         
@@ -128,8 +132,8 @@ class PlotAPI(object):
             plotElements[PlotEl.TITLE] = dfltTitle
         
         # make the plot:
-        self.calc = FFT.FFT()
-        self.plotter = PlotSpectrum.PlotSpectrum()
+        self.calc = FFT()
+        self.plotter = PlotSpectrum()
             
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds):
             print("Invalid dataSeries (id={}) or sampling interval ({} s) for FFT.".format(timeSeriesId, timeSeries.tau0Seconds))
@@ -224,8 +228,8 @@ class PlotAPI(object):
 
         # clear anything kept from last plot:
         self.__reset()
-        self.calc = AmplitudeStability.AmplitudeStability()
-        self.plotter = PlotStability.PlotStability()
+        self.calc = AmplitudeStability()
+        self.plotter = PlotStability()
         
         # parse spec line 1:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
@@ -285,6 +289,36 @@ class PlotAPI(object):
         :param plotElements:
         :return the retrieved TimeSeries object if successful, else None
         '''
+        freqLOGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.LO_GHZ)
+        if freqLOGHz:
+            freqLOGHz = float(freqLOGHz)
+                    
+        # calculate Amplitude stability plot traces:
+        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_AMP_STABILITY).split(', ')
+        TMin = float(xRangePlot[0])
+        TMax = float(xRangePlot[1])
+
+        result = self.calculateAmplitudeStability(timeSeriesId, TMin, TMax)
+
+        if not result:
+            return None
+                
+        # check spec lines:
+        for specLine in self.specLines:
+            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
+            self.__updateDataStatusFinal(complies)
+
+        # add the trace:
+        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+            return timeSeries
+        else:
+            return None
+    
+    def calculateAmplitudeStability(self, timeSeriesId, TMin = 0.05, TMax = 300):
+        '''
+        :param timeSeriesId:
+        :return {'x': List[float], 'y': List[float], 'yError': list[float]}
+        '''
         # get the TimeSeries data:
         timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
         if not timeSeries:
@@ -310,29 +344,17 @@ class PlotAPI(object):
         if not dataSeries:
             return None
 
-        freqLOGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.LO_GHZ)
-        if freqLOGHz:
-            freqLOGHz = float(freqLOGHz)
-                    
-        # calculate Amplitude stability plot traces:
-        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_AMP_STABILITY).split(', ')
-        TMin = float(xRangePlot[0])
-        TMax = float(xRangePlot[1])
-        
+        if not self.calc or not isinstance(self.calc, AmplitudeStability):
+            self.calc = AmplitudeStability()        
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, normalize, calcAdev):
             return None
-
-        # check spec lines:
-        for specLine in self.specLines:
-            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
-            self.__updateDataStatusFinal(complies)
-
-        # add the trace:
-        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
-            return timeSeries
-        else:
-            return None
         
+        return {
+            'x': self.calc.xResult,
+            'y': self.calc.yResult,
+            'yError': self.calc.yError
+        }
+
 
     def plotPhaseStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
         '''
@@ -353,8 +375,8 @@ class PlotAPI(object):
 
         # clear anything kept from last plot:
         self.__reset()
-        self.calc = PhaseStability.PhaseStability()
-        self.plotter = PlotStability.PlotStability()
+        self.calc = PhaseStability()
+        self.plotter = PlotStability()
 
         # parse any spec lines:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)

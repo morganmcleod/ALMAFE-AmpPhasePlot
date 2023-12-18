@@ -1,53 +1,51 @@
 from AmpPhaseDataLib.Constants import Units
 from Utility.ParseTimeStamp import ParseTimeStamp
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple, Self
 from datetime import datetime
 from math import log10
+import numpy as np
+from pydantic import BaseModel, validator
+    
+class TimeSeries(BaseModel):
+    tsId: int = 0
+    dataSeries: List[float] = []
+    temperatures1: List[float] = []
+    temperatures2: List[float] = []
+    timeStamps: List[datetime] = []
+    tau0Seconds: Optional[float] = None
+    startTime: Optional[datetime] = None
+    dataUnits: Optional[Units] = Units.AMPLITUDE
+    nextWriteIndex: int = 0
 
-class TimeSeries():
-    
-    def __init__(self, tsId:int = 0, 
-                 tau0Seconds:float = None, 
-                 startTime:Optional[Union[str, datetime]] = None,
-                 dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
-        self.reset()
-        self.tsId = tsId
-        self.tau0Seconds = tau0Seconds
-        self.initializeStartTime(startTime)
-        self.initializeDataUnits(dataUnits)
-        
     def reset(self):
-        # time series state data:
-        self.tsId:int = 0
-        self.dataSeries:List[float] = []
-        self.temperatures1:List[float] = []
-        self.temperatures2:List[float] = []
-        self.timeStamps:List[datetime] = []
-        self.tau0Seconds:float = None
-        self.startTime:datetime = None
-        self.dataUnits = None
-        # helper objects:
-        self.nextWriteIndex:int = 0
-        self.tsFormat:str = None
-        self.tsParser:ParseTimeStamp = None
-    
-    def initializeStartTime(self, startTime:Optional[Union[str, datetime]] = None):
-        '''
-        Preserves self.startTime if already set.
-        :param startTime: datetime or string of first point in dataSeries
-        :return True if startTime was modified
-        '''
-        if not self.startTime:
-            if isinstance(startTime, datetime):
-                self.startTime = startTime
-                return True
-            elif isinstance(startTime, str):
-                self.startTime = self.parseTimeStamp(startTime)
-                return True
-            else:
-                return False
-        return False
-    
+        self.tsId = 0
+        self.dataSeries = []
+        self.temperatures1 = []
+        self.temperatures2 = []
+        self.timeStamps = []
+        self.tau0Seconds = None
+        self.startTime = None
+        self.dataUnits = Units.AMPLITUDE
+        self.nextWriteIndex = 0
+
+    @validator('startTime')
+    @classmethod
+    def startTime_validator(cls, startTime):
+        if not startTime:
+            return None
+        if isinstance(startTime, datetime):
+            return startTime
+        elif isinstance(startTime, str):
+            return cls.parseTimeStamp(startTime)
+
+    @validator('dataUnits')
+    @classmethod
+    def dataUnits_validator(cls, dataUnits):
+        if isinstance(dataUnits, Units):
+            return dataUnits
+        if isinstance(dataUnits, str):
+            return Units.fromStr(dataUnits)
+
     def updateStartTime(self):
         '''
         Preserves self.startTime if already set. Else initialize it from timeStamps[0] or now()
@@ -73,14 +71,6 @@ class TimeSeries():
                 self.tau0Seconds = duration / (len(self.timeStamps) - 1)
                 return True
         return False
-
-    def initializeDataUnits(self, dataUnits:Optional[Union[str, Units]] = Units.AMPLITUDE):
-        if isinstance(dataUnits, str):
-            self.dataUnits = Units.fromStr(dataUnits)
-        elif isinstance(dataUnits, Units):
-            self.dataUnits = dataUnits
-        else:
-            raise TypeError('dataUnits must be str or Units enum from Constants.py')
 
     def isValid(self):
         valid = True
@@ -127,23 +117,66 @@ class TimeSeries():
         appendOrConcat(self.dataSeries, dataSeries)
         appendOrConcat(self.temperatures1, temperatures1)
         appendOrConcat(self.temperatures2, temperatures2)
-
+            
         if timeStamps:
             if isinstance(timeStamps, str):
                 appendOrConcat(self.timeStamps, self.parseTimeStamp(timeStamps))
+            elif isinstance(timeStamps, datetime):
+                self.timeStamps.append(timeStamps)
             elif isinstance(timeStamps, list):
                 # it's a list of strings.
                 appendOrConcat(self.timeStamps, [self.parseTimeStamp(ts) for ts in timeStamps])
-            self.initializeStartTime(self.timeStamps[0])
+            self.updateStartTime()
+
+    def select(self,
+            first: int = 0, 
+            last: int = -1,
+            averaging: int = 1, 
+            latestOnly: bool = False) -> Self:
+        if latestOnly:
+            return TimeSeries(
+                tsId = self.tsId,
+                dataSeries = [self.dataSeries[-1]] if self.dataSeries else [],
+                temperatures1 = [self.temperatures1[-1]] if self.temperatures1 else [],
+                temperatures2 = [self.temperatures2[-1]] if self.temperatures2 else [],
+                timeStamps = [self.timeStamps[-1]] if self.timeStamps else [],
+                tau0Seconds = self.tau0Seconds,
+                startTime = self.startTime,
+                dataUnits = self.dataUnits
+            )
     
-    def getDataForWrite(self):
-        ds = self.dataSeries[self.nextWriteIndex:] 
-        ts = self.timeStamps[self.nextWriteIndex:] if self.timeStamps else []
-        t1 = self.temperatures1[self.nextWriteIndex:] if self.temperatures1 else []
-        t2 = self.temperatures2[self.nextWriteIndex:] if self.temperatures2 else []
+        else:
+            ts = TimeSeries(
+                tsId = self.tsId,
+                dataSeries = self.dataSeries[first:last] if self.dataSeries else [],
+                temperatures1 = self.temperatures1[first:last] if self.temperatures1 else [],
+                temperatures2 = self.temperatures2[first:last] if self.temperatures2 else [],
+                timeStamps = self.timeStamps[first:last] if self.timeStamps else [],
+                tau0Seconds = self.tau0Seconds,
+                startTime = self.startTime,
+                dataUnits = self.dataUnits
+            )
+            if averaging > 1:
+                ts.dataSeries = (np.convolve(ts.dataSeries, np.ones(averaging), "valid") / averaging).tolist()
+                if ts.tetemperatures1:
+                    ts.temperatures1 = (np.convolve(ts.temperatures1, np.ones(averaging), "valid") / averaging).tolist()
+                if ts.tetemperatures2:
+                    ts.temperatures1 = (np.convolve(ts.temperatures1, np.ones(averaging), "valid") / averaging).tolist()
+                if ts.timeStamps:
+                    ts.timeStamps = ts.timeStamps[0:-1:averaging]
+            return ts
+    
+    def getRecommendedAveraging(self, targetLength: int = 1000) -> int:
+        if len(self.dataSeries) <= targetLength:
+            return 1
+        else:
+            return len(self.dataSeries) // targetLength
+    
+    def getDataForWrite(self) -> Self:
+        toWrite = self.select(self.nextWriteIndex)
         # Move the nextWriteIndex up so we don't write the same data again
         self.nextWriteIndex = len(self.dataSeries)
-        return ds, ts, t1, t2
+        return toWrite
 
     def getDataSeries(self, requiredUnits:Optional[Union[str, Units]] = None):
         '''
@@ -231,22 +264,30 @@ class TimeSeries():
             raise TypeError('Unsupported units conversion from {} to {}'.format(Units.LOCALTIME.value, requiredUnits.value))
         
         return result  
-
-    def parseTimeStamp(self, timeStamp:str):
+        
+    
+    @classmethod
+    def parseTimeStamp(cls, timeStamp:str):
         '''
         Implement loading a single timestamp, using cached timeStampFormat if available:
         :param timeStamp: single timeStamp string
         '''
-        if not self.tsParser:
-            self.tsParser = ParseTimeStamp()
-        if self.tsFormat:
+        # static objects owned by this function:
+        try:
+            parseTimeStamp.tsParser
+        except:
+            parseTimeStamp.tsParser = ParseTimeStamp()
+        
+        try:
+            parseTimeStamp.tsFormat
+        except:
+            parseTimeStamp.tsFormat = None
+
+        if parseTimeStamp.tsFormat:
             # use the cached format string:
-            return self.tsParser.parseTimeStampWithFormatString(timeStamp, self.tsFormat)
+            return parseTimeStamp.tsParser.parseTimeStampWithFormatString(timeStamp, parseTimeStamp.tsFormat)
         else:
             # Call the full parser and store the format for next time
-            timeStamp = self.tsParser.parseTimeStamp(timeStamp)
-            self.tsFormat = self.tsParser.lastTimeStampFormat
+            timeStamp = parseTimeStamp.tsParser.parseTimeStamp(timeStamp)
+            parseTimeStamp.tsFormat = parseTimeStamp.tsParser.lastTimeStampFormat
             return timeStamp
-
-    
-        

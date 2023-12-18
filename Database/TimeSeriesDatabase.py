@@ -109,47 +109,33 @@ class TimeSeriesDatabase(object):
         self.db.commit()
         return timeSeriesId
     
-    def insertTimeSeries(self, timeSeriesId, dataSeries, startTime, tau0Seconds, timeStamps = None, temperatures1 = None, temperatures2 = None):
+    def insertTimeSeries(self, timeSeries: TimeSeries):
         '''
-        Insert a time series associated with timeSeriesId
-        :param timeSeriesId:  int id to associate this data with.
-        :param dataSeries:    list of floats.  The main data series
-        :param startTime:     datetime of the first measurement.
-        :param tau0Seconds:   measurement integration time/sampling interval
-        :param timeStamps:    list of datetimes.  If not provided, they will be generated from starTime and tau0Seconds
-        :param temperatures1: list of temperature sensor readings taken concurrent with the dataSeries
-        :param temperatures2: 2nd list of temperature sensor readings 
+        Insert a time series associated
         '''
-        if not timeSeriesId:
-            raise ValueError('Invalid timeSeriesId.')
+        if not timeSeries.tsId:
+            raise ValueError('Invalid timeSeries tsId.')
         
         self.db.execute('pragma journal_mode=memory')
        
         q0 = """INSERT INTO TimeSeries (fkHeader, timeStamp, seriesData, temperatures1, temperatures2) 
                 VALUES (?,?,?,?,?)"""
-        
-        if not timeStamps:
-            timeStamps = []
-        if not temperatures1:
-            temperatures1 = []
-        if not temperatures2:
-            temperatures2 = []
 
         # timeDelta and timeCount are for generating timeStamps if not provided
-        timeDelta = timedelta(seconds = tau0Seconds)
-        timeCount = startTime
+        timeDelta = timedelta(seconds = timeSeries.tau0Seconds)
+        timeCount = timeSeries.startTime
         error = False
         maxRec = 100000
         # loop on data arrays:        
         records = []
-        for TS, data, temp1, temp2 in zip_longest(timeStamps, dataSeries, temperatures1, temperatures2):
+        for TS, data, temp1, temp2 in zip_longest(timeSeries.timeStamps, timeSeries.dataSeries, timeSeries.temperatures1, timeSeries.temperatures2):
                 
             # timeStamp:
             tss = TS.strftime(self.db.TIMESTAMP_FORMAT) if TS else timeCount.strftime(self.db.TIMESTAMP_FORMAT)
             timeCount += timeDelta
 
             # append tuple to records:
-            records.append((timeSeriesId, tss, data, temp1 if temp1 else None, temp2 if temp2 else None))
+            records.append((timeSeries.tsId, tss, data, temp1 if temp1 else None, temp2 if temp2 else None))
             
             # if maxRec reached, perform the insert:
             if len(records) == maxRec:
