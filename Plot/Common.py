@@ -32,10 +32,10 @@ def makeTitle(timeSeriesIds, plotElements):
             title += dataSources[DataSource.SUBSYSTEM]
         if DataSource.LO_GHZ in dataSources:
             title += ", " if title else ""
-            title += " LO={} GHz".format(dataSources[DataSource.LO_GHZ])
+            title += "LO={} GHz".format(dataSources[DataSource.LO_GHZ])
         if DataSource.RF_GHZ in dataSources:
             title += ", " if title else ""
-            title += " RF={} GHz".format(dataSources[DataSource.RF_GHZ])
+            title += "RF={} GHz".format(dataSources[DataSource.RF_GHZ])
     
     serialNums = []
     for timeSeriesId in timeSeriesIds:            
@@ -79,18 +79,15 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
     testSystem = tsAPI.getDataSource(timeSeriesIds[0], DataSource.TEST_SYSTEM, "unknown")
     dataStatus = getDataStatusString(allDataStatus) 
     
-    idStr = ""
-    configStr = ""
+    configIds = set()
     for timeSeriesId in timeSeriesIds:
-        if idStr:
-            idStr += ", "
-        idStr += str(timeSeriesId)
         configId = tsAPI.getDataSource(timeSeriesId, DataSource.CONFIG_ID)
         if configId:
-            if configStr:
-                configStr += ", "
-            configStr += configId
-    
+            configIds.add(str(configId))
+
+    idStr = ",".join(map(str, timeSeriesIds))
+    configStr = ",".join(configIds)
+                                
     plural = len(timeSeriesIds) > 1
     
     footer1 = "Config{}: {} | DataStatus: {} | Key{}: {} | Measured: {}".format(

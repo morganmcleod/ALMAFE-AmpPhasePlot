@@ -298,27 +298,6 @@ class PlotAPI(object):
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
 
-        result = self.calculateAmplitudeStability(timeSeriesId, TMin, TMax)
-
-        if not result:
-            return None
-                
-        # check spec lines:
-        for specLine in self.specLines:
-            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
-            self.__updateDataStatusFinal(complies)
-
-        # add the trace:
-        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
-            return timeSeries
-        else:
-            return None
-    
-    def calculateAmplitudeStability(self, timeSeriesId, TMin = 0.05, TMax = 300):
-        '''
-        :param timeSeriesId:
-        :return {'x': List[float], 'y': List[float], 'yError': list[float]}
-        '''
         # get the TimeSeries data:
         timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
         if not timeSeries:
@@ -348,14 +327,25 @@ class PlotAPI(object):
             self.calc = AmplitudeStability()        
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, normalize, calcAdev):
             return None
-        
+
+        # check spec lines:
+        for specLine in self.specLines:
+            complies = self.calc.checkSpecLine(specLine[0], specLine[2], specLine[1], specLine[3])
+            self.__updateDataStatusFinal(complies)
+
+        # add the trace:
+        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+            return timeSeries
+        else:
+            return None
+    
+    def getCalcTrace(self):
         return {
             'x': self.calc.xResult,
             'y': self.calc.yResult,
             'yError': self.calc.yError
         }
-
-
+    
     def plotPhaseStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
         '''
         Create an PHASE_STABILITY plot
