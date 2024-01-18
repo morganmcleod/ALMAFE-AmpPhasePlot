@@ -1,6 +1,7 @@
+from __future__ import annotations
 from AmpPhaseDataLib.Constants import Units
 from Utility.ParseTimeStamp import ParseTimeStamp
-from typing import List, Optional, Union, Tuple, Self
+from typing import List, Optional, Union, Tuple
 from datetime import datetime
 from math import log10
 import numpy as np
@@ -132,7 +133,7 @@ class TimeSeries(BaseModel):
             first: int = 0, 
             last: int = -1,
             averaging: int = 1, 
-            latestOnly: bool = False) -> Self:
+            latestOnly: bool = False) -> TimeSeries:
         if latestOnly:
             return TimeSeries(
                 tsId = self.tsId,
@@ -172,7 +173,7 @@ class TimeSeries(BaseModel):
         else:
             return len(self.dataSeries) // targetLength
     
-    def getDataForWrite(self) -> Self:
+    def getDataForWrite(self) -> TimeSeries:
         toWrite = self.select(self.nextWriteIndex)
         # Move the nextWriteIndex up so we don't write the same data again
         self.nextWriteIndex = len(self.dataSeries)
