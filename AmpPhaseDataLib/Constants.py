@@ -169,5 +169,10 @@ class SpecLines(object):
     BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6" # Units = ADEV[V]
     BIAS_LNA_VOLT_ASD_1HZ = "1, 0.8e-6, 1, 0.8e-6"  # 800 nV/√Hz, max @ 1 Hz
     BIAS_LNA_VOLT_RMS = "0.1, 800, 20e-6"           # 0.1 to 800 Hz: 20 uV RMS max
+    IFP_GAIN_STABILITY_SHORT = "0.05, 2.54E-4, 1, 2.54E-4"  # units ADEV
+    IFP_GAIN_STABILITY_MEDIUM = "1, 6.1E-4, 100, 6.1E-4"    # units ADEV
+    IFP_GAIN_STABILITY_LONG = "300, 1.84E-3"                # units ADEV
+    XRANGE_PLOT_IFP_GAIN_SHORT = "0.05, 1"
+    XRANGE_PLOT_IFP_GAIN_MEDIUM = "1, 100"
     XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.
     XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SECONDS, default XRANGE_PLOT for phase.
