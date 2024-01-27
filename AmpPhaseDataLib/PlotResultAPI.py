@@ -21,11 +21,10 @@ Exposes the following data model:
 | +imageData |    # binary and/or a image file on disk;
 +------------+
 '''
-from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotKind
+from AmpPhaseDataLib.Constants import DataSource, PlotKind
 from Database.PlotResultDatabase import PlotResultDatabase
 from Database.PlotImageDatabase import PlotImageDatabase
 from Database.Interface.PlotResult import PlotResult
-from Database.TagsTools import applyDataStatusRules
 import configparser
 
 class PlotResultAPI(object):
@@ -90,41 +89,6 @@ class PlotResultAPI(object):
         :param resultId: int
         '''
         self.db.delete(plotResultId)
-    
-    def setDataStatus(self, plotResultId, dataStatus):
-        '''
-        Set a DataStatus tag for a PlotResult.
-        :param plotResultId: int
-        :param dataStatus: DataStatus enum from Constants.py
-        '''
-        if not isinstance(dataStatus, DataStatus):
-            raise ValueError('Use DataStatus enum from Constants.py')
-        self.db.setTags(plotResultId, applyDataStatusRules(dataStatus))
-    
-    def getDataStatus(self, plotResultId, dataStatus):
-        '''
-        Get whether the given dataStatus tag has been set for a PlotResult
-        :param resultId:   int
-        :param dataStatus: DataStatus enum from Constants.py
-        :return boolean
-        '''
-        if not isinstance(dataStatus, DataStatus):
-            raise ValueError('Use DataStatus enum from Constants.py')
-        result = self.db.getTags(plotResultId, [dataStatus.value])
-        if not result:
-            return False
-        else:
-            return True if result.get(dataStatus.value) else False
-        
-    def clearDataStatus(self, plotResultId, dataStatus):
-        '''
-        Clear a DataStatus tag for a PlotResult.
-        :param resultId:   int
-        :param dataStatus: DataStatus enum from Constants.py
-        '''
-        if not isinstance(dataStatus, DataStatus):
-            raise ValueError('Use DataStatus enum from Constants.py')
-        self.db.setTags(plotResultId, { dataStatus.value : None })
     
     def setDataSource(self, plotResultId, dataSource, value):
         '''

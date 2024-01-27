@@ -2,6 +2,7 @@
 PlotAPI for calling applications to generate plots.
 '''
 from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.TimeSeries import TimeSeries
 from AmpPhaseDataLib.Constants import DataKind, DataSource, DataStatus, PlotEl, SpecLines, Units
 from Calculate.AmplitudeStability import AmplitudeStability
 from Calculate.PhaseStability import PhaseStability
@@ -11,6 +12,7 @@ from Plot.Plotly.PlotStability import PlotStability
 from Plot.Plotly.PlotSpectrum import PlotSpectrum
 from datetime import datetime
 import configparser
+from typing import Dict, List, Optional, Union
 
 class PlotAPI(object):
     '''
@@ -35,30 +37,45 @@ class PlotAPI(object):
         self.imageData = None
         self.plotElementsFinal = None
         self.dataStatusFinal = DataStatus.UNKNOWN
-        
-    def plotTimeSeries(self, timeSeriesId, plotElements = None, outputName = None, show = False):
+
+    def plotTimeSeries(self, 
+            timeSeries: Union[TimeSeries, int], 
+            dataSources: Dict[DataSource, str] = None,
+            plotElements: Dict[PlotEl, str] = None, 
+            outputName: str = None, 
+            show: bool = False) -> bool:
         '''
         Create a TIME_SERIES plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
-        Unlike the other methods in this class, self.traces is not updated by this method. 
-        (It would be the same as the raw data, and huge.)
-        :param timeSeriesId: a timeSeriesId to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        Unlike the other methods in this class, self.traces is not updated by this method. (It would be the same as the raw data, and huge.)
+        :param timeSeries: the TimeSeries to plot *or* its ID to load via TimeSeriesAPI.
+        :param plotElements: to supplement or replace any defaults or loaded via TimeSeriesAPI
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # get the TimeSeries data:
+        timeSeries = self.__getTimeSeries(timeSeries)
+        if not timeSeries:
+            return False
+        
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
-        
+
+        # load dataSources:
+        if not dataSources and timeSeries.tsId > 0:
+            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+        else:
+            dataSources = {}
+                    
         # clear anything kept from last plot:
         self.__reset()
-        
+
         # make the plot:
         self.plotter = PlotTimeSeries()
-        if not self.plotter.plot(timeSeriesId, plotElements, outputName, show):
+        if not self.plotter.plot(timeSeries, dataSources, plotElements, outputName, show):
             return False
         
         # get the results:
@@ -66,23 +83,39 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotSpectrum(self, timeSeriesId, plotElements = None, outputName = None, show = False):
+    def plotSpectrum(self, 
+            timeSeries: Union[TimeSeries, int], 
+            dataSources: Dict[DataSource, str] = None,
+            plotElements: Dict[PlotEl, str] = None, 
+            outputName: str = None, 
+            show: bool = False) -> bool:
         '''
         Create an AMP_SPECTRUM or POWER_SPECTRUM plot
         The resulting image binary data (.png) is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
-        :param timeSeriesId: a timeSeriesId to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param timeSeries: the TimeSeries to plot *or* its ID to load via TimeSeriesAPI.
+        :param plotElements: to supplement or replace any defaults or loaded via TimeSeriesAPI
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # get the TimeSeries data:
+        timeSeries = self.__getTimeSeries(timeSeries)
+        if not timeSeries:
+            return False
+
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
-            
+
+        # load dataSources:
+        if not dataSources and timeSeries.tsId > 0:
+            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+        else:
+            dataSources = {}
+
         # read FFT_RMS configuration:
         config = configparser.ConfigParser()
         config.read("AmpPhaseDataLib.ini")
@@ -90,7 +123,6 @@ class PlotAPI(object):
             ignoreHarmonicsOf = int(config['FFT_RMS']['ignoreHarmonicsOf'])
         except:
             ignoreHarmonicsOf = 0
-            
         try:
             ignoreHarmonicsWindow = float(config['FFT_RMS']['ignoreHarmonicsWindow'])
         except:
@@ -99,15 +131,8 @@ class PlotAPI(object):
         # clear anything kept from last plot:
         self.__reset()
 
-        # get the TimeSeries data:
-        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
-        if not timeSeries:
-            return False
-        if not timeSeries.isValid():
-            return False
-
         # Get the DataSource tags:
-        srcKind = DataKind.fromStr(self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        srcKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         currentUnits = timeSeries.dataUnits
         
         # Get the time series and set the default title:
@@ -126,9 +151,9 @@ class PlotAPI(object):
 
         dataSeries = timeSeries.getDataSeries(requiredUnits)  
     
-        # set the plot title:
-        if dfltTitle and not self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_SOURCE, False) \
-                     and not plotElements.get(PlotEl.TITLE, False) and dfltTitle:
+        # set the plot title.  Priority is: PlotEl.TITLE, DATA_SOURCE, dfltTitle
+        dataSource = dataSources.get(DataSource.DATA_SOURCE, False)                     
+        if dfltTitle and not dataSource and not plotElements.get(PlotEl.TITLE, False):
             plotElements[PlotEl.TITLE] = dfltTitle
         
         # make the plot:
@@ -136,15 +161,13 @@ class PlotAPI(object):
         self.plotter = PlotSpectrum()
             
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds):
-            print("Invalid dataSeries (id={}) or sampling interval ({} s) for FFT.".format(timeSeriesId, timeSeries.tau0Seconds))
+            print("Invalid dataSeries or sampling interval for FFT.")
             return False
 
         # calculate highlight points:
-        x2Array = None
-        y2Array = None
+        x2Array = []
+        y2Array = []
         if ignoreHarmonicsOf:
-            x2Array = []
-            y2Array = []
             for x, y in zip(self.calc.xResult, self.calc.yResult):
                 if self.calc.isHarmonic(x, ignoreHarmonicsOf, ignoreHarmonicsWindow):
                     x2Array.append(x)
@@ -209,19 +232,36 @@ class PlotAPI(object):
         self.plotElementsFinal = plotElements
         return True
     
-    def plotAmplitudeStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
+    def plotAmplitudeStability(self, 
+                timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
+                dataSources: Dict[DataSource, str] = None,
+                plotElements: Dict[PlotEl, str] = None, 
+                outputName: str = None, 
+                show: bool = False) -> bool:
         '''
         Create an POWER_STABILITY, VOLT_STABILITY, or PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
-        :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param timeSeries: either a single TimeSeries or ID to load, or a list of TimeSeries or IDs.
+        :param plotElements: dict of {PLotEl : str} to supplement or replace any defaults or loaded from database.
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        # get the TimeSeries data:
+        timeSeriesList = self.__getTimeSeriesList(timeSeries)
+        if not timeSeriesList:
+            return False
+    
+        # load dataSources:
+        if dataSources is None:
+            if timeSeries.tsId > 0:
+                dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+            else:
+                dataSources = {}
+    
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
@@ -243,39 +283,22 @@ class PlotAPI(object):
             specLine = specLine.split(', ')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
         
-        # use this to find the earliest start time if multiple traces:
-        startTime = None
-        
-        # is it a single time series plot?
-        if isinstance(timeSeriesIds, int):
-            timeSeriesId = timeSeriesIds
-            plotElements[PlotEl.ERROR_BARS] = "1"
-            self.plotter.startPlot(plotElements)
-            timeSeries = self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements)
-            if not timeSeries:
-                return False
-            startTime = timeSeries.startTime
+        # suppress error bars for ensemble plot
+        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeries) > 1 else "1"
+        startTime = datetime.now()
+        self.plotter.startPlot(plotElements)
+        for timeSeries in timeSeriesList:
+            if timeSeries.startTime < startTime:
+                startTime = timeSeries.startTime
+            self.__plotAmplitudeStabilitySingle(timeSeries, dataSources, plotElements)
 
-        # is it a list:
-        elif isinstance(timeSeriesIds, list):
-            # suppress error bars for ensemble plot
-            plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeriesIds) > 1 else "1"
-            startTime = datetime.now()
-            self.plotter.startPlot(plotElements)
-            for timeSeriesId in timeSeriesIds:
-                timeSeries = self.__plotAmplitudeStabilitySingle(timeSeriesId, plotElements)
-                if timeSeries:
-                    if timeSeries.startTime < startTime:
-                        startTime = timeSeries.startTime
-                else:
-                    return False
-            # set a generic title:
-            title = plotElements.get(PlotEl.TITLE, None)
-            if not title:
-                plotElements[PlotEl.TITLE] = "Amplitude Stability"
+        # set a generic title:
+        title = plotElements.get(PlotEl.TITLE, None)
+        if not title:
+            plotElements[PlotEl.TITLE] = "Amplitude Stability"
 
         # get the results:
-        if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+        if self.plotter.finishPlot(startTime, dataSources, plotElements, outputName, show):
             self.traces = self.plotter.traces
             self.imageData = self.plotter.imageData
             self.plotElementsFinal = plotElements
@@ -283,13 +306,16 @@ class PlotAPI(object):
         else:
             return False
         
-    def __plotAmplitudeStabilitySingle(self, timeSeriesId, plotElements):        
+    def __plotAmplitudeStabilitySingle(self, 
+            timeSeries: TimeSeries,
+            dataSources: Dict[DataSource, str],
+            plotElements: Dict[PlotEl, str] = None) -> bool:
         '''
-        :param timeSeriesId:
+        :param timeSeries:
         :param plotElements:
-        :return the retrieved TimeSeries object if successful, else None
+        :return True/False
         '''
-        freqLOGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.LO_GHZ)
+        freqLOGHz = self.tsAPI.getDataSource(timeSeries.tsId, DataSource.LO_GHZ)
         if freqLOGHz:
             freqLOGHz = float(freqLOGHz)
                     
@@ -297,14 +323,9 @@ class PlotAPI(object):
         xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_AMP_STABILITY).split(', ')
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
-
-        # get the TimeSeries data:
-        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
-        if not timeSeries:
-            return None
         
         # Get the DataSource tags:
-        srcKind = self.tsAPI.getDataSource(timeSeriesId, DataSource.DATA_KIND, (DataKind.AMPLITUDE).value)
+        srcKind = dataSources.get(DataSource.DATA_KIND, DataKind.AMPLITUDE.value)
         currentUnits = timeSeries.dataUnits
         
         # Depending on srcKind, get the dataSeries in the proper units:
@@ -313,6 +334,11 @@ class PlotAPI(object):
             normalize = False   # for pure voltage time series: don't normalize, calculate ADEV
             calcAdev = True     # this would be typical for a bias or power supply where absolute
                                 # deviations from nominal are more of interest than relative level drifts.
+        elif srcKind == (DataKind.GAIN).value:
+            # for IFP gain stability normalized ADEV
+            dataSeries = timeSeries.getDataSeries(currentUnits)
+            normalize = True
+            calcAdev = True 
         else:
             # for POWER and AMPLITUDE, use the source units, if any:
             dataSeries = timeSeries.getDataSeries(currentUnits)
@@ -321,12 +347,12 @@ class PlotAPI(object):
                                 # square-law output characteristic.
 
         if not dataSeries:
-            return None
+            return False
 
         if not self.calc or not isinstance(self.calc, AmplitudeStability):
             self.calc = AmplitudeStability()        
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, normalize, calcAdev):
-            return None
+            return False
 
         # check spec lines:
         for specLine in self.specLines:
@@ -334,10 +360,10 @@ class PlotAPI(object):
             self.__updateDataStatusFinal(complies)
 
         # add the trace:
-        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+        if self.plotter.addTrace(timeSeries, dataSources, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
             return timeSeries
         else:
-            return None
+            return False
     
     def getCalcTrace(self):
         return {
@@ -346,19 +372,36 @@ class PlotAPI(object):
             'yError': self.calc.yError
         }
     
-    def plotPhaseStability(self, timeSeriesIds, plotElements = None, outputName = None, show = False):
+    def plotPhaseStability(self, 
+            timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
+            dataSources: Dict[DataSource, str] = None,
+            plotElements: Dict[PlotEl, str] = None, 
+            yUnits = Units.DEG, 
+            outputName: str = None, 
+            show: bool = False) -> bool:
         '''
-        Create an PHASE_STABILITY plot
+        Create a PHASE_STABILITY plot
         The resulting image data is stored in self.imageData.
         The applied plotElements are stored in self.plotElementsFinal.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
         If any spec lines were provided, self.dataStatusFinal will be updated to MEET_SPEC or FAIL_SPEC.
-        :param timeSeriesIds: a single int timeSeriesId or a list of Ids to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param timeSeries: either a single TimeSeries or ID to load, or a list of TimeSeries or IDs.
+        :param plotElements: dict of {PLotEl : str} to supplement or replace any defaults or loaded from database.
+        :param yUnits:
         :param outputName: str filename to store the resulting .png file.
         :param show: if True, displays the plot using the default renderer.
         :return True if succesful, False otherwise
         '''
+        timeSeriesList = self.__getTimeSeriesList(timeSeries)
+        if not timeSeriesList:
+            return False
+        
+        # load dataSources:
+        if not dataSources and timeSeries.tsId > 0:
+            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+        else:
+            dataSources = {}
+        
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
@@ -380,35 +423,18 @@ class PlotAPI(object):
             specLine = specLine.split(', ')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
-        # use this to find the earliest start time if multiple traces:
-        startTime = None
+        # suppress error bars for ensemble plot
+        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeries) > 1 else "1"
+        startTime = datetime.now()
+        self.plotter.startPlot(plotElements)
+        for timeSeries in timeSeriesList:
+            if timeSeries.startTime < startTime:
+                startTime = timeSeries.startTime
+            self.__plotPhaseStabilitySingle(timeSeries, dataSources, lotElements, yUnits)
 
-        # is it a single time series plot?
-        if isinstance(timeSeriesIds, int):
-            timeSeriesId = timeSeriesIds
-            plotElements[PlotEl.ERROR_BARS] = "1"
-            self.plotter.startPlot(plotElements)
-            timeSeries = self.__plotPhaseStabilitySingle(timeSeriesId, plotElements)
-            if not timeSeries:
-                return False
-            startTime = timeSeries.startTime
-
-        # is it a list:
-        elif isinstance(timeSeriesIds, list):
-            # suppress error bars for ensemble plot
-            plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeriesIds) > 1 else "1"
-            startTime = datetime.now()
-            self.plotter.startPlot(plotElements)
-            for timeSeriesId in timeSeriesIds:
-                timeSeries = self.__plotPhaseStabilitySingle(timeSeriesId, plotElements)
-                if timeSeries:
-                    if timeSeries.startTime < startTime:
-                        startTime = timeSeries.startTime
-                else:
-                    return None
-            # set a generic title:
-            if not plotElements.get(PlotEl.TITLE, None):
-                plotElements[PlotEl.TITLE] = "Phase Stability"
+        # set a generic title:
+        if not plotElements.get(PlotEl.TITLE, None):
+            plotElements[PlotEl.TITLE] = "Phase Stability"
         
         # get the results:
         if self.plotter.finishPlot(startTime, plotElements, outputName, show):
@@ -419,23 +445,21 @@ class PlotAPI(object):
         else:
             return False
     
-    def __plotPhaseStabilitySingle(self, timeSeriesId, plotElements):
+    def __plotPhaseStabilitySingle(self, 
+            timeSeries: TimeSeries,
+            dataSources: Dict[DataSource, str] = None,
+            plotElements: Dict[PlotEl, str] = None) -> bool:
         '''
-        :param timeSeriesId:
+        :param timeSeries:
         :param plotElements:
+        :param yUnits:
         :return the retrieved TimeSeries object if successful, else None
         '''
-        # get the TimeSeries data:
-        timeSeries = self.tsAPI.retrieveTimeSeries(timeSeriesId)
-        if not timeSeries:
-            return None
-        
-        # get the raw data in degrees:
-        yUnits = Units.DEG
+        # get the raw data:
         dataSeries = timeSeries.getDataSeries(yUnits)
         
         # If we have freqRFGHz then can plot in FS instead of DEG:        
-        freqRFGHz = self.tsAPI.getDataSource(timeSeriesId, DataSource.RF_GHZ)
+        freqRFGHz = dataSources.get(DataSource.RF_GHZ, None)
         if freqRFGHz:
             freqRFGHz = float(freqRFGHz)
             if freqRFGHz > 0:
@@ -459,11 +483,34 @@ class PlotAPI(object):
             self.__updateDataStatusFinal(complies)
 
         # add the trace:
-        if self.plotter.addTrace(timeSeriesId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+        if self.plotter.addTrace(timeSeries.tsId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
             return timeSeries
         else:
             return None
     
+    def __getTimeSeries(self, timeSeries: Union[TimeSeries, int]) -> Optional[TimeSeries]:
+        if isinstance(timeSeries, int):
+            return self.tsAPI.retrieveTimeSeries(timeSeries)
+        else:
+            assert(isinstance(timeSeries, TimeSeries))
+            return timeSeries
+    
+    def __getTimeSeriesList(self, timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]]) -> List[TimeSeries]:
+        if isinstance(timeSeries, int): 
+            return [self.tsAPI.retrieveTimeSeries(timeSeries)]
+        elif isinstance(timeSeries, TimeSeries):
+            return [timeSeries]
+        else:
+            assert(isinstance(timeSeries, list))
+            result = []
+            for item in timeSeries:
+                if isinstance(item, int):
+                    result.append(self.tsAPI.retrieveTimeSeries(item))
+                else:
+                    assert(isinstance(item, TimeSeries))
+                    result.append(item)
+            return result
+                
     def __updateDataStatusFinal(self, passFail):
         '''
         Private helper to update self.dataStatusFinal.  Allowed transitions:
@@ -474,8 +521,8 @@ class PlotAPI(object):
         '''
         # can always FAIL:
         if not passFail:
-            self.dataStatusFinal = DataStatus.FAIL_SPEC
+            self.dataStatusFinal = DataStatus.REJECTED
 
         # don't overwrite previous FAIL:
-        elif self.dataStatusFinal != DataStatus.FAIL_SPEC:
-            self.dataStatusFinal = DataStatus.MEET_SPEC
+        elif self.dataStatusFinal != DataStatus.REJECTED:
+            self.dataStatusFinal = DataStatus.ACCEPTED

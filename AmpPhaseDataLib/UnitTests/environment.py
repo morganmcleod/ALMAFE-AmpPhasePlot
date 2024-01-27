@@ -6,18 +6,17 @@ from behave import fixture, use_fixture
 from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
 from AmpPhaseDataLib.PlotResultAPI import PlotResultAPI
 from Utility import ParseTimeStamp
-from AmpPhaseDataLib.Constants import DataStatus, DataSource, PlotEl
+from AmpPhaseDataLib.Constants import DataSource, PlotEl
 
 @fixture
 def resultAPI(context, **kwargs):
     # -- SETUP-FIXTURE PART:
     context.API = PlotResultAPI()
+    context.plotResultId = None
     context.resultTags = {}
     yield context.API
     # -- CLEANUP-FIXTURE PART:
     for tag in context.resultTags:
-        if DataStatus.exists(tag):
-            context.API.clearDataStatus(context.plotResultId, DataStatus[tag])
         if DataSource.exists(tag):
             context.API.clearDataSource(context.plotResultId, DataSource[tag])
     if context.plotResultId:
@@ -28,13 +27,12 @@ def timeSeriesAPI(context, **kwargs):
     # -- SETUP-FIXTURE PART:
     context.API = TimeSeriesAPI()
     assert(context.API.localDatabaseFile)
+    context.timeSeriesId = None
     context.tagsAdded = {}
     yield context.API
     # -- CLEANUP-FIXTURE PART:
     if context.timeSeriesId:
         for tag in context.tagsAdded:
-            if DataStatus.exists(tag):
-                context.API.clearDataStatus(context.timeSeriesId, DataStatus[tag])
             if DataSource.exists(tag):
                 context.API.clearDataSource(context.timeSeriesId, DataSource[tag])
         context.API.deleteTimeSeries(context.timeSeriesId)
@@ -58,3 +56,12 @@ def before_tag(context, tag):
     elif tag == "fixture.parseTimeStamp":
         use_fixture(parseTimeStamp, context)
 
+def before_feature(context, feature):
+    if "skip" in feature.tags:
+        feature.skip("Marked with @skip")
+        return
+
+def before_scenario(context, scenario):
+    if "skip" in scenario.effective_tags:
+        scenario.skip("Marked with @skip")
+        return

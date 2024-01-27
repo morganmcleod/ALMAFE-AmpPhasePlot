@@ -89,7 +89,7 @@ def importTimeSeriesE4418B(file, notes = None, tau0Seconds = None, importUnits =
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "2009-03-13 changelist 6851")
     if notes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId
 
 def importTimeSeriesFETMSAmp(file, measFile = None):
@@ -250,7 +250,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None):
         api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, SWVersion)
     if measNotes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, measNotes)
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId
 
 def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName = None):
@@ -420,7 +420,7 @@ def importTimeSeriesFETMSPhase(file, measFile = None, notes = None, systemName =
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
     elif measNotes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, measNotes)        
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId
 
 
@@ -560,7 +560,7 @@ def importTimeSeriesBand6CTS_experimental(file, notes = None, dataKind = (DataKi
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "6.3")
     if notes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId
 
 def importTimeSeriesBand6CTS_experimental2(file, notes = None, dataKind = (DataKind.POWER).value):
@@ -641,7 +641,7 @@ def importTimeSeriesBand6CTS_experimental2(file, notes = None, dataKind = (DataK
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_VERSION, "6.3")
     if notes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId
 
 def importTimeSeriesWCABench(file, notes = None, dataKind = (DataKind.POWER).value):
@@ -699,5 +699,5 @@ def importTimeSeriesWCABench(file, notes = None, dataKind = (DataKind.POWER).val
     api.setDataSource(timeSeriesId, DataSource.MEAS_SW_NAME, "WCA test bench")
     if notes:
         api.setDataSource(timeSeriesId, DataSource.NOTES, notes)
-    api.setDataStatus(timeSeriesId, DataStatus.UNKNOWN)
+    api.setDataSource(timeSeriesId, DataSource.DATA_STATUS, DataStatus.UNKNOWN)
     return timeSeriesId

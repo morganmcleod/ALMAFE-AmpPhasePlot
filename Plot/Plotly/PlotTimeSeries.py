@@ -1,4 +1,4 @@
-from AmpPhaseDataLib import TimeSeriesAPI
+from AmpPhaseDataLib.TimeSeries import TimeSeries
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, Units
 from Calculate.Common import getMinMaxArray, getFirstItemArray
 from Plot.Common import makeTitle, makeFooters
@@ -6,8 +6,9 @@ from Plot.Plotly.Common import addFooters, makePlotOutput
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+from typing import Dict
 
-class PlotTimeSeries(object):
+class PlotTimeSeries():
     '''
     Plot TimeSeries using Plotly
     '''
@@ -15,8 +16,7 @@ class PlotTimeSeries(object):
     def __init__(self):
         '''
         Constructor
-        '''
-        self.timeSeriesAPI = TimeSeriesAPI.TimeSeriesAPI()
+        '''        
         self.__reset()
         
     def __reset(self):
@@ -25,16 +25,23 @@ class PlotTimeSeries(object):
         '''
         self.imageData = None
         
-    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False, xResolution = 1000):
+    def plot(self, 
+            timeSeries: TimeSeries, 
+            dataSources: Dict[DataSource, str],
+            plotElements: Dict[PlotEl, str] = None, 
+            outputName: str = None, 
+            show: bool = False, 
+            xResolution: int = 1000) -> bool:
         '''
         Create a TIME_SERIES plot
         The resulting image data is stored in self.imageData
-        :param timeSeriesId: to retrieve and plot
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param timeSeries: the raw data to plot
+        :param dataSources: data source attributes of the timeSeries
+        :param plotElements: dict of {PLotEl : str} to supplement or replace any defaults or loaded from database.
         :param outputName: Filename where to write the plot .PNG file, optional.
         :param show: if True, displays the plot using the default renderer.
-        :param xResolution: reduce the number of data points actually rendered to this many, by boxcar max, min.
-        :return True if succesful, False otherwise
+        :param xResolution: reduce the number of data points actually rendered to this many, by boxcar max and min.
+        :return True/False;  Updates plotElements
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
@@ -42,14 +49,8 @@ class PlotTimeSeries(object):
                     
         # clear anything kept from last plot:
         self.__reset()
-
-        # get the TimeSeries data:        
-        timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
-        if not timeSeries:
-            return False
         
-        # Get the DataSource tags:
-        dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
+        # Get data kind and units:
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         currentUnits = timeSeries.dataUnits
 
@@ -177,12 +178,12 @@ class PlotTimeSeries(object):
             fig.update_yaxes(range = [float(window[0]), window[1]])
 
         # Plot title:
-        title = makeTitle([timeSeriesId], plotElements)
+        title = makeTitle([timeSeries.tsId], plotElements)
         if title:
             fig.update_layout(title_text = title)
         
         # Plot footers:        
-        makeFooters([timeSeriesId], plotElements, self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
+        makeFooters([timeSeries.tsId], plotElements, timeSeries.startTime)
         addFooters(fig, plotElements)
         
         # make and show plot:
