@@ -1,12 +1,13 @@
 from AmpPhaseDataLib.Constants import Units
 from Calculate.Common import unwrapPhase
+from __future__ import annotations
 from Utility.ParseTimeStamp import ParseTimeStamp
-from typing import List, Optional, Union, Tuple, Self
+from typing import List, Optional, Union, Tuple, Dict
 from datetime import datetime
 from math import log10
 import numpy as np
 from pydantic import BaseModel, validator
-    
+
 class TimeSeries(BaseModel):
     tsId: int = 0
     dataSeries: List[float] = []
@@ -46,6 +47,9 @@ class TimeSeries(BaseModel):
             return dataUnits
         if isinstance(dataUnits, str):
             return Units.fromStr(dataUnits)
+
+    def __len__(self):
+        return len(self.dataSeries)
 
     def updateStartTime(self):
         '''
@@ -134,9 +138,9 @@ class TimeSeries(BaseModel):
 
     def select(self,
             first: int = 0, 
-            last: int = -1,
+            last: int = None,
             averaging: int = 1, 
-            latestOnly: bool = False) -> Self:
+            latestOnly: bool = False) -> TimeSeries:
         if latestOnly:
             return TimeSeries(
                 tsId = self.tsId,
@@ -150,6 +154,8 @@ class TimeSeries(BaseModel):
             )
     
         else:
+            if last is None:
+                last = len(self.dataSeries)
             ts = TimeSeries(
                 tsId = self.tsId,
                 dataSeries = self.dataSeries[first:last] if self.dataSeries else [],
@@ -176,7 +182,7 @@ class TimeSeries(BaseModel):
         else:
             return len(self.dataSeries) // targetLength
     
-    def getDataForWrite(self) -> Self:
+    def getDataForWrite(self) -> TimeSeries:
         toWrite = self.select(self.nextWriteIndex)
         # Move the nextWriteIndex up so we don't write the same data again
         self.nextWriteIndex = len(self.dataSeries)
@@ -268,7 +274,6 @@ class TimeSeries(BaseModel):
             raise TypeError('Unsupported units conversion from {} to {}'.format(Units.LOCALTIME.value, requiredUnits.value))
         
         return result  
-        
     
     @classmethod
     def parseTimeStamp(cls, timeStamp:str):
@@ -278,20 +283,20 @@ class TimeSeries(BaseModel):
         '''
         # static objects owned by this function:
         try:
-            parseTimeStamp.tsParser
+            cls.tsParser
         except:
-            parseTimeStamp.tsParser = ParseTimeStamp()
+            cls.tsParser = ParseTimeStamp()
         
         try:
-            parseTimeStamp.tsFormat
+            cls.tsFormat
         except:
-            parseTimeStamp.tsFormat = None
+            cls.tsFormat = None
 
-        if parseTimeStamp.tsFormat:
+        if cls.tsFormat:
             # use the cached format string:
-            return parseTimeStamp.tsParser.parseTimeStampWithFormatString(timeStamp, parseTimeStamp.tsFormat)
+            return cls.tsParser.parseTimeStampWithFormatString(timeStamp, cls.tsFormat)
         else:
             # Call the full parser and store the format for next time
-            timeStamp = parseTimeStamp.tsParser.parseTimeStamp(timeStamp)
-            parseTimeStamp.tsFormat = parseTimeStamp.tsParser.lastTimeStampFormat
+            timeStamp = cls.tsParser.parseTimeStamp(timeStamp)
+            cls.tsFormat = cls.tsParser.lastTimeStampFormat
             return timeStamp

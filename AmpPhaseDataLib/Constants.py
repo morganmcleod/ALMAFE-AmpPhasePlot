@@ -53,6 +53,7 @@ class DataKind(EnumHelper):
     POWER       = "power"       # typically W or dBm but could be V of a square-law detector.
     PHASE       = "phase"       # linear degrees or radians.
     VOLTAGE     = "voltage"     # linear volts.
+    GAIN        = "gain"        # IFP Gain stability
 
 class DataStatus(EnumHelper):
     '''
@@ -60,11 +61,12 @@ class DataStatus(EnumHelper):
     '''
     UNKNOWN     = 'UNKNOWN'     # setting any other tag will clear UNKNOWN
     ERROR       = 'ERROR'       # an error occurred during the measurement
-    TO_DELETE   = 'TO_DELETE'   # setting TO_DELETE will clear TO_RETAIN
-    TO_RETAIN   = 'TO_RETAIN'   # setting TO_RETAIN will clear TO_DELETE
-    MEET_SPEC   = 'MEET_SPEC'   # setting MEET_SPEC will clear FAIL_SPEC
-    FAIL_SPEC   = 'FAIL_SPEC'   # setting FAIL_SPEC will clear MEET_SPEC
-    
+    MEASURED    = 'MEASURED'    # measurement complete
+    PROCESSED   = 'PROCESSED'   # calculation/plotting done
+    REJECTED    = 'REJECTED'    # failed specification or otherwise discarded by operator
+    ACCEPTED    = 'ACCEPTED'    # met specification or otherwise accepted by operator
+    FOR_REPORT  = 'FOR_REPORT'  # tagged for inclusion in a report
+
 class DataSource(EnumHelper):
     '''
     Data source flags for annotating Time Series and Results
@@ -72,6 +74,7 @@ class DataSource(EnumHelper):
     CONFIG_ID       = 'CONFIG_ID'   # of the device under test
     DATA_SOURCE     = 'DATA_SOURCE' # source data file on disk, if applicable.  Otherwise describe where this came from.
     DATA_KIND       = 'DATA_KIND'   # of the primary data series. Values from DataKind enum.
+    DATA_STATUS     = 'DATA_STATUS' # Values from DataStatus enum
     TEST_SYSTEM     = 'TEST_SYSTEM' # name of measurement system or computer where the data was created.
     UNITS           = 'UNITS'       # of the primary data series, like "dBm" or "deg".  Values from Units enum.
     T_UNITS         = 'T_UNITS'     # of the temperature data series, like "K".  Values from Units enum.
@@ -169,5 +172,10 @@ class SpecLines(object):
     BIAS_SIS_VOLT_STABILITY = "0.1, 0.2e-6, 300, 0.2e-6" # Units = ADEV[V]
     BIAS_LNA_VOLT_ASD_1HZ = "1, 0.8e-6, 1, 0.8e-6"  # 800 nV/√Hz, max @ 1 Hz
     BIAS_LNA_VOLT_RMS = "0.1, 800, 20e-6"           # 0.1 to 800 Hz: 20 uV RMS max
+    IFP_GAIN_STABILITY_SHORT = "0.05, 2.54E-4, 1, 2.54E-4"  # units ADEV
+    IFP_GAIN_STABILITY_MEDIUM = "1, 6.1E-4, 100, 6.1E-4"    # units ADEV
+    IFP_GAIN_STABILITY_LONG = "300, 1.84E-3"                # units ADEV
+    XRANGE_PLOT_IFP_GAIN_SHORT = "0.05, 1"
+    XRANGE_PLOT_IFP_GAIN_MEDIUM = "1, 100"
     XRANGE_PLOT_AMP_STABILITY = "0.05, 375"         # Units = SECONDS, default XRANGE_PLOT for amp.
     XRANGE_PLOT_PHASE_STABILITY = "10, 300"         # Units = SECONDS, default XRANGE_PLOT for phase.

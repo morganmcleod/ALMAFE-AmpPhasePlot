@@ -3,7 +3,7 @@ Implement test cases for t_PlotResultAPI.feature
 Validate PlotResultAPI
 '''
 from behave import given, when, then 
-from AmpPhaseDataLib.Constants import PlotKind, DataStatus, DataSource, PlotEl
+from AmpPhaseDataLib.Constants import PlotKind, DataSource, PlotEl
 from hamcrest import assert_that, equal_to
 
 @given('the description "{description}"')
@@ -85,35 +85,6 @@ def step_impl(context):
     context.API.deletePlotImage(context.plotImageId)
     result = context.API.retrievePlotImage(context.plotImageId)
     assert_that(result, equal_to(None))
-
-@when('DataStatus tag "{tagName}" is set')
-def step_impl(context, tagName):
-    '''
-    :param context: behave.runner.Context
-    '''
-    dataStatus = DataStatus[tagName]
-    context.resultTags[dataStatus.value] = True
-    context.API.setDataStatus(context.plotResultId, dataStatus)
-
-@then('DataStatus tag "{tagName}" can be retrieved and the value matches')
-def step_impl(context, tagName):
-    '''
-    :param context: behave.runner.Context
-    '''
-    dataStatus = DataStatus[tagName]
-    result = context.API.getDataStatus(context.plotResultId, dataStatus)
-    assert_that(result, equal_to(True))    
-
-@then('DataStatus tag "{tagName}" can be removed')
-def step_impl(context, tagName):
-    '''
-    :param context: behave.runner.Context
-    '''
-    dataStatus = DataStatus[tagName]
-    del context.resultTags[dataStatus.value] 
-    context.API.clearDataStatus(context.plotResultId, dataStatus)
-    result = context.API.getDataStatus(context.plotResultId, dataStatus)
-    assert_that(result, equal_to(False))    
     
 @when('Result DataSource tag "{tagName}" is set with value "{tagValue}"')
 def step_impl(context, tagName, tagValue):

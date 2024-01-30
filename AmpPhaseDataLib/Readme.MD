@@ -103,25 +103,6 @@ Fetch the timeStamps[] with optional Units conversion:
 
 Delete a TimeSeries and all associated data
 
-### DataStatus tag functions
-
-DataStatus tags describe the disposition of a Time Series.
-
-DataStatus tags are boolean. Either present or absent. Use DataStatus enums from Constants.py.
-
-Normally a Time Series will start out with DataStatus.UNKNOWN. If an error occurs or the test is stopped by the operator, use DataStatus.ERROR.  If it is determined whether the result meets specification, use DataStatus.MEET_SPEC or FAIL_SPEC.
-
-DataStatus.TO_RETAIN and TO_DELETE are for data management after-the-fact of measurement.
-
-Set, Query, Delete a DataStatus tag:
-* setDataStatus(timeSeriesId, dataStatus)
-* getDataStatus(timeSeriesId, dataStatus)
-* clearDataStatus(timeSeriesId, dataStatus)  
-
-Query multiple tags:
-* getAllDataStatus(timeSeriesId)  
-returns dict of {DataStatus : str} where the str will be truthy, typically '1'.
-
 ### DataSource tag functions
 
 DataSource tags describe the configuration and other metadata at the time of measurement (or time of data creation for legacy data sets.)  They are used extensively in automatic plot labels.  Use as many as are applicable when inserting TimeSeries.
@@ -202,21 +183,6 @@ Exposes the following data model:
 * updateResult(resultId, description = None, timeStamp = None)
 * deleteResult(resultId)
 Also deletes all associated Plots, etc.
-
-### DataStatus tag functions
-
-DataStatus tags describe the disposition of a Result.
-
-DataStatus tags are boolean. Either present or absent. Use DataStatus enums from Constants.py.
-
-Normally a Result will start out with DataStatus.UNKNOWN. If an error occurs, use DataStatus.ERROR.  If it is determined whether the Result meets specification, use DataStatus.MEET_SPEC or FAIL_SPEC.
-
-DataStatus.TO_RETAIN and TO_DELETE are for data management after-the-fact of measurement and analysis.
-
-Set, Query, Delete DataStatus tag:
-* setResultDataStatus(resultId, dataStatus)
-* getResultDataStatus(resultId, dataStatus)
-* clearResultDataStatus(resultId, dataStatus)  
 
 ### DataSource tag functions
 

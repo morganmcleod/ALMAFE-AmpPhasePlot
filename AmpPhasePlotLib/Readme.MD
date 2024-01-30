@@ -31,10 +31,6 @@ Produce a 2-point Allan Standard Deviation plot of phase stability:
   - timeSeriesIds can be a single id or a list. Error bars are shown by default if it is a single id, hidden for a list.
   - This is a plot specifically required by ALMA and is not the same as the standard ADEV(phase).  
 
-### Method to re-create a plot using data from the [ResultAPI](AmpPhaseDataLib/Readme.MD):
-* rePlot(plotId, plotElements = {}, outputName = None, show = False)
-  - supported only for stability plots and powerSpectrum plots.  (It doesn't make sense to store the whole original TimeSeries again in the Results database.)
-
 ### PlotEl Tags:
 * XUNITS: of the primary x axis, like "seconds"
 * YUNITS: of the primary y axis, like "dBm"

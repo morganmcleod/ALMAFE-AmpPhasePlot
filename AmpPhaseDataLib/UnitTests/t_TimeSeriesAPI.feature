@@ -64,34 +64,6 @@ Feature: Validate TimeSeriesAPI
     And we can retrieve DataSource tag "SUBSYSTEM" and the value matches
     And we can retrieve DataSource tag "MEAS_SW_VERSION" and the value matches
     Then we can retrieve DataSource tag "SUBSYSTEM" and the value matches
-
-    @fixture.timeSeriesAPI
-    Scenario: Insert a time series and add, remove DataStatus tags
-    Given dataSeries list "6.0, 6.1, 5.9" 
-    And timestamp list "2020:05:28 14:15:00, 2020:05:28 14:15:01, 2020:05:28 14:15:02"
-    When the data is inserted
-    Then we can set DataStatus "UNKNOWN"
-    And we can read DataStatus "UNKNOWN" and the value matches
-    And we can clear DataStatus "UNKNOWN"
-    And we can set DataStatus "MEET_SPEC"
-    And we can read DataStatus "MEET_SPEC" and the value matches
-    And we can clear DataStatus "MEET_SPEC"
-
-    @fixture.timeSeriesAPI
-    Scenario: Some DataStatus tags are mutually exclusive
-    Given dataSeries list "6.0, 6.1, 5.9" 
-    And timestamp list "2020:05:28 14:15:00, 2020:05:28 14:15:01, 2020:05:28 14:15:02"
-    When the data is inserted
-    Then we can set DataStatus "UNKNOWN"
-    And we can read DataStatus "UNKNOWN" and the value matches
-    When we set the DataStatus "ERROR"
-    Then the DataStatus "UNKNOWN" gets removed
-    When we set the DataStatus "MEET_SPEC"
-    And we set the DataStatus "FAIL_SPEC"
-    Then the DataStatus "MEET_SPEC" gets removed
-    When we set the DataStatus "TO_RETAIN"
-    And we set the DataStatus "TO_DELETE"
-    Then the DataStatus "TO_RETAIN" gets removed
     
     @fixture.timeSeriesAPI
     Scenario: Insert time series in Watts and retrieve in different units

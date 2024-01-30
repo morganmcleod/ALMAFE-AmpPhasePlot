@@ -28,11 +28,10 @@ Or it can be inserted in chunks or single values using startTimeSeries(),
   insertTimeSeriesChunk(), finishTimeSeries()
 '''
 
-from AmpPhaseDataLib.Constants import DataStatus, DataSource, Units
+from AmpPhaseDataLib.Constants import DataSource, Units
 from AmpPhaseDataLib.TimeSeries import TimeSeries
 from Database.TimeSeriesDatabase import TimeSeriesDatabase
-from Database.TagsTools import applyDataStatusRules
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 from Utility import ParseTimeStamp
 from datetime import datetime
 import configparser
@@ -69,8 +68,8 @@ class TimeSeriesAPI(object):
         timeSeries = TimeSeries(
             tsId = 0, 
             tau0Seconds = tau0Seconds, 
-            startTime = startTime, dataUnits = 
-            dataUnits
+            startTime = startTime, 
+            dataUnits = dataUnits
         )
 
         # create a time series header record and return the timeSeriesId:
@@ -162,56 +161,6 @@ class TimeSeriesAPI(object):
         '''
         self.db.deleteTimeSeries(timeSeriesId)
     
-    def setDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
-        '''
-        Set a DataStatus tag for a TimeSeries.
-        :param timeSeriesId: int
-        :param dataStatus: str or DataStatus enum from Constants.py
-        '''
-        if isinstance(dataStatus, str):
-            dataStatus = DataStatus.fromStr(dataStatus)
-        if not isinstance(dataStatus, DataStatus):
-            raise TypeError('Use DataStatus enum from Constants.py')
-        self.db.setTags(timeSeriesId, applyDataStatusRules(dataStatus))
-    
-    def getDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
-        '''
-        Retrieve Data Status key having either true/false value.
-        :param timeSeriesId: int
-        :param dataStatus: str or DataStatus enum from Constants.py
-        '''
-        if isinstance(dataStatus, str):
-            dataStatus = DataStatus.fromStr(dataStatus)
-        if not isinstance(dataStatus, DataStatus):
-            raise TypeError('Use DataStatus enum from Constants.py')
-        result = self.db.getTags(timeSeriesId, [dataStatus.value])
-        return dataStatus.value in result.keys()
-        
-    def clearDataStatus(self, timeSeriesId:int, dataStatus:Union[str, DataStatus]):
-        '''
-        Clear a DataStatus tag for a TimeSeries.
-        :param timeSeriesId:   int
-        :param dataStatus: str or DataStatus enum from Constants.py
-        '''
-        if isinstance(dataStatus, str):
-            dataStatus = DataStatus.fromStr(dataStatus)
-        if not isinstance(dataStatus, DataStatus):
-            raise TypeError('Use DataStatus enum from Constants.py')
-        self.db.setTags(timeSeriesId, { dataStatus.value : None })
-    
-    def getAllDataStatus(self, timeSeriesId:int):
-        '''
-        Get all DataStatus tags for a timeSeries:
-        :param timeSeriesId: int
-        :return dict of {DataStatus : str}
-        '''
-        retrieved = self.db.getTags(timeSeriesId, [el.value for el in DataStatus])
-        result = {}
-        # replace key str values with DataStatus enum values:
-        for tag, value in retrieved.items():
-            result[DataStatus(tag)] = value
-        return result
-    
     def setDataSource(self, timeSeriesId:int, dataSource:Union[str, DataSource], value):
         '''
         Set a DataSource tag for a TimeSeries.
@@ -236,6 +185,8 @@ class TimeSeriesAPI(object):
             dataSource = DataSource.fromStr(dataSource)
         if not isinstance(dataSource, DataSource):
             raise TypeError('Use DataSource enum from Constants.py')
+        if timeSeriesId == 0:
+            return default
         result = self.db.getTags(timeSeriesId, [dataSource.value])
         return result.get(dataSource.value, default)
     
@@ -247,7 +198,7 @@ class TimeSeriesAPI(object):
         '''
         self.setDataSource(timeSeriesId, dataSource, None)
     
-    def getAllDataSource(self, timeSeriesId):
+    def getAllDataSource(self, timeSeriesId: int) -> Dict[DataSource, str]:
         '''
         Get all DataSource tags for a TimeSeries
         :param timeSeriesId: int

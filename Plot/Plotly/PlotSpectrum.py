@@ -1,8 +1,9 @@
-from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.TimeSeries import TimeSeries
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units 
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
+from typing import Dict, List
 
 class PlotSpectrum(object):
     '''
@@ -13,8 +14,6 @@ class PlotSpectrum(object):
         '''
         Constructor
         '''
-        self.timeSeriesAPI = None
-        self.resultAPI = None
         self.__reset()
         
     def __reset(self):
@@ -24,21 +23,30 @@ class PlotSpectrum(object):
         self.imageData = None
         self.traces = []
         
-    def plot(self, timeSeriesId, xArray, yArray, x2Array = None, y2Array = None, 
-             plotElements = None, outputName = None, show = False):
+    def plot(self,
+        timeSeries: TimeSeries, 
+        dataSources: Dict[DataSource, str],
+        xArray: List[float], 
+        yArray: List[float], 
+        x2Array: List[float] = None, 
+        y2Array: List[float] = None, 
+        plotElements: Dict[PlotEl, str] = None, 
+        outputName: str = None, 
+        show: bool = False) -> bool:
         '''
-        Create a POWER_SPECTRUM plot from timeSeries.
+        Create a POWER_SPECTRUM plot.
         The resulting image data is stored in self.imageData.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
-        :param timeSeriesId: to retrieve and plot
+        :param timeSeries: the raw data to plot
+        :param dataSources: data source attributes of the timeSeries
         :param xArray: list of x coordinates to plot
         :param yArray: list of y coordinates to plot, corresponding 1:1 with xArray
         :param x2Array: list of x coordinates to plot for 2nd trace
         :param y2Array: list of y coordinates to plot for 2nd trace, corresponding 1:1 with x2Array
-        :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
+        :param plotElements: dict of {PLotEl : str} to supplement or replace any defaults or loaded from database.
         :param outputName: Filename where to write the plot .PNG file, optional.
         :param show: if True, displays the plot using the default renderer.
-        :return True if succesful, False otherwise
+        :return True/False;  Updates plotElements
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
@@ -47,16 +55,7 @@ class PlotSpectrum(object):
         # clear anything kept from last plot:
         self.__reset()
     
-        # get the TimeSeries data:        
-        if not self.timeSeriesAPI:
-            self.timeSeriesAPI = TimeSeriesAPI()
-
-        timeSeries = self.timeSeriesAPI.retrieveTimeSeries(timeSeriesId)
-        if not timeSeries:
-            return False
-        
-        # Get the DataSource tags:
-        dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
+        # Get data kind and units:
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         
         # set the X axis units:
@@ -95,18 +94,18 @@ class PlotSpectrum(object):
             self.traces.append((x2Array, y2Array, [], legend2))
         
         # Plot title:
-        title = makeTitle([timeSeriesId], plotElements)
+        title = makeTitle([timeSeries.tsId], plotElements)
         plotElements[PlotEl.TITLE] = title
         
         # Make plot footer strings:
-        makeFooters([timeSeriesId], plotElements, self.timeSeriesAPI.getAllDataStatus(timeSeriesId), timeSeries.startTime)
+        makeFooters([timeSeries.tsId], plotElements, timeSeries.startTime)
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)
         
     def __plot(self, plotElements, outputName = None, show = False):
         '''
-        implementation helper shared by plot() and rePlot()
+        implementation helper
         Uses the contents of self.traces [([x], [y], [yError], name)] 
         and the provided plotElements to produce the output plot.
         :param plotElements: dict of {PLotElement : str}

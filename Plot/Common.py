@@ -1,11 +1,9 @@
 '''
 Common functions used by plotting routines
 '''
-from AmpPhaseDataLib import TimeSeriesAPI
 from AmpPhaseDataLib.Constants import PlotEl, DataSource
-from Database.TagsTools import getDataStatusString
 
-def makeTitle(timeSeriesIds, plotElements):
+def makeTitle(timeSeriesIds, dataSources, plotElements):
     '''
     Make a title string from available items in dataSources, plotElements
     Also updates plotElements with the title string
@@ -17,10 +15,7 @@ def makeTitle(timeSeriesIds, plotElements):
     if not len(timeSeriesIds):
         return None
 
-    tsAPI = TimeSeriesAPI.TimeSeriesAPI()
-
     title = plotElements.get(PlotEl.TITLE, "")
-    dataSources = tsAPI.getAllDataSource(timeSeriesIds[0])
     
     if DataSource.SYSTEM in dataSources:
         title += ": " if title else ""
@@ -39,7 +34,7 @@ def makeTitle(timeSeriesIds, plotElements):
     
     serialNums = []
     for timeSeriesId in timeSeriesIds:            
-        serialNum = tsAPI.getDataSource(timeSeriesId, DataSource.SERIALNUM)
+        serialNum = dataSources.get(DataSource.SERIALNUM, None)
         if serialNum:
             serialNums.append(serialNum)                
     if serialNums:
@@ -57,46 +52,36 @@ def makeTitle(timeSeriesIds, plotElements):
     plotElements[PlotEl.TITLE] = title
     return title
 
-def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
+def makeFooters(timeSeriesIds, dataSources, plotElements, startTime):
     '''
     Make three footer strings from available items in dataSources, plotElements, allDataStatus
     Also updates plotElements with the footer strings
     :param timeSeriesIds: list of int timeSeriesId
     :param plotElements:  dict of {PlotEl : str}
-    :param allDataStatus: dict of {DataStatus : str}
     :param startTime: datetime from TimeSeries
     :return (footer1, footer2, footer3)
     '''
     if not len(timeSeriesIds):
         return None
 
-    tsAPI = TimeSeriesAPI.TimeSeriesAPI()
-
     # Footer1 text:
     whenMeas = startTime.strftime('%a %Y-%m-%d %H:%M:%S')
-    measSwname = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_NAME, "unknown")
-    measSwVer = tsAPI.getDataSource(timeSeriesIds[0], DataSource.MEAS_SW_VERSION, "unknown")
-    testSystem = tsAPI.getDataSource(timeSeriesIds[0], DataSource.TEST_SYSTEM, "unknown")
-    dataStatus = getDataStatusString(allDataStatus) 
+    measSwname = dataSources.get(DataSource.MEAS_SW_NAME, "unknown")
+    measSwVer = dataSources.get(DataSource.MEAS_SW_VERSION, "unknown")
+    testSystem = dataSources.get(DataSource.TEST_SYSTEM, "unknown")
     
     configIds = set()
     for timeSeriesId in timeSeriesIds:
-        configId = tsAPI.getDataSource(timeSeriesId, DataSource.CONFIG_ID)
+        configId = dataSources.get(DataSource.CONFIG_ID, None)
         if configId:
             configIds.add(str(configId))
 
     idStr = ",".join(map(str, timeSeriesIds))
     configStr = ",".join(configIds)
                                 
-    plural = len(timeSeriesIds) > 1
+    plural = 's' if len(timeSeriesIds) > 1 else ''
     
-    footer1 = "Config{}: {} | DataStatus: {} | Key{}: {} | Measured: {}".format(
-        "s" if plural else "",
-        configStr if configStr else "unknown", 
-        dataStatus, 
-        "s" if plural else "",
-        idStr, 
-        whenMeas)
+    footer1 = f"Config{plural}: {configStr if configStr else 'unknown'} | Key{plural}: {idStr} | Measured: {whenMeas}"
     plotElements[PlotEl.FOOTER1] = footer1
 
     # Footer2 text:
@@ -105,7 +90,7 @@ def makeFooters(timeSeriesIds, plotElements, allDataStatus, startTime):
 
     # Footer3 text:
     if len(timeSeriesIds) == 1:
-        dataSource = tsAPI.getDataSource(timeSeriesIds[0], DataSource.DATA_SOURCE, "unknown")
+        dataSource = dataSources.get(DataSource.DATA_SOURCE, "unknown")
         footer3 = "Source: " + dataSource
     else:
         footer3 = ""

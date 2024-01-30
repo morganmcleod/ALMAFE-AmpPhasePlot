@@ -1,4 +1,4 @@
-from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
+from AmpPhaseDataLib.TimeSeries import TimeSeries
 from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from math import log10, floor, ceil
 from numpy import logspace
 from sys import float_info
+from typing import Dict, List
 
 class PlotStability(object):
     '''
@@ -16,7 +17,6 @@ class PlotStability(object):
         '''
         Constructor
         '''
-        self.tsAPI = None
         self.__reset()        
         
     def __reset(self):
@@ -33,7 +33,6 @@ class PlotStability(object):
     def startPlot(self, plotElements = None):
         '''
         Start a new STABILITY plot.
-        :param startTime: when the measurement data was originally taken
         :param plotElements: dict of {PLotElement : str} to supplement or replace any defaults or loaded from database.
         :return None; updates plotElements
         '''
@@ -44,34 +43,37 @@ class PlotStability(object):
         # clear anything kept from last plot:
         self.__reset()
         
-        if not self.tsAPI:
-            self.tsAPI = TimeSeriesAPI()
-        
         # Default xUnits to seconds if not specified:
-        xUnits = plotElements.get(PlotEl.XUNITS, (Units.SECONDS).value)
-        plotElements[PlotEl.XUNITS] = xUnits
+        xUnits = plotElements.get(PlotEl.XUNITS, None)
+        if not xUnits:        
+            plotElements[PlotEl.XUNITS] = (Units.SECONDS).value
         
-    def addTrace(self, timeSeriesId, xArray, yArray, yError, plotElements = None):
+    def addTrace(self, 
+            timeSeries,
+            dataSources: Dict[DataSource, str],
+            xArray: List[float], 
+            yArray: List[float], 
+            yError: List[float], 
+            plotElements: Dict[PlotEl, str] = None) -> bool:
         '''
         Add a trace to a STABILITY plot in-progress.
         The resulting traces ([x], [y], [yError], name) are stored in self.traces 
-        :param timeSeriesId: int, of the trace so we can get dataSource tags
+        :param timeSeries: the raw data to plot
+        :param dataSources: data source attributes of the timeSeries
         :param xArray: datetimes or float seconds
         :param yArray: float amplitudes or phases
         :param yError: float +- error bar on yArray
+        :param plotElements: dict of {PLotEl : str} to supplement or replace any defaults or loaded from database.
         :return True/False;  Updates plotElements
         '''
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
             plotElements = {}
             
-        # Get the DataSource tags from the TimeSeries:
-        dataSources = self.tsAPI.getAllDataSource(timeSeriesId)
-        
         # Determine yUnits:
         yUnits = plotElements.get(PlotEl.YUNITS, None)
         if not yUnits:
-            yUnits = dataSources.get(DataSource.UNITS, yUnits)
+            yUnits = dataSources.get(DataSource.UNITS, None)
             plotElements[PlotEl.YUNITS] = yUnits
         
         # If we still don't know, guess based on DataSource.DATA_KIND:
@@ -115,7 +117,7 @@ class PlotStability(object):
             name += "RF " + RF + " GHz"
         
         if not name:
-            if self.plotKind == PlotKind.PHASE_STABILITY or self.plotKind == PlotKind.VOLT_STABILITY:
+            if self.plotKind == PlotKind.PHASE_STABILITY or self.plotKind == PlotKind.VOLT_STABILITY or dataSources.get(DataSource.DATA_KIND, None) == DataKind.GAIN.value:
                 name = "ADEV({0})".format(yUnits)
             else:
                 name = "AVAR({0})".format(yUnits)
@@ -131,10 +133,10 @@ class PlotStability(object):
         self.maxXY[1] = max(self.maxXY[1], max(yArray))
         
         # Save the timeSeriesId:
-        self.timeSeriesIds.append(timeSeriesId)
+        self.timeSeriesIds.append(timeSeries.tsId)
         return True
     
-    def finishPlot(self, startTime, plotElements = None, outputName = None, show = False):
+    def finishPlot(self, startTime, dataSources, plotElements = None, outputName = None, show = False):
         '''
         Make plot title, axes labels, and footers;  Render the plot.
         Updates self.imageData with the finished plot
@@ -196,18 +198,18 @@ class PlotStability(object):
             plotElements[PlotEl.YRANGE_WINDOW] = "{0}, {1}".format(fMin, cMax)
         
         # Plot title:
-        title = makeTitle(self.timeSeriesIds, plotElements)
+        title = makeTitle(self.timeSeriesIds, dataSources, plotElements)
         plotElements[PlotEl.TITLE] = title
         
         # Plot footers:
-        makeFooters(self.timeSeriesIds, plotElements, self.tsAPI.getAllDataStatus(self.timeSeriesIds[0]), startTime)
+        makeFooters(self.timeSeriesIds, dataSources, plotElements, startTime)
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)    
     
     def __plot(self, plotElements, outputName = None, show = False):
         '''
-        implementation helper shared by plot() and rePlot()
+        implementation helper
         Uses the contents of self.traces [([x], [y], [yError], name)] 
         and the provided plotElements to produce the output plot.
         :param plotElements: dict of {PLotElement : str}
