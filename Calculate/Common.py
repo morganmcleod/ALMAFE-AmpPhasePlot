@@ -75,10 +75,9 @@ def getFirstItemArray(inputArray, K):
         firstItems.append(inputArray[i0])
     return firstItems
 
-def unwrapPhase(inputArray):
+def unwrapPhase(inputArray, period = 2 * np.pi):
     '''
     Unwrap phase in the provided inputArray
-    TODO: this won't deal with more than one zero crossing correctly
     :param inputArray:
     '''
-    inputArray = np.unwrap(inputArray, period = 360).tolist()
+    return np.unwrap(inputArray, period = period).tolist()

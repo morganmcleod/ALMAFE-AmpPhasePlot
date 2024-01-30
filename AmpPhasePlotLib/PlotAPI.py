@@ -36,7 +36,7 @@ class PlotAPI(object):
         self.plotElementsFinal = None
         self.dataStatusFinal = DataStatus.UNKNOWN
         
-    def plotTimeSeries(self, timeSeriesId, plotElements = None, outputName = None, show = False):
+    def plotTimeSeries(self, timeSeriesId, plotElements = None, outputName = None, show = False, unwrapPhase = False):
         '''
         Create a TIME_SERIES plot
         The resulting image binary data (.png) is stored in self.imageData.
@@ -58,7 +58,7 @@ class PlotAPI(object):
         
         # make the plot:
         self.plotter = PlotTimeSeries()
-        if not self.plotter.plot(timeSeriesId, plotElements, outputName, show):
+        if not self.plotter.plot(timeSeriesId, plotElements, outputName, show, unwrapPhase = unwrapPhase):
             return False
         
         # get the results:

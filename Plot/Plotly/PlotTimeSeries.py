@@ -25,7 +25,7 @@ class PlotTimeSeries(object):
         '''
         self.imageData = None
         
-    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False, xResolution = 1000):
+    def plot(self, timeSeriesId, plotElements = None, outputName = None, show = False, xResolution = 1000, unwrapPhase = False):
         '''
         Create a TIME_SERIES plot
         The resulting image data is stored in self.imageData
@@ -48,6 +48,10 @@ class PlotTimeSeries(object):
         if not timeSeries:
             return False
         
+        # unwrap
+        if unwrapPhase:
+            timeSeries.unwrapPhase(period = 360)
+
         # Get the DataSource tags:
         dataSources = self.timeSeriesAPI.getAllDataSource(timeSeriesId)
         dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))

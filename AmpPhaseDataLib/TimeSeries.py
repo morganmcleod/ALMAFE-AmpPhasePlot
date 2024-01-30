@@ -1,4 +1,5 @@
 from AmpPhaseDataLib.Constants import Units
+from Calculate.Common import unwrapPhase
 from Utility.ParseTimeStamp import ParseTimeStamp
 from typing import List, Optional, Union, Tuple, Self
 from datetime import datetime
@@ -127,6 +128,9 @@ class TimeSeries(BaseModel):
                 # it's a list of strings.
                 appendOrConcat(self.timeStamps, [self.parseTimeStamp(ts) for ts in timeStamps])
             self.updateStartTime()
+
+    def unwrapPhase(self, period = 2 * np.pi):
+        self.dataSeries = unwrapPhase(self.dataSeries, period)
 
     def select(self,
             first: int = 0, 

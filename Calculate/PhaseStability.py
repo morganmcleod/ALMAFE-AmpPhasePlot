@@ -52,7 +52,7 @@ class PhaseStability(object):
         TMin = tau0Seconds * NMin        
 
         # before processing, make sure that the phase data doesn't wrap around:
-        unwrapPhase(dataSeries)
+        dataSeries = unwrapPhase(dataSeries, period = 360)
         
         # If more than one sample fits in the new TMin
         if NMin > 1:
@@ -75,7 +75,7 @@ class PhaseStability(object):
         self.xResult = []
         self.yResult = []
         self.yError = []
-        for K in range(NMin, NMax + 1):
+        for K in range(NMin, NMax):
             # calculate T for this iteration and save to the output time array:
             self.xResult.append(K * TMin)
             # calculate ADev for this iteration and save to the output Allan array:
