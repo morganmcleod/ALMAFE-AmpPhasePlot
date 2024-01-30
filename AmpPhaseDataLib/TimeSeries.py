@@ -1,6 +1,6 @@
+from __future__ import annotations
 from AmpPhaseDataLib.Constants import Units
 from Calculate.Common import unwrapPhase
-from __future__ import annotations
 from Utility.ParseTimeStamp import ParseTimeStamp
 from typing import List, Optional, Union, Tuple, Dict
 from datetime import datetime

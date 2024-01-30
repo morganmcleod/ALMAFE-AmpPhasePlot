@@ -121,7 +121,7 @@ class PlotResultAPI(object):
         result = self.db.getTags(plotResultId, [dataSource.value])
         return result.get(dataSource.value, None)
 
-    def getAllDataSources(self, plotResultId):
+    def getAllDataSource(self, plotResultId):
         '''
         Get all DataSource tags for a TimeSeries
         :param timeSeriesId: int

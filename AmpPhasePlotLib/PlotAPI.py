@@ -67,7 +67,7 @@ class PlotAPI(object):
 
         # load dataSources:
         if not dataSources and timeSeries.tsId > 0:
-            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+            dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
         else:
             dataSources = {}
                     
@@ -76,7 +76,7 @@ class PlotAPI(object):
 
         # make the plot:
         self.plotter = PlotTimeSeries()
-        if not self.plotter.plot(timeSeriesId, dataSources, plotElements, outputName, show, unwrapPhase = unwrapPhase):
+        if not self.plotter.plot(timeSeries, dataSources, plotElements, outputName, show, unwrapPhase = unwrapPhase):
             return False
         
         # get the results:
@@ -113,7 +113,7 @@ class PlotAPI(object):
 
         # load dataSources:
         if not dataSources and timeSeries.tsId > 0:
-            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
+            dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
         else:
             dataSources = {}
 
@@ -235,7 +235,7 @@ class PlotAPI(object):
     
     def plotAmplitudeStability(self, 
                 timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
-                dataSources: Dict[DataSource, str] = None,
+                dataSources_: Dict[DataSource, str] = None,
                 plotElements: Dict[PlotEl, str] = None, 
                 outputName: str = None, 
                 show: bool = False) -> bool:
@@ -255,13 +255,6 @@ class PlotAPI(object):
         timeSeriesList = self.__getTimeSeriesList(timeSeries)
         if not timeSeriesList:
             return False
-    
-        # load dataSources:
-        if dataSources is None:
-            if timeSeries.tsId > 0:
-                dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
-            else:
-                dataSources = {}
     
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
@@ -285,17 +278,23 @@ class PlotAPI(object):
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
         
         # suppress error bars for ensemble plot
-        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeries) > 1 else "1"
+        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeriesList) > 1 else "1"
         startTime = datetime.now()
         self.plotter.startPlot(plotElements)
-        for timeSeries in timeSeriesList:
+        for timeSeries in timeSeriesList:            
+            # load dataSources:
+            dataSources = dataSources_
+            if dataSources is None:
+                if timeSeries.tsId > 0:
+                    dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
+                else:
+                    dataSources = {}
             if timeSeries.startTime < startTime:
                 startTime = timeSeries.startTime
             self.__plotAmplitudeStabilitySingle(timeSeries, dataSources, plotElements)
 
         # set a generic title:
-        title = plotElements.get(PlotEl.TITLE, None)
-        if not title:
+        if not plotElements.get(PlotEl.TITLE, None):
             plotElements[PlotEl.TITLE] = "Amplitude Stability"
 
         # get the results:
@@ -375,7 +374,7 @@ class PlotAPI(object):
     
     def plotPhaseStability(self, 
             timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
-            dataSources: Dict[DataSource, str] = None,
+            dataSources_: Dict[DataSource, str] = None,
             plotElements: Dict[PlotEl, str] = None, 
             yUnits = Units.DEG, 
             outputName: str = None, 
@@ -396,12 +395,6 @@ class PlotAPI(object):
         timeSeriesList = self.__getTimeSeriesList(timeSeries)
         if not timeSeriesList:
             return False
-        
-        # load dataSources:
-        if not dataSources and timeSeries.tsId > 0:
-            dataSources = self.tsAPI.getAllDataSources(timeSeries.tsId)
-        else:
-            dataSources = {}
         
         # initialize default plotElements [https://docs.python.org/3/reference/compound_stmts.html#index-30]:
         if plotElements == None:
@@ -425,20 +418,27 @@ class PlotAPI(object):
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
         # suppress error bars for ensemble plot
-        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeries) > 1 else "1"
+        plotElements[PlotEl.ERROR_BARS] = "0" if len(timeSeriesList) > 1 else "1"
         startTime = datetime.now()
         self.plotter.startPlot(plotElements)
         for timeSeries in timeSeriesList:
+            # load dataSources:
+            dataSources = dataSources_
+            if dataSources is None:
+                if timeSeries.tsId > 0:
+                    dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
+                else:
+                    dataSources = {}
             if timeSeries.startTime < startTime:
                 startTime = timeSeries.startTime
-            self.__plotPhaseStabilitySingle(timeSeries, dataSources, lotElements, yUnits)
+            self.__plotPhaseStabilitySingle(timeSeries, dataSources, plotElements, yUnits)
 
         # set a generic title:
         if not plotElements.get(PlotEl.TITLE, None):
             plotElements[PlotEl.TITLE] = "Phase Stability"
         
         # get the results:
-        if self.plotter.finishPlot(startTime, plotElements, outputName, show):
+        if self.plotter.finishPlot(startTime, dataSources, plotElements, outputName, show):
             self.traces = self.plotter.traces
             self.imageData = self.plotter.imageData
             self.plotElementsFinal = plotElements
@@ -449,7 +449,8 @@ class PlotAPI(object):
     def __plotPhaseStabilitySingle(self, 
             timeSeries: TimeSeries,
             dataSources: Dict[DataSource, str] = None,
-            plotElements: Dict[PlotEl, str] = None) -> bool:
+            plotElements: Dict[PlotEl, str] = None,
+            yUnits = Units.DEG) -> bool:
         '''
         :param timeSeries:
         :param plotElements:
@@ -484,7 +485,7 @@ class PlotAPI(object):
             self.__updateDataStatusFinal(complies)
 
         # add the trace:
-        if self.plotter.addTrace(timeSeries.tsId, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
+        if self.plotter.addTrace(timeSeries, dataSources, self.calc.xResult, self.calc.yResult, self.calc.yError, plotElements):
             return timeSeries
         else:
             return None

@@ -44,9 +44,8 @@ class PlotStability(object):
         self.__reset()
         
         # Default xUnits to seconds if not specified:
-        xUnits = plotElements.get(PlotEl.XUNITS, None)
-        if not xUnits:        
-            plotElements[PlotEl.XUNITS] = (Units.SECONDS).value
+        xUnits = plotElements.get(PlotEl.XUNITS, (Units.SECONDS).value)
+        plotElements[PlotEl.XUNITS] = xUnits
         
     def addTrace(self, 
             timeSeries,

@@ -183,12 +183,12 @@ class PlotTimeSeries():
             fig.update_yaxes(range = [float(window[0]), window[1]])
 
         # Plot title:
-        title = makeTitle([timeSeries.tsId], plotElements)
+        title = makeTitle([timeSeries.tsId], dataSources, plotElements)
         if title:
             fig.update_layout(title_text = title)
         
         # Plot footers:        
-        makeFooters([timeSeries.tsId], plotElements, timeSeries.startTime)
+        makeFooters([timeSeries.tsId], dataSources, plotElements, timeSeries.startTime)
         addFooters(fig, plotElements)
         
         # make and show plot:
