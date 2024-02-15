@@ -17,7 +17,7 @@ def step_impl(context, dataList):
     :param dataList: comma-separated list of float strings
     """
     # convert strings to lists: 
-    context.dataSeries = dataList.strip('][').split(', ')
+    context.dataSeries = dataList.strip('][').split(',')
 
 @given('timestamp list "{timeStampList}"')
 def step_impl(context, timeStampList):
@@ -26,7 +26,7 @@ def step_impl(context, timeStampList):
     :param timeStampList: comma-separated list of datetime strings
     """
     # convert strings to lists: 
-    context.timeStamps = timeStampList.strip('][').split(', ')
+    context.timeStamps = timeStampList.strip('][').split(',')
 
 @given('a sequence of readings "{dataList}" and tau0 of "{floatString}"')
 def step_impl(context, dataList, floatString):
@@ -36,7 +36,7 @@ def step_impl(context, dataList, floatString):
     :param floatString: a float as string
     """
     # convert string to list: 
-    context.dataSeries = dataList.strip('][').split(', ')
+    context.dataSeries = dataList.strip('][').split(',')
     context.tau0Seconds = float(floatString)
 
 @given('the units are "{units}"')
@@ -219,7 +219,7 @@ def step_impl(context, dataList, units):
     :param units: units as a string
     """
     # convert string to list: 
-    dataList = [float(i) for i in dataList.strip('][').split(', ')]
+    dataList = [float(i) for i in dataList.strip('][').split(',')]
     result = context.timeSeries.getTimeStamps(requiredUnits = units)
     assert_that(result, equal_to(dataList))
 
@@ -231,7 +231,7 @@ def step_impl(context, dataList, units):
     :param units: units as a string
     """
     # convert string to list: 
-    dataList = [float(i) for i in dataList.strip('][').split(', ')]
+    dataList = [float(i) for i in dataList.strip('][').split(',')]
     requiredUnits = Units.fromStr(units)
     result = context.timeSeries.getDataSeries(requiredUnits)
     for a, b in zip(result, dataList):

@@ -178,7 +178,7 @@ class PlotAPI(object):
         rmsSpec = plotElements.get(PlotEl.RMS_SPEC, None)
         compliance = ""
         if rmsSpec:
-            rmsSpec = rmsSpec.split(', ')
+            rmsSpec = rmsSpec.split(',')
             bwLower = float(rmsSpec[0])
             bwUpper = float(rmsSpec[1])
             rmsSpec = float(rmsSpec[2])
@@ -213,7 +213,7 @@ class PlotAPI(object):
         # check whether there is a spec line to compare to the FFT:
         fftSpec = plotElements.get(PlotEl.SPEC_LINE1, None)
         if fftSpec:
-            fftSpec = fftSpec.split(', ')
+            fftSpec = fftSpec.split(',')
             bwLower = float(fftSpec[0])
             bwUpper = float(fftSpec[1])
             specLimit = float(fftSpec[2])  # for now assuming that y2==y1
@@ -235,7 +235,7 @@ class PlotAPI(object):
     
     def plotAmplitudeStability(self, 
                 timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
-                dataSources_: Dict[DataSource, str] = None,
+                dataSources: Dict[DataSource, str] = None,
                 plotElements: Dict[PlotEl, str] = None, 
                 outputName: str = None, 
                 show: bool = False) -> bool:
@@ -268,13 +268,13 @@ class PlotAPI(object):
         # parse spec line 1:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
         # parse spec line 2:
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
         
         # suppress error bars for ensemble plot
@@ -283,7 +283,6 @@ class PlotAPI(object):
         self.plotter.startPlot(plotElements)
         for timeSeries in timeSeriesList:            
             # load dataSources:
-            dataSources = dataSources_
             if dataSources is None:
                 if timeSeries.tsId > 0:
                     dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
@@ -320,7 +319,7 @@ class PlotAPI(object):
             freqLOGHz = float(freqLOGHz)
                     
         # calculate Amplitude stability plot traces:
-        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_AMP_STABILITY).split(', ')
+        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_AMP_STABILITY).split(',')
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         
@@ -338,7 +337,7 @@ class PlotAPI(object):
             # for IFP gain stability normalized ADEV
             dataSeries = timeSeries.getDataSeries(currentUnits)
             normalize = True
-            calcAdev = True 
+            calcAdev = True
         else:
             # for POWER and AMPLITUDE, use the source units, if any:
             dataSeries = timeSeries.getDataSeries(currentUnits)
@@ -350,7 +349,7 @@ class PlotAPI(object):
             return False
 
         if not self.calc or not isinstance(self.calc, AmplitudeStability):
-            self.calc = AmplitudeStability()        
+            self.calc = AmplitudeStability()
         if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, normalize, calcAdev):
             return False
 
@@ -374,7 +373,7 @@ class PlotAPI(object):
     
     def plotPhaseStability(self, 
             timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
-            dataSources_: Dict[DataSource, str] = None,
+            dataSources: Dict[DataSource, str] = None,
             plotElements: Dict[PlotEl, str] = None, 
             yUnits = Units.DEG, 
             outputName: str = None, 
@@ -408,13 +407,13 @@ class PlotAPI(object):
         # parse any spec lines:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
         # parse any spec lines:
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             self.specLines.append((float(specLine[0]), float(specLine[1]), float(specLine[2]), float(specLine[3])))
 
         # suppress error bars for ensemble plot
@@ -423,7 +422,6 @@ class PlotAPI(object):
         self.plotter.startPlot(plotElements)
         for timeSeries in timeSeriesList:
             # load dataSources:
-            dataSources = dataSources_
             if dataSources is None:
                 if timeSeries.tsId > 0:
                     dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
@@ -472,7 +470,7 @@ class PlotAPI(object):
             plotElements[PlotEl.YUNITS] = yUnits.value
         
         # calculate Amplitude stability plot traces:
-        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_PHASE_STABILITY).split(', ')
+        xRangePlot = plotElements.get(PlotEl.XRANGE_PLOT, SpecLines.XRANGE_PLOT_PHASE_STABILITY).split(',')
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         

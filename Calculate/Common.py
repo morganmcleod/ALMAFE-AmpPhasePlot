@@ -22,6 +22,7 @@ def getAveragesArray(inputArray, K):
     # N is the size of the input data array:
     N = len(inputArray)
     # K is the number of points to group and average:
+    K = int(K)
     if K < 1:
         K = 1
     if K > N:

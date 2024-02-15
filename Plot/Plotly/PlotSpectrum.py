@@ -162,13 +162,13 @@ class PlotSpectrum(object):
         # expand plot window:
         window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             window = [float(window[0]), float(window[1])]
             fig.update_xaxes(range = window)
 
         window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             window = [float(window[0]), float(window[1])]
             fig.update_yaxes(range = window)
             

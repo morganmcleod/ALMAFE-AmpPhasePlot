@@ -1,10 +1,13 @@
 from statistics import mean
-import allantools
+from .Common import getAveragesArray
+from .allantools import adev as allantools_adev
 import bisect
+import operator
+from math import sqrt
 
 class AmplitudeStability(object):
     '''
-    Computes non-overlapping Allan variance or Allan deviation for a range of integration times.
+    Computes non-overlapping Allan variance or Allan deviation for a range of time differencing intervals.
     '''
     def __init__(self):
         '''
@@ -24,8 +27,8 @@ class AmplitudeStability(object):
         '''
         :param dataSeries: list of float, linear amplitudes to analyze
         :param tau0Seconds: integration time of the dataSeries
-        :param TMin: float shortest integration time to plot
-        :param TMax: float longest integration time to plot
+        :param TMin: float shortest time differencing interval to plot
+        :param TMax: float longest time differencing interval to plot
         :param normalize: If true, normalize to the mean amplitude
         :param calcAdev: If true, return ADEV instead of AVAR. 
         :return True if successful, false otherwise
@@ -47,7 +50,7 @@ class AmplitudeStability(object):
         if TMin < tau0Seconds:            
             TMin = tau0Seconds
 
-        # compute longest integration time which can be made:        
+        # compute longest time differencing interval which can be made:        
         maxK = int(TMax / tau0Seconds) + 1
         
         # smallest number of groups M:
@@ -57,14 +60,12 @@ class AmplitudeStability(object):
             minM = 2
             maxK = N // minM
         
-        taus = []
         # make list of taus to calculate for:
-        for K in range(1, maxK):        
-            taus.append(K * tau0Seconds)
+        taus = [K * tau0Seconds for K in range(1, maxK)]
         
         # non-overlapping ADEV using allantools 'freq' mode.
         # https://github.com/aewallin/allantools
-        (taus, adev, aderr, adn) = allantools.adev(dataSeries, 1 / tau0Seconds, data_type = "freq", taus = taus)
+        (taus, adev, aderr, adn) = allantools_adev(dataSeries, 1 / tau0Seconds, data_type = "freq", taus = taus)
         
         # convert from numpy.ndarray to list:
         self.xResult = taus.tolist()
@@ -119,7 +120,7 @@ class AmplitudeStability(object):
         
     def __findTimeRange(self, TMin, TMax):
         '''
-        Private helper to find the indices corresponding to the provided integration time range.
+        Private helper to find the indices corresponding to the provided time differencing interval range.
         :param TMin: lower time limit to find.
         :param TMax: upper time limit for to find. Must be >= TMin.
         :return (iLower, iUpper): tuple of the first and last+1 indexes of self.xResult.

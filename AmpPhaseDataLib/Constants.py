@@ -135,6 +135,7 @@ class Units(EnumHelper):
     MW          = 'mW'          # milliwatts
     VOLTS       = 'V'           # volts
     VOLTS_SQ    = 'V²'          # volts squared such as from a square-law detector
+    DELTA_GAIN  = 'ΔG/G'        # gain variation
     MV          = 'mV'          # millivolts
     DBM         = 'dBm'         # dBm
     DEG         = 'deg'         # degrees of phase
@@ -147,8 +148,14 @@ class Units(EnumHelper):
     AMPLITUDE   = 'amplitude'   # default Y axis units when unknown
     KELVIN      = 'K'           # temperature
     CELCIUS     = 'C'           # temperature
-    AVAR        = u'σ²(T)'      # Allan variance definition. Actual units will be W or V etc.
-    ADEV        = u'σ(2,t=10s,T)' # 2-pt Allan std dev. definition. Actual units will be DEG or FS.
+
+                                        # FETMS and CTS
+    AVAR        = u'σ²(2,T,τ=0.05s)'    # 2-pt Allan variance. Actual units will be W or V etc.
+    ADEV        = u'σ(2,T,τ=10s)'       # 2-pt Allan std dev. Actual units will be DEG or FS.
+                                        # BE IFP
+    ADEV_IFP_05 = u'σ(2,T,τ=0.05s)'     # 2-pt Allan std dev. Actual units will be DELTA_GAIN
+    ADEV_IFP_1  = u'σ(2,T,τ=1s)'        # 2-pt Allan std dev. Actual units will be DELTA_GAIN
+    
     PER_ROOT_HZ = u'{0}/√Hz'    # Amplitude spectral density units. Replace {0} with actual units.
     PER_HZ      = '{0}/Hz'      # Power spectral density units
 

@@ -15,7 +15,7 @@ def addSpecLines(fig, plotElements):
     specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
     if specLine:
         specName = plotElements.get(PlotEl.SPEC1_NAME, "Specification")
-        specLine = specLine.split(', ')
+        specLine = specLine.split(',')
         x1 = float(specLine[0])
         y1 = float(specLine[1])
         x2 = float(specLine[2])
@@ -35,7 +35,7 @@ def addSpecLines(fig, plotElements):
     specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
     if specLine:
         specName = plotElements.get(PlotEl.SPEC2_NAME, None)
-        specLine = specLine.split(', ')
+        specLine = specLine.split(',')
         x1 = float(specLine[0])
         y1 = float(specLine[1])
         x2 = float(specLine[2])

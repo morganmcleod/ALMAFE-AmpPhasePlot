@@ -174,12 +174,12 @@ class PlotTimeSeries():
         # expand plot window:
         window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             fig.update_xaxes(range = [float(window[0]), window[1]])
 
         window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             fig.update_yaxes(range = [float(window[0]), window[1]])
 
         # Plot title:

@@ -32,8 +32,8 @@ class PhaseStability(object):
         '''
         :param dataSeries:  list of float degrees phases to analyze
         :param tau0Seconds: integration time of the dataSeries
-        :param TMin: float shortest integration time to plot
-        :param TMax: float longest integration time to plot
+        :param TMin: float shortest time differencing interval to plot
+        :param TMax: float longest time differencing interval to plot
         :param freqRFGHz:  if provided, the Allan dev yResult will be returned in fs rather than degreees
         :return True if successful, otherwise False
         '''

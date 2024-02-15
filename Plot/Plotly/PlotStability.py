@@ -151,7 +151,7 @@ class PlotStability(object):
         # update XY min/max from specline1:
         specLine = plotElements.get(PlotEl.SPEC_LINE1, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             x1 = float(specLine[0])
             y1 = float(specLine[1])
             x2 = float(specLine[2])
@@ -165,7 +165,7 @@ class PlotStability(object):
         # update XY min/max from specline2:
         specLine = plotElements.get(PlotEl.SPEC_LINE2, None)
         if specLine:
-            specLine = specLine.split(', ')
+            specLine = specLine.split(',')
             x1 = float(specLine[0])
             y1 = float(specLine[1])
             x2 = float(specLine[2])
@@ -247,9 +247,9 @@ class PlotStability(object):
         if not xAxisLabel:
             if xUnits == (Units.SECONDS).value or xUnits == (Units.MINUTES).value:
                 if self.plotKind == PlotKind.PHASE_STABILITY:
-                    xAxisLabel = "time [" + xUnits + "]"
+                    xAxisLabel = "T [" + xUnits + "]"
                 else:
-                    xAxisLabel = "integration time [" + xUnits + "]"
+                    xAxisLabel = "T [" + xUnits + "]"
         fig.update_xaxes(title_text = xAxisLabel)
         plotElements[PlotEl.X_AXIS_LABEL] = xAxisLabel
         
@@ -277,17 +277,17 @@ class PlotStability(object):
         yaxis_type = "linear" if plotElements.get(PlotEl.Y_LINEAR, False) else "log"
         
         fig.update_layout(xaxis_type=xaxis_type, yaxis_type=yaxis_type, showlegend=True, 
-                          yaxis = dict(showexponent = 'all', exponentformat = 'e'))
+                          yaxis = dict(showexponent = 'all', tickformat = '.2e'))
 
         # expand plot window:
         window = plotElements.get(PlotEl.XRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             fig.update_xaxes(range = [float(window[0]), window[1]])
 
         window = plotElements.get(PlotEl.YRANGE_WINDOW, None)
         if window:
-            window = window.split(', ')
+            window = window.split(',')
             fig.update_yaxes(range = [float(window[0]), window[1]])
         
         # Plot title:

@@ -7,6 +7,7 @@ from datetime import datetime
 from math import log10
 import numpy as np
 from pydantic import BaseModel, validator
+import copy
 
 class TimeSeries(BaseModel):
     tsId: int = 0
@@ -188,7 +189,11 @@ class TimeSeries(BaseModel):
         self.nextWriteIndex = len(self.dataSeries)
         return toWrite
 
-    def getDataSeries(self, requiredUnits:Optional[Union[str, Units]] = None):
+    def getDataSeries(self, 
+            requiredUnits:Optional[Union[str, Units]] = None,
+            scale: Optional[float] = None,
+            offset: Optional[float] = None,
+            gainRef: Optional[float] = None):
         '''
         Get the dataSeries array, optionally converted to requiredUnits
         :param requiredUnits: enum Units from Constants.py or None
@@ -202,44 +207,51 @@ class TimeSeries(BaseModel):
             # no conversion needed:
             return self.dataSeries
         
-        result = None
+        result = copy.copy(self.dataSeries)
+
+        if scale is not None:
+            if offset is None:
+                offset = 0
+            result = [y * scale + offset for y in result]
         
         if self.dataUnits == Units.WATTS:
             if requiredUnits == Units.MW:
                 # convert from watt to mW:
-                result = [y * 1000 for y in self.dataSeries]
+                result = [y * 1000 for y in result]
             
             if requiredUnits == Units.DBM:
                 # convert from watt to dBm:
-                result = [10 * log10(y * 1000) for y in self.dataSeries]
+                result = [10 * log10(y * 1000) for y in result]
         
         elif self.dataUnits == Units.MW:
             if requiredUnits == Units.WATTS:
                 # convert from mW to watt:
-                result = [y / 1000 for y in self.dataSeries]
+                result = [y / 1000 for y in result]
             
             if requiredUnits == Units.DBM:
                 # convert from mW to dBm:
-                result = [10 * log10(y) for y in self.dataSeries]
+                result = [10 * log10(y) for y in result]
         
         elif self.dataUnits == Units.DBM:
             if requiredUnits == Units.WATTS:
                 # convert from dBm to watt:
-                result = [pow(10, y / 10) / 1000 for y in self.dataSeries]
+                result = [pow(10, y / 10) / 1000 for y in result]
             
             if requiredUnits == Units.MW:
                 # convert from dBm to mW:
-                result = [pow(10, y / 10) for y in self.dataSeries]
+                result = [pow(10, y / 10) for y in result]
 
         elif self.dataUnits == Units.VOLTS:
             if requiredUnits == Units.MV:
                 # convert from Volt to mV
-                result = [y * 1000 for y in self.dataSeries]
+                result = [y * 1000 for y in result]
+            if requiredUnits == Units.DELTA_GAIN and gainRef is not None:
+                result = [y / gainRef for y in result]
 
         elif self.dataUnits == Units.MV:
             if requiredUnits == Units.VOLTS:
                 # convert from mV to Volt
-                result = [y / 1000 for y in self.dataSeries]
+                result = [y / 1000 for y in self.dataSeries]        
         else:
             # not supported:
             raise TypeError('Unsupported units conversion from {} to {}'.format(self.dataUnits.value, requiredUnits.value))
