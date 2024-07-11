@@ -117,9 +117,9 @@ class PlotStability(object):
         
         if not name:
             if self.plotKind == PlotKind.PHASE_STABILITY or self.plotKind == PlotKind.VOLT_STABILITY or dataSources.get(DataSource.DATA_KIND, None) == DataKind.GAIN.value:
-                name = "ADEV({0})".format(yUnits)
+                name = f"ADEV [{yUnits}]"
             else:
-                name = "AVAR({0})".format(yUnits)
+                name = f"AVAR [{yUnits}]"
 
         # append to self.traces:
         trace = (xArray, yArray, yError if yError else [], name)

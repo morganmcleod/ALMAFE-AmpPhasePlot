@@ -43,7 +43,8 @@ def addSpecLines(fig, plotElements):
         
         # name for spec line 2 defaults to value of y2:
         if not specName:
-            specName = "Spec {:.1e}".format(y2)
+            num = int(x2) if int(x2) == x2 else x2
+            specName = f"Spec at {num} sec."
 
         # show spec line 2 in brick red:
         specLines = dict(color='firebrick', width=3)

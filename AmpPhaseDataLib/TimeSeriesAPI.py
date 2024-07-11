@@ -73,7 +73,7 @@ class TimeSeriesAPI(object):
         )
 
         # create a time series header record and return the timeSeriesId:
-        timeSeries.tsId = self.db.insertTimeSeriesHeader(startTime, tau0Seconds)
+        timeSeries.tsId = self.db.insertTimeSeriesHeader(timeSeries.startTime, tau0Seconds)
         if timeSeries.tsId:
             self.setDataSource(timeSeries.tsId, DataSource.UNITS, dataUnits.value)
             return timeSeries

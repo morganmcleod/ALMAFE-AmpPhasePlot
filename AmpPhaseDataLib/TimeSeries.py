@@ -16,7 +16,7 @@ class TimeSeries(BaseModel):
     temperatures2: List[float] = []
     timeStamps: List[datetime] = []
     tau0Seconds: Optional[float] = None
-    startTime: Optional[datetime] = None
+    startTime: Optional[datetime | str] = None
     dataUnits: Optional[Units] = Units.AMPLITUDE
     nextWriteIndex: int = 0
 

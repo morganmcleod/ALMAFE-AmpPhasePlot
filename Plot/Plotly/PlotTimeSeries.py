@@ -60,7 +60,9 @@ class PlotTimeSeries():
         currentUnits = timeSeries.dataUnits
 
         # Set up trace legends:
-        legends = [dataSources.get(DataSource.SUBSYSTEM, dataKind.value)]
+        units = dataSources.get(DataSource.UNITS, None)
+        defaultLegend = f"{dataKind.value} [{units}]" if units else None
+        legends = [dataSources.get(DataSource.SUBSYSTEM, defaultLegend if defaultLegend else dataKind.value)]
         if timeSeries.temperatures1:
             legend = plotElements.get(PlotEl.Y2_LEGEND1, 'Temperature sensor 1')
             legends.append(legend)
