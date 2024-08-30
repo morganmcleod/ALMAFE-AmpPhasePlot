@@ -169,7 +169,7 @@ class TimeSeriesAPI(object):
         :param value:      str or None to delete
         '''
         if isinstance(dataSource, str):
-            dataSource = DataSource.fromStr(dataSource)
+            dataSource = DataSource.from_str(dataSource)
         if not isinstance(dataSource, DataSource):
             raise TypeError('Use DataSource enum from Constants.py')
         self.db.setTags(timeSeriesId, { dataSource.value : value })
@@ -182,7 +182,7 @@ class TimeSeriesAPI(object):
         :param default:      value to return if not found
         '''
         if isinstance(dataSource, str):
-            dataSource = DataSource.fromStr(dataSource)
+            dataSource = DataSource.from_str(dataSource)
         if not isinstance(dataSource, DataSource):
             raise TypeError('Use DataSource enum from Constants.py')
         if timeSeriesId == 0:

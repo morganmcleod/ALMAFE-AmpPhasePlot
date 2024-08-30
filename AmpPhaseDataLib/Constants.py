@@ -4,6 +4,8 @@ When referring to metadata about a measurement or a plot, you must use these Enu
 Admittedly, a few other things are stashed here to avoid literals in the code.  
 '''
 from enum import Enum
+from ALMAFE.basic.EnumHelper import EnumHelper
+from ALMAFE.basic.Units import Units
 
 class PlotKind(Enum):
     '''
@@ -18,29 +20,6 @@ class PlotKind(Enum):
     AMP_SPECTRUM = 5        # ASD for linear volts, phase (V, deg, rad)
     POWER_SPECTRUM = 6      # PSD for power, square-law detector volts (W, V²)
     ALL = 99
-
-class EnumHelper(Enum):
-    '''
-    Add matching and conversion helpers to Enum.
-    Used in sombunall classes below.
-    '''
-    @classmethod
-    def exists(cls, value):
-        '''
-        True if the value str is a value in the Enum.
-        :param cls:    derived from EnumHelper
-        :param value:  str
-        '''
-        return value in cls.__members__
-    
-    @classmethod
-    def fromStr(cls, value):
-        '''
-        Convert from str value to Enum value.  Doesn't catch exceptions.        
-        :param cls:    derived from EnumHelper
-        :param value:  str
-        '''
-        return cls(value)
 
 class DataKind(EnumHelper):
     '''
@@ -127,28 +106,7 @@ class PlotEl(EnumHelper):
     IMG_HEIGHT      = 'IMG_HEIGHT'      # pixels height of output image
     PROCESS_NOTES   = 'PROCESS_NOTES'   # notes about data processing applied to the result (e.g. noise floor subtraction
 
-class Units(EnumHelper):
-    '''
-    Units literals for display.
-    '''
-    WATTS       = 'W'           # watts
-    MW          = 'mW'          # milliwatts
-    VOLTS       = 'V'           # volts
-    VOLTS_SQ    = 'V²'          # volts squared such as from a square-law detector
-    DELTA_GAIN  = 'ΔG/G'        # gain variation
-    MV          = 'mV'          # millivolts
-    DBM         = 'dBm'         # dBm
-    DEG         = 'deg'         # degrees of phase
-    SECONDS     = 'seconds'     # time as seconds
-    MS          = 'ms'          # time as milliseconds
-    FS          = 'fs'          # femtoseconds of phase
-    MINUTES     = 'minutes'     # time as minutes
-    LOCALTIME   = 'localtime'   # time as datetime
-    HZ          = 'Hz'          # X axis of FFT
-    AMPLITUDE   = 'amplitude'   # default Y axis units when unknown
-    KELVIN      = 'K'           # temperature
-    CELCIUS     = 'C'           # temperature
-
+class StabilityUnits(EnumHelper):
                                         # FETMS and CTS
     AVAR        = u'σ²(2,T,τ=0.05s)'    # 2-pt Allan variance. Actual units will be W or V etc.
     ADEV        = u'σ(2,T,τ=10s)'       # 2-pt Allan std dev. Actual units will be DEG or FS.

@@ -187,7 +187,7 @@ def importTimeSeriesFETMSAmp(file, measFile = None):
                 yUnits = header.get('powermeter_unit', (Units.WATTS).value)
                 if yUnits:
                     yUnits = stripQuotes(yUnits)
-                yUnits = Units.fromStr(yUnits)
+                yUnits = Units.from_str(yUnits)
                 pol = header.get('pol', None)
                 sb = header.get('sb', None)
                 if sb:

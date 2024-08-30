@@ -1,5 +1,5 @@
 from AmpPhaseDataLib.TimeSeries import TimeSeries
-from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units
+from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units, StabilityUnits
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
@@ -255,20 +255,20 @@ class PlotStability(object):
         
         # Y axis units:
         if self.plotKind == PlotKind.PHASE_STABILITY:
-            yUnits = plotElements.get(PlotEl.YUNITS, (Units.ADEV).value)
+            yUnits = plotElements.get(PlotEl.YUNITS, (StabilityUnits.ADEV).value)
         else:
-            yUnits = plotElements.get(PlotEl.YUNITS, (Units.AVAR).value)
+            yUnits = plotElements.get(PlotEl.YUNITS, (StabilityUnits.AVAR).value)
         plotElements[PlotEl.YUNITS] = yUnits   # save it in case default was used
 
         # Y axis label:
         yAxisLabel = plotElements.get(PlotEl.Y_AXIS_LABEL, None)
         if not yAxisLabel:
             if self.plotKind == PlotKind.PHASE_STABILITY:
-                yAxisLabel = "2-Pt ADEV: " + (Units.ADEV).value + " [" + yUnits + "]"                
+                yAxisLabel = "2-Pt ADEV: " + (StabilityUnits.ADEV).value + " [" + yUnits + "]"                
             elif self.plotKind == PlotKind.VOLT_STABILITY:
                 yAxisLabel = "ADEV: [" + yUnits + "]"
             else:
-                yAxisLabel = "AVAR: " + (Units.AVAR).value
+                yAxisLabel = "AVAR: " + (StabilityUnits.AVAR).value
         fig.update_yaxes(title_text = yAxisLabel)
         plotElements[PlotEl.Y_AXIS_LABEL] = yAxisLabel
 

@@ -1,5 +1,5 @@
 from AmpPhaseDataLib.TimeSeries import TimeSeries
-from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units 
+from AmpPhaseDataLib.Constants import DataKind, DataSource, PlotEl, PlotKind, Units, StabilityUnits
 from Plot.Common import makeTitle, makeFooters
 from Plot.Plotly.Common import addComplianceString, addFooters, addSpecLines, makePlotOutput
 import plotly.graph_objects as go
@@ -56,7 +56,7 @@ class PlotSpectrum(object):
         self.__reset()
     
         # Get data kind and units:
-        dataKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        dataKind = DataKind.from_str(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         
         # set the X axis units:
         xUnits = (Units.HZ).value
@@ -81,9 +81,9 @@ class PlotSpectrum(object):
 
         # set the Y axis label:
         if yUnits == (Units.VOLTS_SQ).value:
-            plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_HZ).value.format(yUnits)
+            plotElements[PlotEl.Y_AXIS_LABEL] = (StabilityUnits.PER_HZ).value.format(yUnits)
         else:
-            plotElements[PlotEl.Y_AXIS_LABEL] = (Units.PER_ROOT_HZ).value.format(yUnits)
+            plotElements[PlotEl.Y_AXIS_LABEL] = (StabilityUnits.PER_ROOT_HZ).value.format(yUnits)
         
         # save the trace:
         self.traces = [(xArray, yArray, [], legend)] 

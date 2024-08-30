@@ -1,7 +1,7 @@
 from AmpPhaseDataLib.TimeSeriesAPI import TimeSeriesAPI
 from AmpPhaseDataLib.TimeSeries import TimeSeries
 from AmpPhasePlotLib.PlotAPI import PlotAPI
-from AmpPhaseDataLib.Constants import DataSource, DataKind, PlotEl, SpecLines, Units
+from AmpPhaseDataLib.Constants import DataSource, DataKind, PlotEl, SpecLines, Units, StabilityUnits
 from Calculate.Common import getAveragesArray
 from Calculate.IFPT_ASD import AllanDev
 from datetime import datetime
@@ -76,7 +76,7 @@ class BackEndIFProcessor():
         plotEls_SHORT = {
             PlotEl.SPEC_LINE1: SpecLines.IFP_GAIN_STABILITY_SHORT,
             PlotEl.XRANGE_PLOT: SpecLines.XRANGE_PLOT_IFP_GAIN_SHORT,            
-            PlotEl.Y_AXIS_LABEL: Units.ADEV_IFP_05.value,
+            PlotEl.Y_AXIS_LABEL: StabilityUnits.ADEV_IFP_05.value,
             PlotEl.Y_LINEAR: True,
             PlotEl.YUNITS: Units.DELTA_GAIN.value,
             PlotEl.XRANGE_WINDOW: "0.1,1",
@@ -85,7 +85,7 @@ class BackEndIFProcessor():
         plotEls_MEDIUM = {
             PlotEl.SPEC_LINE1: SpecLines.IFP_GAIN_STABILITY_MEDIUM,
             PlotEl.XRANGE_PLOT: SpecLines.XRANGE_PLOT_IFP_GAIN_MEDIUM,
-            PlotEl.Y_AXIS_LABEL: Units.ADEV_IFP_1.value,
+            PlotEl.Y_AXIS_LABEL: StabilityUnits.ADEV_IFP_1.value,
             PlotEl.Y_LINEAR: True,
             PlotEl.YUNITS: Units.DELTA_GAIN.value,
             PlotEl.XRANGE_WINDOW: "1,100",

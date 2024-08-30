@@ -232,7 +232,7 @@ def step_impl(context, dataList, units):
     """
     # convert string to list: 
     dataList = [float(i) for i in dataList.strip('][').split(',')]
-    requiredUnits = Units.fromStr(units)
+    requiredUnits = Units.from_str(units)
     result = context.timeSeries.getDataSeries(requiredUnits)
     for a, b in zip(result, dataList):
         assert_that(a, close_to(b, 0.00005))

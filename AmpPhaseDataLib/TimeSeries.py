@@ -47,7 +47,7 @@ class TimeSeries(BaseModel):
         if isinstance(dataUnits, Units):
             return dataUnits
         if isinstance(dataUnits, str):
-            return Units.fromStr(dataUnits)
+            return Units.from_str(dataUnits)
 
     def __len__(self):
         return len(self.dataSeries)
@@ -201,7 +201,7 @@ class TimeSeries(BaseModel):
         :raise TypeError if unsupported conversion requested
         '''
         if requiredUnits and isinstance(requiredUnits, str):
-            requiredUnits = Units.fromStr(requiredUnits)
+            requiredUnits = Units.from_str(requiredUnits)
         
         if not requiredUnits or self.dataUnits == requiredUnits:
             # no conversion needed:
@@ -265,7 +265,7 @@ class TimeSeries(BaseModel):
         :return list derived from self.dataSeries converted, if possible
         '''
         if requiredUnits and isinstance(requiredUnits, str):
-            requiredUnits = Units.fromStr(requiredUnits)
+            requiredUnits = Units.from_str(requiredUnits)
             
         # timestamps are always stored as LOCALTIME:
         if not requiredUnits or requiredUnits == Units.LOCALTIME: 

@@ -133,7 +133,7 @@ class PlotAPI(object):
         self.__reset()
 
         # Get the DataSource tags:
-        srcKind = DataKind.fromStr(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        srcKind = DataKind.from_str(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
         currentUnits = timeSeries.dataUnits
         
         # Get the time series and set the default title:
