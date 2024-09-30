@@ -56,7 +56,7 @@ class PlotTimeSeries():
             timeSeries.unwrapPhase(period = 360)
 
         # Get the DataSource tags:
-        dataKind = DataKind.from_str(dataSources.get(DataSource.DATA_KIND, (DataKind.AMPLITUDE).value))
+        dataKind = DataKind.from_str(dataSources.get(DataSource.DATA_KIND, DataKind.AMPLITUDE.value))
         currentUnits = timeSeries.dataUnits
 
         # Set up trace legends:
