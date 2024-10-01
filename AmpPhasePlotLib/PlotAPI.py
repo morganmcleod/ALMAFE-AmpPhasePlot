@@ -235,7 +235,7 @@ class PlotAPI(object):
     
     def plotAmplitudeStability(self, 
                 timeSeries: Union[TimeSeries, int, List[Union[TimeSeries, int]]],
-                dataSources: Dict[DataSource, str] = None,
+                dataSources_in: Dict[DataSource, str] = None,
                 plotElements: Dict[PlotEl, str] = None, 
                 outputName: str = None, 
                 show: bool = False) -> bool:
@@ -283,11 +283,13 @@ class PlotAPI(object):
         self.plotter.startPlot(plotElements)
         for timeSeries in timeSeriesList:            
             # load dataSources:
-            if dataSources is None:
+            if dataSources_in is None:
                 if timeSeries.tsId > 0:
                     dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
                 else:
                     dataSources = {}
+            else:
+                dataSources = dataSources_in
             if timeSeries.startTime < startTime:
                 startTime = timeSeries.startTime
             self.__plotAmplitudeStabilitySingle(timeSeries, dataSources, plotElements)

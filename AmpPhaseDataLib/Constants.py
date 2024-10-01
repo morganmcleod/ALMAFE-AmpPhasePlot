@@ -110,6 +110,7 @@ class StabilityUnits(EnumHelper):
                                         # FETMS and CTS
     AVAR        = u'σ²(2,T,τ=0.05s)'    # 2-pt Allan variance. Actual units will be W or V etc.
     ADEV        = u'σ(2,T,τ=10s)'       # 2-pt Allan std dev. Actual units will be DEG or FS.
+    AVAR_TAU    = u'σ²(2,T,τ={0}s)'
                                         # BE IFP
     ADEV_IFP_05 = u'σ(2,T,τ=0.05s)'     # 2-pt Allan std dev. Actual units will be DELTA_GAIN
     ADEV_IFP_1  = u'σ(2,T,τ=1s)'        # 2-pt Allan std dev. Actual units will be DELTA_GAIN
