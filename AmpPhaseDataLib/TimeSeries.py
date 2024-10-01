@@ -130,8 +130,12 @@ class TimeSeries(BaseModel):
             elif isinstance(timeStamps, datetime):
                 self.timeStamps.append(timeStamps)
             elif isinstance(timeStamps, list):
-                # it's a list of strings.
-                appendOrConcat(self.timeStamps, [self.parseTimeStamp(ts) for ts in timeStamps])
+                if isinstance(timeStamps[0], str):
+                    # it's a list of strings.
+                    appendOrConcat(self.timeStamps, [self.parseTimeStamp(ts) for ts in timeStamps])
+                elif isinstance(timeStamps[0], datetime):
+                    # it's a list of datetime:
+                    appendOrConcat(self.timeStamps, timeStamps)
             self.updateStartTime()
 
     def unwrapPhase(self, period = 2 * np.pi):
