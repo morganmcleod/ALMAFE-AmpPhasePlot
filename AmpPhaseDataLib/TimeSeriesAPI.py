@@ -92,12 +92,11 @@ class TimeSeriesAPI(object):
         timeSeries.initializeTau0Seconds()
         # check for validity:
         valid, msg = timeSeries.isValid()
-        if not valid:
-            raise ValueError(msg)
-        # update the header in case startTime or tau0Seconds changed:
-        self.db.updateTimeSeriesHeader(timeSeries.tsId, timeSeries.startTime, timeSeries.tau0Seconds)
-        # get the data arrays and insert into database:
-        self.db.insertTimeSeries(timeSeries.getDataForWrite())
+        if valid:
+            # update the header in case startTime or tau0Seconds changed:
+            self.db.updateTimeSeriesHeader(timeSeries.tsId, timeSeries.startTime, timeSeries.tau0Seconds)
+            # get the data arrays and insert into database:
+            self.db.insertTimeSeries(timeSeries.getDataForWrite())
     
     def insertTimeSeries(self, 
                          dataSeries:Union[float, List[float]], 
@@ -117,7 +116,6 @@ class TimeSeriesAPI(object):
         :param tau0Seconds:   float: integration time of each reading
         :param startTime:     dateTime string of first point in dataSeries
         :return:              integer timeSeriesId if successful.
-        :raise ValueError:    if any data series is not at least two points.
         Either timeStamps or tau0seconds must be provided.
         If timeStamps is provided, startTime will be set to the first value, else now() if not provided. 
         '''
