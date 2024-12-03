@@ -223,7 +223,7 @@ class PlotAPI(object):
             else:
                 self.__updateDataStatusFinal(True)
 
-        if not self.plotter.plot(timeSeriesId, self.calc.xResult, self.calc.yResult, x2Array, y2Array, 
+        if not self.plotter.plot(timeSeries, dataSources, self.calc.xResult, self.calc.yResult, x2Array, y2Array, 
                                  plotElements = plotElements, outputName = outputName, show = show):
             return False
 

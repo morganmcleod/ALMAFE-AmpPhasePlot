@@ -94,11 +94,11 @@ class PlotSpectrum(object):
             self.traces.append((x2Array, y2Array, [], legend2))
         
         # Plot title:
-        title = makeTitle([timeSeries.tsId], plotElements)
+        title = makeTitle([timeSeries.tsId], dataSources, plotElements)
         plotElements[PlotEl.TITLE] = title
         
         # Make plot footer strings:
-        makeFooters([timeSeries.tsId], plotElements, timeSeries.startTime)
+        makeFooters([timeSeries.tsId], dataSources, plotElements, timeSeries.startTime)
         
         # Generate the plot:
         return self.__plot(plotElements, outputName, show)
