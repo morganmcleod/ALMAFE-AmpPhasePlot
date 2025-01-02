@@ -66,10 +66,11 @@ class PlotAPI(object):
             plotElements = {}
 
         # load dataSources:
-        if not dataSources and timeSeries.tsId > 0:
-            dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
-        else:
-            dataSources = {}
+        if dataSources is None:
+            if timeSeries.tsId > 0:
+                dataSources = self.tsAPI.getAllDataSource(timeSeries.tsId)
+            else:
+                dataSources = {}
                     
         # clear anything kept from last plot:
         self.__reset()
@@ -366,7 +367,7 @@ class PlotAPI(object):
         else:
             return False
     
-    def getCalcTrace(self):
+    def getCalcTrace(self) -> dict:
         return {
             'x': self.calc.xResult,
             'y': self.calc.yResult,
@@ -464,7 +465,8 @@ class PlotAPI(object):
         
         # If we have freqRFGHz then can plot in FS instead of DEG:        
         freqRFGHz = dataSources.get(DataSource.RF_GHZ, None)
-        if freqRFGHz:
+        plotFS = plotElements.get(PlotEl.PHASE_FS, "1") == "1"
+        if freqRFGHz and plotFS:
             freqRFGHz = float(freqRFGHz)
             if freqRFGHz > 0:
                 yUnits = Units.FS
@@ -478,7 +480,7 @@ class PlotAPI(object):
         TMin = float(xRangePlot[0])
         TMax = float(xRangePlot[1])
         
-        if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, freqRFGHz):
+        if not self.calc.calculate(dataSeries, timeSeries.tau0Seconds, TMin, TMax, freqRFGHz if plotFS else 0):
             return None
 
         # check spec lines:

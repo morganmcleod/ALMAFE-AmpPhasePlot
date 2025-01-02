@@ -3,7 +3,7 @@ from AmpPhaseDataLib.Constants import Units
 from Calculate.Common import unwrapPhase
 from Utility.ParseTimeStamp import ParseTimeStamp
 from typing import List, Optional, Union, Tuple, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import log10
 import numpy as np
 from pydantic import BaseModel, validator
@@ -270,7 +270,11 @@ class TimeSeries(BaseModel):
         '''
         if requiredUnits and isinstance(requiredUnits, str):
             requiredUnits = Units.from_str(requiredUnits)
-            
+
+        # populate timestamps from start time and tau0, if needed:
+        if not self.timeStamps and self.startTime is not None and self.tau0Seconds is not None:
+            self.timeStamps = [self.startTime + timedelta(seconds = x * self.tau0Seconds) for x in range(len(self.dataSeries))]
+
         # timestamps are always stored as LOCALTIME:
         if not requiredUnits or requiredUnits == Units.LOCALTIME: 
             # no conversion:

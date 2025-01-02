@@ -76,6 +76,7 @@ class PlotEl(EnumHelper):
     YUNITS          = 'YUNITS'          # of the primary y axis, like "dBm"
     Y2UNITS         = 'Y2UNITS'         # of secondary y axis, like "K"
     ERROR_BARS      = 'ERROR_BARS'      # show error bars?  like "1" or "0"
+    PHASE_FS        = 'PHASE_FS'        # calculate phase stability in femptoseconds if RF_GHZ provided?  like "1" or "0"
     TITLE           = 'TITLE'           # plot title, overrides automatically generated
     X_AXIS_LABEL    = 'X_AXIS_LABEL'    # overrides automatically generated
     Y_AXIS_LABEL    = 'Y_AXIS_LABEL'    # overrides automatically generated

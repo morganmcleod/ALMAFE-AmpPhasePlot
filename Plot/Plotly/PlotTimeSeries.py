@@ -101,18 +101,19 @@ class PlotTimeSeries():
         if xResolution:
             # get the number of groups to combine:
             K = len(dataSeries) // xResolution
-            minArray, maxArray = getMinMaxArray(dataSeries, K)
-            # interleave minArray, maxArray:
-            dataSeries = [None]*(len(minArray)+len(maxArray))
-            dataSeries[::2] = minArray
-            dataSeries[1::2] = maxArray
-            # reduce timestamps and temperatures by the same group size K.
-            # because len(dataSeries) is now about 2 * xResoltion, repeat each element twice in the arrays: 
-            timeStamps = np.repeat(getFirstItemArray(timeStamps, K), 2).tolist()
-            if timeSeries.temperatures1:
-                timeSeries.temperatures1 = np.repeat(getFirstItemArray(timeSeries.temperatures1, K), 2).tolist()
-            if timeSeries.temperatures2:
-                timeSeries.temperatures2 = np.repeat(getFirstItemArray(timeSeries.temperatures2, K), 2).tolist()
+            if K > 1:
+                minArray, maxArray = getMinMaxArray(dataSeries, K)
+                # interleave minArray, maxArray:
+                dataSeries = [None]*(len(minArray)+len(maxArray))
+                dataSeries[::2] = minArray
+                dataSeries[1::2] = maxArray
+                # reduce timestamps and temperatures by the same group size K.
+                # because len(dataSeries) is now about 2 * xResoltion, repeat each element twice in the arrays: 
+                timeStamps = np.repeat(getFirstItemArray(timeStamps, K), 2).tolist()
+                if timeSeries.temperatures1:
+                    timeSeries.temperatures1 = np.repeat(getFirstItemArray(timeSeries.temperatures1, K), 2).tolist()
+                if timeSeries.temperatures2:
+                    timeSeries.temperatures2 = np.repeat(getFirstItemArray(timeSeries.temperatures2, K), 2).tolist()
 
         # add the trace(s), compute temperature trace spans:
         y2min = None
