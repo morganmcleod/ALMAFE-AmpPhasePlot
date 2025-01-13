@@ -8,7 +8,7 @@ from AmpPhasePlotLib import PlotAPI
 tsa = TimeSeriesAPI.TimeSeriesAPI()
 plt = PlotAPI.PlotAPI()
 
-myPath = r'\\cvfiler\ALMA-NA-FEIC\IF Processor\IFP v3 first unit tests\IF processor PAI 4-22\Amplitude stability\2022-08-18'
+myPath = r'L:\Python\ALMAFE-AmpPhasePlot\SampleData-local\FETMS IFPROCV3\2024-12-11'
 
 # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
 (_, _, filenames) = next(os.walk(myPath))
@@ -17,7 +17,7 @@ for name in filenames:
     (base, ext) = os.path.splitext(name)
     if ext.lower() == '.txt' and '__meas' not in base:
 
-        dataSource = "IF Processor V3 SN01"
+        dataSource = "IF Processor V3 SN 02"
         tau0Seconds = 0.05
         timePlotEls = { 
             PlotEl.TITLE : "IF Processor V3 Amplitude Stability",
@@ -34,5 +34,6 @@ for name in filenames:
         #tsId = importTimeSeriesFETMSAmp(myPath + '/' + name, myPath + '/' + measFile)
         if tsId:
             tsa.setDataSource(tsId, DataSource.TEST_SYSTEM, dataSource)
+            tsa.setDataSource(tsId, DataSource.SUBSYSTEM, base.upper())
             plt.plotTimeSeries(tsId, timePlotEls, outputName = myPath + "/" + base + ".png", show = True)
             plt.plotAmplitudeStability([tsId], plotElements = spectrumPlotEls, outputName = myPath + "/" + base + "-stability.png", show = True)    
